@@ -1,0 +1,49 @@
+@charset "UTF-8";
+@import '../../../../../colors.css';
+
+div#cidade-projeto > h1 {
+    text-align: center;
+    padding: 30px;
+    background-color: var(--color5);
+    color: white;
+
+}
+
+div#cidade-projeto > h2 {
+    text-align: center;
+    padding: 15px;
+    color: black;
+    background-color: var(--color3);
+}
+
+div#cidade-projeto > h3 {
+    text-align: center;
+    padding: 15px;
+    color: black;
+    background-color: var(--color3);
+}
+
+div#cidade-projeto > h4 {
+    padding: 15px;
+}
+
+div#cidade-projeto > p {
+    padding: 30px;
+
+}
+
+div#cidade-projeto li {
+    display: block;
+}
+
+div#cidade-projeto a {
+    width: 60%;
+    margin: 0 auto;
+    padding: 2px;
+}
+
+div#cidade-projeto a:hover {
+    border-bottom: none;
+}
+
+

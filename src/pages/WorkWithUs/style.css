@@ -1,0 +1,29 @@
+@charset "UTF-8";
+@import '../../colors.css';
+
+section#jobs, #form-infos {
+    text-align: center;
+    margin: 30px;
+}
+
+section#jobs h2, #form-infos h2 {
+    padding-bottom: 20px;
+}
+
+section#form-infos p {
+    padding-bottom: 30px;
+}
+
+section#jobs p {
+    padding-bottom: 30px;
+}
+
+section#form-infos article {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 85%;
+    margin: 15px auto;
+    text-align: left;
+}
+

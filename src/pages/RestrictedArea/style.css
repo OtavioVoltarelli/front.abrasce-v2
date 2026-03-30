@@ -1,0 +1,38 @@
+@charset "UTF-8";
+@import '../../colors.css';
+
+main#restricted-area {
+    padding: 20px;
+}
+
+main#restricted-area a.links {
+    background-color: var(--color5);
+    margin: 20px auto;
+    display: block;
+    width: 50%;
+    border-radius: 15px;
+    transition: ease 0.5s;
+}
+
+main#restricted-area a.links button {
+    display: block;
+    text-align: center;
+    padding: 30px;
+    width: 100%;
+}
+
+main#restricted-area a.links button:hover {
+    cursor: pointer;
+}
+
+@media screen and (min-width: 768px) {
+    main#restricted-area a.links {
+        width: 30%;
+    }
+}
+
+@media screen and (min-width: 992px) {
+    main#restricted-area a.links {
+        width: 20%;
+    }
+}

@@ -1,0 +1,73 @@
+@charset "UTF-8";
+@import '../../colors.css';
+
+@media screen and (min-width: 768px) {
+
+    .quem-somos p {
+        max-width: 75%;
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    .missao-visao-valores .titulo {
+        margin: 50px auto;
+        padding: 50px;
+        background-size: 25%;
+    }
+
+    .atuacao article {
+        width: 80%;
+        margin: 0 auto;
+        margin-bottom: 30px;
+    }
+
+    .mensagem p{
+        max-width: 75%;
+        margin: 0 auto;
+        text-align: center;
+    }
+}
+
+@media screen and (min-width: 992px) {
+
+    .quem-somos p {
+        max-width: 50%;
+        text-align: center;
+        margin: 0 auto;
+    }
+
+    .missao-visao-valores .titulo {
+        margin: 40px auto;
+        padding: 80px;
+        background-size: 15%;
+        background-attachment: scroll;
+    }
+
+    .missao-visao-valores .caixas {
+        display: flex;
+    }
+
+    .caixas article {
+        width: 60%;
+    }
+
+
+    .atuacao .titulo {
+        height: 350px;
+        margin-top: 100px;
+        margin-bottom: 80px;
+        box-shadow: inset 6px 6px 13px 0px rgba(0, 0, 0, 0.504);
+        background-attachment: fixed;
+    }
+
+    .atuacao .titulo h2 {
+        font-weight: 500;
+        text-shadow: 1px 1px 0 black
+    }
+
+    .atuacao article {
+        width: 70%;
+        margin: 0 auto;
+        margin-bottom: 30px;
+    }
+}

@@ -1,0 +1,49 @@
+@charset "UTF-8";
+@import '../../../colors.css';
+
+div#fmorato > h1 {
+    text-align: center;
+    padding: 30px;
+    background-color: var(--color5);
+    color: white;
+
+}
+
+div#fmorato > h2 {
+    text-align: center;
+    padding: 15px;
+    color: black;
+    background-color: var(--color3);
+}
+
+div#fmorato > h3 {
+    text-align: center;
+    padding: 15px;
+    color: black;
+    background-color: var(--color3);
+}
+
+div#fmorato > h4 {
+    padding: 15px;
+}
+
+div#fmorato > p {
+    padding: 30px;
+
+}
+
+div#fmorato li {
+    display: block;
+}
+
+div#fmorato a {
+    width: 60%;
+    margin: 0 auto;
+    padding: 2px;
+}
+
+div#fmorato a:hover {
+    border-bottom: none;
+}
+
+
