@@ -29,6 +29,9 @@ function RestrictedArea() {
             <Link to={'/area-restrita/contatos'} className='links'>
                 <button>Contatos</button>
             </Link>
+            <Link to={'/area-restrita/transparencia'} className='links'>
+                <button>Transparência</button>
+            </Link>
             <Link className='links'>
                 <button>Usuários</button>
             </Link>

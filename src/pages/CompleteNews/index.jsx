@@ -1,30 +1,38 @@
 import './style.css';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useNewsById } from '../../hooks/useNews';
 
 function CompleteNew() {
-    const { title } = useParams();
-    const location = useLocation();
-    const { imageUrl, fullContent, pdfUrl, postDate } = location.state || {};
+    const { id } = useParams();
+    const { data, isLoading, isError, error } = useNewsById(id);
 
+    if (isLoading) {
+        return <div>Carregando notícia...</div>;
+    }
 
-    const formatTitle = (rawTitle) => {
-        return rawTitle
-            .split('-') 
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' '); 
-    };
+    if (isError) {
+        return <div>Error: {error.message}</div>;
+    }
+
+    const news = data.content;
 
     return (
         <div id="complete-new">
             <article id='postdate'>
-                <p><strong>Data de postagem: </strong>{postDate}</p>
+                <p><strong>Data de postagem: </strong>{news.creationDate}</p>
             </article>
-            <h1 id="complete-new-title">{formatTitle(title)}</h1>
-            {imageUrl && <img id="complete-new-img" src={imageUrl} alt={title} />}
+            <h1 id="complete-new-title">{news.title}</h1>
+            {news.coverImagePath && <img id="complete-new-img" src={`${import.meta.env.VITE_API_URL}/files/admin/${news.coverImagePath}`} alt={news.title} />}
             <pre id="complete-new-content">
-                {fullContent || "Conteúdo não disponível."}
+                {news.longDescription || "Conteúdo não disponível."}
             </pre>
-            {pdfUrl && <a id='pdf-link' href={pdfUrl} target="_blank" rel="noopener noreferrer"><strong>Visualizar Anexo</strong></a>}
+            {news.filesPath.map((file) => (
+                <a key={file} id='pdf-link' href={`${import.meta.env.VITE_API_URL}/files/news/${file}`} target="_blank" rel="noopener noreferrer">
+                    <strong>Visualizar Anexo</strong><br />
+                </a>
+            ))}
+
+            {news.pdfUrl && <a id='pdf-link' href={news.pdfUrl} target="_blank" rel="noopener noreferrer"><strong>Visualizar Anexo</strong></a>}
         </div>
     );
 }

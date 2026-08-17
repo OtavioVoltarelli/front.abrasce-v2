@@ -1,243 +1,170 @@
 import './style.css';
-import React, { useEffect, useState } from "react";
-import CONFIG from '../../config';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import { useState } from 'react';
+import Loading from '../../components/Loading';
+import AlertModal from '../../components/AlertModal';
+import NewsForm from './NewsForm';
+import {
+    useAllNews,
+    useCreateNews,
+    useUpdateNews,
+    useDeleteNews,
+} from '../../hooks/useNews';
+import { uploadFile, buildFileUrl, buildNewsPdfUrl } from '../../services/fileService';
 
 function NewsManagement() {
-    const [dados, setDados] = useState([]);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState(null);
-    const [showForm, setShowForm] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentId, setCurrentId] = useState(null);
-    const [title, setTitle] = useState("");
-    const [imgFile, setImgFile] = useState(null);
-    const [imgUrl, setImgUrl] = useState("");
-    const [newsPreview, setNewsPreview] = useState("");
-    const [completeNews, setCompleteNews] = useState("");
-    const [pdfFile, setPdfFile] = useState(null);
-    const [pdfUrl, setPdfUrl] = useState("");
+    /* Dados e escritas — tudo vindo dos hooks. A página não conhece axios,
+       não guarda lista em useState e não refaz busca na mão: quando uma
+       mutation termina, ela invalida o cache e o React Query rebusca. */
+    const { data: news = [], isPending, isError, error } = useAllNews();
+    const createNews = useCreateNews();
+    const updateNews = useUpdateNews();
+    const deleteNews = useDeleteNews();
 
-    const maxFileSize = 5 * 1024 * 1024;
+    /* Estado só de interface. */
+    const [editingNews, setEditingNews] = useState(null); // null = form fechado
+    const [pendingDelete, setPendingDelete] = useState(null);
+    const [feedback, setFeedback] = useState(null);
 
-    const navigate = useNavigate();
+    const isFormOpen = editingNews !== null;
+    const isSaving = createNews.isPending || updateNews.isPending;
 
-    const token = Cookies.get('token');
+    const openCreateForm = () => setEditingNews({});
+    const closeForm = () => setEditingNews(null);
 
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-            return
-        }
-    }, [navigate, token]);
-
-
-    useEffect(() => {
-        fetch(`${CONFIG.API_URL}news`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar os dados'); 
-                }
-                return response.json();
-            })
-            .then(data => {
-                setDados(data.reverse());
-                setCarregando(false);
-            })
-            .catch(error => {
-                setErro(error.message);
-                setCarregando(false);
-            });
-    }, []);
-
-    const handleEditClick = (noticia) => {
-        setTitle(noticia.title);
-        setNewsPreview(noticia.newsPreview);
-        setCompleteNews(noticia.completeNews);
-        setImgUrl(noticia.imgUrl);
-        setPdfUrl(noticia.pdfUrl || "");
-        setCurrentId(noticia.id);
-        setIsEditing(true);
-        setShowForm(true);
+    const openEditForm = (item) => {
+        setEditingNews(item);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleCreateClick = () => {
-        setTitle("");
-        setImgFile(null);
-        setImgUrl("");
-        setNewsPreview("");
-        setCompleteNews("");
-        setPdfFile(null);
-        setPdfUrl("");
-        setIsEditing(false);
-        setShowForm(!showForm);
-    };
-
-    const handleFileChange = (event, type) => {
-        const selectedFile = event.target.files[0];
-
-        if (!selectedFile) return;
-
-        if (selectedFile.size > maxFileSize) {
-            alert('O arquivo é muito grande! O tamanho máximo permitido é 5MB.');
-            if (type === "image") setImgFile(null);
-            else setPdfFile(null);
-            return;
-        }
-
-        if (type === "image") setImgFile(selectedFile);
-        else setPdfFile(selectedFile);
-    };
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (!title || !newsPreview || !completeNews) {
-            alert("Por favor, preencha todos os campos.");
-            return;
-        }
-
+    const handleSave = async ({ title, newsPreview, completeNews, imgFile, pdfFile }) => {
         try {
-            let imageUrl = imgUrl;
-            let uploadedPdfUrl = pdfUrl;
+            /* Só sobe arquivo novo; sem arquivo, mantém a URL que já existia.
+               Os dois uploads são independentes, então vão em paralelo. */
+            const [imgUrl, pdfUrl] = await Promise.all([
+                imgFile ? uploadFile(imgFile) : editingNews.imgUrl ?? '',
+                pdfFile ? uploadFile(pdfFile, 'news-pdfs') : editingNews.pdfUrl ?? '',
+            ]);
 
-            if (imgFile) {
-                const fileFormData = new FormData();
-                fileFormData.append("file", imgFile);
+            const payload = { title, newsPreview, completeNews, imgUrl, pdfUrl };
 
-                const fileResponse = await fetch(`${CONFIG.API_URL}files/upload`, {
-                    method: "POST",
-                    body: fileFormData,
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (!fileResponse.ok) {
-                    throw new Error("Erro ao enviar a imagem.");
-                }
-
-                imageUrl = await fileResponse.text();
+            if (editingNews.id) {
+                await updateNews.mutateAsync({ id: editingNews.id, payload });
+            } else {
+                await createNews.mutateAsync(payload);
             }
 
-            if (pdfFile) {
-                const pdfFormData = new FormData();
-                pdfFormData.append("file", pdfFile);
-
-                const pdfResponse = await fetch(`${CONFIG.API_URL}files/upload?directory=news-pdfs`, {
-                    method: "POST",
-                    body: pdfFormData,
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (!pdfResponse.ok) {
-                    throw new Error("Erro ao enviar o PDF.");
-                }
-
-                uploadedPdfUrl = await pdfResponse.text();
-            }
-
-            const requestBody = { title, imgUrl: imageUrl, newsPreview, completeNews, pdfUrl: uploadedPdfUrl };
-
-            const newsResponse = await fetch(
-                isEditing
-                    ? `${CONFIG.API_URL}news/${currentId}`
-                    : `${CONFIG.API_URL}news`,
-                {
-                    method: isEditing ? "PUT" : "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`},
-                    body: JSON.stringify(requestBody),
-                }
-            );
-
-            if (!newsResponse.ok) {
-                throw new Error(isEditing ? "Erro ao editar a notícia." : "Erro ao criar a notícia.");
-            }
-
-            alert(isEditing ? "Notícia atualizada com sucesso!" : "Notícia criada com sucesso!");
-
-            setTitle("");
-            setImgFile(null);
-            setImgUrl("");
-            setNewsPreview("");
-            setCompleteNews("");
-            setPdfFile(null);
-            setPdfUrl("");
-            setShowForm(false);
-
-            const updatedResponse = await fetch(`${CONFIG.API_URL}news`);
-            const updatedData = await updatedResponse.json();
-            setDados(updatedData.reverse());
-        } catch (error) {
-            alert(error.message);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        const confirmDelete = window.confirm("Tem certeza que deseja excluir esta notícia?");
-        if (!confirmDelete) return;
-
-        try {
-            const deleteResponse = await fetch(`${CONFIG.API_URL}news/${id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
+            closeForm();
+            setFeedback({
+                title: 'Tudo certo',
+                message: editingNews.id
+                    ? 'Notícia atualizada com sucesso.'
+                    : 'Notícia criada com sucesso.',
             });
-
-            if (!deleteResponse.ok) {
-                throw new Error("Erro ao excluir a notícia.");
-            }
-
-            const updatedResponse = await fetch(`${CONFIG.API_URL}news`);
-            const updatedData = await updatedResponse.json();
-            setDados(updatedData.reverse());
-
-            alert("Notícia excluída com sucesso!");
-        } catch (error) {
-            alert(error.message);
+        } catch (err) {
+            setFeedback({
+                title: 'Não foi possível salvar',
+                message: err?.response?.data?.message ?? err.message,
+            });
         }
     };
 
-    if (carregando) return <div>Carregando...</div>;
+    const handleConfirmDelete = async () => {
+        try {
+            await deleteNews.mutateAsync(pendingDelete.id);
+            setPendingDelete(null);
+            setFeedback({ title: 'Tudo certo', message: 'Notícia excluída com sucesso.' });
+        } catch (err) {
+            setPendingDelete(null);
+            setFeedback({
+                title: 'Não foi possível excluir',
+                message: err?.response?.data?.message ?? err.message,
+            });
+        }
+    };
+
+    if (isPending) return <Loading />;
 
     return (
         <main id="news-management">
-            <article id='title'>
+            <article id="title">
                 <h1>Notícias</h1>
             </article>
-            <button id='create-new' onClick={handleCreateClick}>{showForm ? "Cancelar" : "Criar nova notícia"}</button>
 
-            {showForm && (
-                <form id='edit' onSubmit={handleSubmit}>
-                    <input className='texts' type="text" placeholder="Título" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                    <textarea className='texts' placeholder="Prévia da Notícia" value={newsPreview} onChange={(e) => setNewsPreview(e.target.value)} required />
-                    <textarea className='texts' placeholder="Notícia Completa" value={completeNews} onChange={(e) => setCompleteNews(e.target.value)} required />
-                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, "image")} />
-                    <input type="file" accept="application/pdf" onChange={(e) => handleFileChange(e, "pdf")} />
-                    <button type="submit">{isEditing ? "Atualizar" : "Salvar"}</button>
-                </form>
+            <button
+                id="create-new"
+                onClick={isFormOpen ? closeForm : openCreateForm}
+            >
+                {isFormOpen ? 'Cancelar' : 'Criar nova notícia'}
+            </button>
+
+            {isFormOpen && (
+                /* key força o React a recriar o formulário ao trocar de item.
+                   Sem isso ele reaproveitaria a instância e manteria o texto
+                   da notícia anterior nos campos. */
+                <NewsForm
+                    key={editingNews.id ?? 'new'}
+                    initialValues={editingNews}
+                    onSubmit={handleSave}
+                    onCancel={closeForm}
+                    isSaving={isSaving}
+                />
             )}
 
-            {!erro && dados.length > 0 ? (
-                dados.map((noticia) => (
-                    <article id='news' key={noticia.id}>
-                        <section id='infos'>
-                            <p><strong>Título: </strong>{noticia.title}</p>
-                            <p><strong>Data: </strong>{noticia.data}</p>
-                            {noticia.imgUrl && <img src={`${CONFIG.API_URL}files/${noticia.imgUrl}`} alt={noticia.title} />}
-                            <p><strong>Resumo: </strong>{noticia.newsPreview}</p>
-                            <p><strong>Completo: </strong>{noticia.completeNews}</p>
-                            {noticia.pdfUrl && <a href={`${CONFIG.API_URL}files/documents${noticia.pdfUrl}`} target="_blank" rel="noopener noreferrer"><strong>Visualizar PDF</strong></a>}
-                        </section>
-                        <section id='edit-and-delete'>
-                            <button id='edit' onClick={() => handleEditClick(noticia)}>Editar</button>
-                            <button id='delete' onClick={() => handleDelete(noticia.id)}>Excluir</button>
-                        </section>
-                    </article>
-                ))
-            ) : (
-                !erro && <p>Nenhuma notícia encontrada.</p>
+            {isError && (
+                <p role="alert" className="font-semibold text-red-600">
+                    Erro ao carregar as notícias: {error.message}
+                </p>
             )}
 
-            {erro && <div>Erro: {erro}</div>}
+            {!isError && news.length === 0 && <p>Nenhuma notícia encontrada.</p>}
+
+            {news.map((item) => (
+                <article className="news" key={item.id}>
+                    <section className="infos">
+                        <p><strong>Título: </strong>{item.title}</p>
+                        <p><strong>Data: </strong>{item.data}</p>
+                        {item.imgUrl && (
+                            <img src={buildFileUrl(item.imgUrl)} alt={item.title} loading="lazy" />
+                        )}
+                        <p><strong>Resumo: </strong>{item.newsPreview}</p>
+                        <p><strong>Completo: </strong>{item.completeNews}</p>
+                        {item.pdfUrl && (
+                            <a
+                                href={buildNewsPdfUrl(item.pdfUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <strong>Visualizar PDF</strong>
+                            </a>
+                        )}
+                    </section>
+                    <section className="edit-and-delete">
+                        <button className="edit" onClick={() => openEditForm(item)}>
+                            Editar
+                        </button>
+                        <button className="delete" onClick={() => setPendingDelete(item)}>
+                            Excluir
+                        </button>
+                    </section>
+                </article>
+            ))}
+
+            <AlertModal
+                isOpen={pendingDelete !== null}
+                title="Excluir notícia"
+                message={`Tem certeza que deseja excluir "${pendingDelete?.title}"? Esta ação não pode ser desfeita.`}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={handleConfirmDelete}
+                confirmLabel="Excluir"
+                isConfirming={deleteNews.isPending}
+            />
+
+            <AlertModal
+                isOpen={feedback !== null}
+                title={feedback?.title}
+                message={feedback?.message}
+                onClose={() => setFeedback(null)}
+            />
         </main>
     );
 }

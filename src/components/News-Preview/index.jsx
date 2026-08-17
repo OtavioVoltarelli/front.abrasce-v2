@@ -1,30 +1,20 @@
 import './style.css';
 import { useNavigate } from 'react-router-dom';
 
-function NewsPreview({ title, resume, imageUrl, fullContent, pdfUrl, postDate }) {
-    const formattedTitle = title.toLowerCase().replace(/\s+/g, '-');
+function NewsPreview({news}) {
     const navigate = useNavigate();
 
-    const handleReadMore = () => {
-        navigate(`/noticias/${encodeURIComponent(formattedTitle)}`, {
-            state: { 
-                imageUrl: imageUrl,
-                fullContent: fullContent,
-                pdfUrl: pdfUrl, 
-                postDate: postDate,
-            },
-        });
-    };
+    const { title, coverImagePath, shortDescription, creationDate } = news;
 
     return (
         <div id="news-preview">
             <article id='postdate'>
-                <p><strong>Data de postagem: </strong>{postDate}</p>
+                <p><strong>Data de postagem: </strong>{creationDate}</p>
             </article>
             <h2 id="news-title">{title}</h2>
-            <img id="news-img" src={imageUrl} alt="Notícia" />
-            <p id="news-resume">{resume}</p>
-            <button className="read-more" onClick={handleReadMore}>
+            <img id="news-img" src={`${import.meta.env.VITE_API_URL}/files/admin/${coverImagePath}`} alt="Notícia" />
+            <p id="news-resume">{shortDescription}</p>
+            <button className="read-more" onClick={() => navigate(`/noticias/${news.id}`)}>
                 Ler mais
             </button>
         </div>

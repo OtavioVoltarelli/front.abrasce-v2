@@ -1,271 +1,161 @@
 import './style.css';
-import React, { useEffect, useState } from "react";
-import CONFIG from '../../config';
-import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import { useState } from 'react';
+import Loading from '../../components/Loading';
+import AlertModal from '../../components/AlertModal';
+import RecruitmentProcessForm from './RecruitmentProcessForm';
+import {
+    useAllRecruitmentProcesses,
+    useCreateRecruitmentProcess,
+    useUpdateRecruitmentProcess,
+    useDeleteRecruitmentProcess,
+} from '../../hooks/useRecruitmentProcess';
+import { uploadFile, buildFileUrl } from '../../services/fileService';
 
 function RecruitmentProcess() {
-    const [dados, setDados] = useState([]);
-    const [carregando, setCarregando] = useState(true);
-    const [erro, setErro] = useState(null);
-    const [showForm, setShowForm] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentId, setCurrentId] = useState(null);
-    const [title, setTitle] = useState("");
-    const [pdfFile, setPdfFile] = useState(null);
-    const [isActive, setIsActive] = useState(true);
-    const [existingPdfUrl, setExistingPdfUrl] = useState("");
+    const { data: processes = [], isPending, isError, error } = useAllRecruitmentProcesses();
+    const createProcess = useCreateRecruitmentProcess();
+    const updateProcess = useUpdateRecruitmentProcess();
+    const deleteProcess = useDeleteRecruitmentProcess();
 
-    const maxFileSize = 10 * 1024 * 1024;
+    const [editingProcess, setEditingProcess] = useState(null);
+    const [pendingDelete, setPendingDelete] = useState(null);
+    const [feedback, setFeedback] = useState(null);
 
-    const navigate = useNavigate();
+    const isFormOpen = editingProcess !== null;
+    const isSaving = createProcess.isPending || updateProcess.isPending;
 
-    const token = Cookies.get('token');
+    const openCreateForm = () => setEditingProcess({});
+    const closeForm = () => setEditingProcess(null);
 
-    useEffect(() => {
-        if (!token) {
-            navigate('/login');
-            return
-        }
-    }, [navigate, token]);
-
-    useEffect(() => {
-        fetch(`${CONFIG.API_URL}recruitment-process`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar os dados');
-                }
-                return response.json();
-            })
-            .then(data => {
-                setDados(data.reverse());
-                setCarregando(false);
-            })
-            .catch(error => {
-                setErro(error.message);
-                setCarregando(false);
-            });
-    }, []);
-
-    const handleEditClick = (processo) => {
-        setTitle(processo.title);
-        setIsActive(processo.active);
-        setExistingPdfUrl(processo.pdfUrl);
-        setCurrentId(processo.id);
-        setIsEditing(true);
-        setShowForm(true);
+    const openEditForm = (item) => {
+        setEditingProcess(item);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleCreateClick = () => {
-        setTitle("");
-        setPdfFile(null);
-        setIsActive(true);
-        setExistingPdfUrl("");
-        setIsEditing(false);
-        setShowForm(!showForm);
-    };
-
-    const handleTituloChange = (event) => {
-        setTitle(event.target.value);
-    };
-
-    const handleFileChange = (event) => {
-        const selectedFile = event.target.files[0];
-        if (selectedFile && selectedFile.size > maxFileSize) {
-            alert('O arquivo é muito grande! O tamanho máximo permitido é 10MB.');
-            setPdfFile(null);
-        } else {
-            setPdfFile(selectedFile);
-        }
-    };
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (!title) {
-            alert("Por favor, preencha o título.");
-            return;
-        }
-
+    const handleSave = async ({ title, isActive, pdfFile }) => {
         try {
-            let pdfUrl = existingPdfUrl;
+            const pdfUrl = pdfFile
+                ? await uploadFile(pdfFile)
+                : editingProcess.pdfUrl ?? '';
 
-            if (pdfFile) {
-                const fileFormData = new FormData();
-                fileFormData.append("file", pdfFile);
+            const payload = { title, isActive };
+            if (pdfUrl) payload.pdfUrl = pdfUrl;
 
-                const fileResponse = await fetch(`${CONFIG.API_URL}files/upload`, {
-                    method: "POST",
-                    body: fileFormData,
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-
-                if (!fileResponse.ok) {
-                    throw new Error("Erro ao enviar o arquivo PDF.");
-                }
-
-                pdfUrl = await fileResponse.text();
+            if (editingProcess.id) {
+                await updateProcess.mutateAsync({ id: editingProcess.id, payload });
+            } else {
+                await createProcess.mutateAsync(payload);
             }
 
-            const requestBody = { title, isActive };
-            if (pdfUrl) {
-                requestBody.pdfUrl = pdfUrl;
-            }
-
-            const processResponse = await fetch(
-                isEditing
-                    ? `${CONFIG.API_URL}recruitment-process/${currentId}`
-                    : `${CONFIG.API_URL}recruitment-process`,
-                {
-                    method: isEditing ? "PUT" : "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify(requestBody),
-                }
-            );
-
-            if (!processResponse.ok) {
-                throw new Error(isEditing ? "Erro ao editar o processo seletivo." : "Erro ao criar o processo seletivo.");
-            }
-
-            alert(isEditing ? "Processo seletivo atualizado com sucesso!" : "Processo seletivo criado com sucesso!");
-
-            setTitle("");
-            setPdfFile(null);
-            setIsActive(true);
-            setExistingPdfUrl("");
-            setShowForm(false);
-
-            const updatedResponse = await fetch(`${CONFIG.API_URL}recruitment-process`);
-            const updatedData = await updatedResponse.json();
-            setDados(updatedData.reverse());
-        } catch (error) {
-            alert(error.message);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        const confirmDelete = window.confirm("Tem certeza que deseja excluir este processo seletivo?");
-        if (!confirmDelete) return;
-
-        try {
-            const deleteResponse = await fetch(`${CONFIG.API_URL}recruitment-process/${id}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
+            closeForm();
+            setFeedback({
+                title: 'Tudo certo',
+                message: editingProcess.id
+                    ? 'Processo seletivo atualizado com sucesso.'
+                    : 'Processo seletivo criado com sucesso.',
             });
-
-            if (!deleteResponse.ok) {
-                throw new Error("Erro ao excluir o processo seletivo.");
-            }
-
-            const updatedResponse = await fetch(`${CONFIG.API_URL}recruitment-process`);
-            const updatedData = await updatedResponse.json();
-            setDados(updatedData);
-
-            alert("Processo seletivo excluído com sucesso!");
-        } catch (error) {
-            alert(error.message);
+        } catch (err) {
+            setFeedback({
+                title: 'Não foi possível salvar',
+                message: err?.response?.data?.message ?? err.message,
+            });
         }
     };
 
-    if (carregando) return <div>Carregando...</div>;
+    const handleConfirmDelete = async () => {
+        try {
+            await deleteProcess.mutateAsync(pendingDelete.id);
+            setPendingDelete(null);
+            setFeedback({
+                title: 'Tudo certo',
+                message: 'Processo seletivo excluído com sucesso.',
+            });
+        } catch (err) {
+            setPendingDelete(null);
+            setFeedback({
+                title: 'Não foi possível excluir',
+                message: err?.response?.data?.message ?? err.message,
+            });
+        }
+    };
+
+    if (isPending) return <Loading />;
 
     return (
         <main id="rp">
-            <article id='title'>
+            <article id="title">
                 <h1>Processos Seletivos</h1>
             </article>
-            <button id='create' onClick={handleCreateClick}>
-                {showForm ? "Cancelar" : "Criar novo processo seletivo"}
+
+            <button id="create" onClick={isFormOpen ? closeForm : openCreateForm}>
+                {isFormOpen ? 'Cancelar' : 'Criar novo processo seletivo'}
             </button>
 
-            {showForm && (
-                <div className="form-container">
-                    <form onSubmit={handleSubmit}>
-                        <div>
-                            <label htmlFor="title">Título: </label>
-                            <input
-                                type="text"
-                                id="title"
-                                value={title}
-                                onChange={handleTituloChange}
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="pdfFile">Anexar Edital: </label>
-                            <input
-                                type="file"
-                                id="pdfFile"
-                                accept="application/pdf"
-                                onChange={handleFileChange}
-                                required={!isEditing}
-                            />
-                            {isEditing && existingPdfUrl && (
-                                <p>
-                                    <strong>Arquivo Atual:</strong>{" "}
-                                    <a href={`${CONFIG.API_URL}files/${existingPdfUrl}`} target="_blank" rel="noopener noreferrer">
-                                        {existingPdfUrl}
-                                    </a>
-                                </p>
-                            )}
-                        </div>
-                        {isEditing && (
-                            <div>
-                                <label>Status: </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        name="status"
-                                        value="true"
-                                        checked={isActive === true}
-                                        onChange={() => setIsActive(true)}
-                                    />
-                                    Ativo
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        name="status"
-                                        value="false"
-                                        checked={isActive === false}
-                                        onChange={() => setIsActive(false)}
-                                    />
-                                    Inativo
-                                </label>
-                            </div>
-                        )}
-                        <button type="submit">{isEditing ? "Atualizar" : "Salvar"}</button>
-                    </form>
-                </div>
+            {isFormOpen && (
+                <RecruitmentProcessForm
+                    key={editingProcess.id ?? 'new'}
+                    initialValues={editingProcess}
+                    onSubmit={handleSave}
+                    onCancel={closeForm}
+                    isSaving={isSaving}
+                />
             )}
 
-            {!erro && dados.length > 0 ? (
-                dados.map((processo) => (
-                    <article className="process" key={processo.id}>
-                        <p><strong>ID:</strong> {processo.id}</p>
-                        <p><strong>Título:</strong> {processo.title}</p>
+            {isError && (
+                <p role="alert" className="font-semibold text-red-600">
+                    Erro ao carregar os processos seletivos: {error.message}
+                </p>
+            )}
+
+            {!isError && processes.length === 0 && (
+                <p>Nenhum processo seletivo encontrado.</p>
+            )}
+
+            {processes.map((item) => (
+                <article className="process" key={item.id}>
+                    <p><strong>ID:</strong> {item.id}</p>
+                    <p><strong>Título:</strong> {item.title}</p>
+                    {item.pdfUrl && (
                         <p>
-                            <strong>PDF:</strong>{" "}
-                            <a href={`${CONFIG.API_URL}files/${processo.pdfUrl}`} target="_blank" rel="noopener noreferrer">
-                                {processo.pdfUrl}
+                            <strong>PDF:</strong>{' '}
+                            <a
+                                href={buildFileUrl(item.pdfUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {item.pdfUrl}
                             </a>
                         </p>
-                        <p><strong>Data de Criação:</strong> {processo.creationDate}</p>
-                        <p><strong>Status:</strong> {processo.active ? "Ativo" : "Inativo"}</p>
-                        <section id='edit-and-delete'>
-                            <button id='edit' onClick={() => handleEditClick(processo)}>Editar</button>
-                            <button id='delete' onClick={() => handleDelete(processo.id)}>Excluir</button>
-                        </section>
-                    </article>
-                ))
-            ) : (
-                !erro && <p>Nenhum processo seletivo encontrado.</p>
-            )}
+                    )}
+                    <p><strong>Data de Criação:</strong> {item.creationDate}</p>
+                    <p><strong>Status:</strong> {item.active ? 'Ativo' : 'Inativo'}</p>
+                    <section className="edit-and-delete">
+                        <button className="edit" onClick={() => openEditForm(item)}>
+                            Editar
+                        </button>
+                        <button className="delete" onClick={() => setPendingDelete(item)}>
+                            Excluir
+                        </button>
+                    </section>
+                </article>
+            ))}
 
-            {erro && <div>Erro: {erro}</div>}
+            <AlertModal
+                isOpen={pendingDelete !== null}
+                title="Excluir processo seletivo"
+                message={`Tem certeza que deseja excluir "${pendingDelete?.title}"? Esta ação não pode ser desfeita.`}
+                onClose={() => setPendingDelete(null)}
+                onConfirm={handleConfirmDelete}
+                confirmLabel="Excluir"
+                isConfirming={deleteProcess.isPending}
+            />
+
+            <AlertModal
+                isOpen={feedback !== null}
+                title={feedback?.title}
+                message={feedback?.message}
+                onClose={() => setFeedback(null)}
+            />
         </main>
     );
 }

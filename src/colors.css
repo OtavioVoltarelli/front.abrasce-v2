@@ -1,8 +1,23 @@
+/* src/colors.css
+   ---------------------------------------------------------------------------
+   PONTE TEMPORÁRIA (compatibilidade).
+
+   Os nomes reais das cores agora vivem no bloco @theme do App.css, com nomes
+   semânticos (--color-brand, --color-brand-dark, ...).
+
+   Este arquivo continua existindo só porque ~40 arquivos de CSS legado fazem
+   @import dele e usam --color1..--color5. Em vez de duplicar os hex (duas
+   fontes de verdade = elas divergem cedo ou tarde), cada nome antigo agora
+   APONTA para o token novo.
+
+   Conforme cada componente for migrado para Tailwind, o @import some junto.
+   Quando o último sumir, este arquivo pode ser apagado.
+--------------------------------------------------------------------------- */
 
 :root {
-    --color1: #D7F8F9;
-    --color2: #00EBFC;
-    --color3: #278CFF;
-    --color4: #2222FF;
-    --color5: #1C0051;
+    --color1: var(--color-surface);
+    --color2: var(--color-accent);
+    --color3: var(--color-brand-light);
+    --color4: var(--color-brand);
+    --color5: var(--color-brand-dark);
 }

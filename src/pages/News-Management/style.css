@@ -1,61 +1,68 @@
 @charset "UTF-8";
 @import '../../colors.css';
 
-main#news-management button#create-new{
+/* NOTA: #news, #infos, #edit-and-delete, #edit e #delete viraram classes.
+   Eles ficavam dentro de um .map(), então o mesmo id era repetido em toda
+   notícia da lista — id tem que ser único na página. Seletor de id também
+   tem especificidade alta demais, o que dificulta sobrescrever depois. */
+
+main#news-management button#create-new {
     margin: 50px;
     background-color: green;
     border: none;
 }
 
-main#news-management article#news{
+main#news-management article.news {
     width: 70%;
     background-color: var(--color1);
     border-radius: 15px;
     text-align: left;
-    margin: 50px;
     margin: 50px auto;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-main#news-management article#news section#infos{
+main#news-management article.news section.infos {
     padding: 30px;
     padding-bottom: 0;
 }
 
-main#news-management article#news section#infos p{
+main#news-management article.news section.infos p {
     padding: 5px;
     word-wrap: break-word;
     white-space: normal;
 }
 
-main#news-management article#news img{
+main#news-management article.news img {
     margin-top: 10px;
     width: 200px;
     height: 200px;
 }
 
-main#news-management article#news section#edit-and-delete{
+main#news-management article.news section.edit-and-delete {
     display: block;
 }
 
-main#news-management article#news button#edit, button#delete{
+/* Antes: "article#news button#edit, button#delete" — a vírgula reiniciava o
+   seletor, então a segunda metade valia para QUALQUER button#delete do site. */
+main#news-management article.news button.edit,
+main#news-management article.news button.delete {
     border: none;
     color: black;
     margin: 10px 25px;
     cursor: pointer;
 }
 
-main#news-management article#news button#delete{
+main#news-management article.news button.delete {
     background-color: red;
 }
 
-main#news-management article#news button#edit{
+main#news-management article.news button.edit {
     background-color: yellow;
 }
 
 main#news-management form#edit {
     display: block;
-    margin:  0 auto;
+    margin: 0 auto;
     width: 90%;
 }
 

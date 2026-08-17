@@ -1,4 +1,38 @@
 /* src/App.css */
+
+/* ---------------------------------------------------------------------------
+   TAILWIND — importado SEM o preflight (o reset próprio do Tailwind).
+   Motivo: o projeto ainda tem ~47 arquivos de CSS legado que dependem dos
+   estilos padrão do navegador (principalmente h1–h4). Ligar o preflight agora
+   "achataria" todos eles de uma vez. Vamos ligar quando a migração terminar.
+   Quando for a hora, isto tudo vira uma linha só: @import "tailwindcss";
+--------------------------------------------------------------------------- */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* ---------------------------------------------------------------------------
+   DESIGN TOKENS
+   O bloco @theme é a configuração do Tailwind v4 — ela mora no CSS, não mais
+   num tailwind.config.js. Cada variável aqui vira uma classe utilitária:
+   --color-brand  ->  text-brand, bg-brand, border-brand...
+--------------------------------------------------------------------------- */
+@theme {
+  /* Paleta — nomes que dizem a FUNÇÃO, não a ordem */
+  --color-brand: #2222FF;       /* era --color4 — cor principal de links e texto */
+  --color-brand-dark: #1C0051;  /* era --color5 — hover, estado ativo, ênfase  */
+  --color-brand-light: #278CFF; /* era --color3 — apoio                        */
+  --color-accent: #00EBFC;      /* era --color2 — destaque                     */
+  --color-surface: #D7F8F9;     /* era --color1 — fundos suaves                */
+
+  /* Tipografia do projeto */
+  --font-sans: 'Montserrat', 'Open Sans', sans-serif;
+}
+
+/* ---------------------------------------------------------------------------
+   BASE — estilos globais do projeto
+--------------------------------------------------------------------------- */
 * {
   margin: 0;
   padding: 0;
@@ -6,7 +40,7 @@
 }
 
 body {
-  font-family: 'Montserrat','Open Sans', sans-serif; 
+  font-family: var(--font-sans);
   line-height: 1.6;
   font-size: 0.9em;
 }

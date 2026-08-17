@@ -1,49 +1,40 @@
 import { useEffect, useState } from 'react';
 import './style.css';
 import Form from './../../components/Form-WWU';
-import Jobs from './../../components/Jobs';
+import JobsPreview from '../../components/Jobs-Preview';
 import CONFIG from '../../config';
+import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import Loading from '../../components/Loading';
+import { useActivesRecruitmentProcesses } from '../../hooks/useRecruitmentProcess';
 
 function WorkWithUs() {
-    const [jobs, setJobs] = useState([]);
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const response = await fetch(`${CONFIG.API_URL}recruitment-process/actives`);
-                if (!response.ok) {
-                    throw new Error('Erro ao buscar os processos seletivos');
-                }
-                const data = await response.json();
-                console.log(data)
-                setJobs(data);
-            } catch (error) {
-                console.error('Erro ao buscar os processos seletivos:', error);
-            }
-        };
+    const {data, isLoading, isError, error} = useActivesRecruitmentProcesses();
 
-        fetchJobs();
-    }, []);
+    if (isLoading) {
+        return ( 
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100vw', height: '80vh' }}>
+                <Loading />
+            </div>
+        );
+    }
+
+    if (isError) {
+        return <div>Error: {error.message}</div>
+    }
 
     return (
         <main>
+            <h2>PROCESSOS SELETIVOS</h2>
             <section id='jobs'>
-                <h2>PROCESSOS SELETIVOS</h2>
                 <p>Clique no processo seletivo de sua preferência para acessar o edital.</p>
-                {jobs.length > 0 ? (
-                    jobs.map((job) => (
-                        <Jobs key={job.id} title={job.title} pdf={job.pdfUrl} />
-                    ))
-                ) : (
-                    <p>Carregando processos seletivos...</p>
-                )}
-            </section>
-            <section id='form-infos'>
-                <h2>FORMULÁRIO DE INSCRIÇÃO</h2>
-                <p>Selecione o processo seletivo no qual deseja se inscrever e preencha o formulário abaixo com suas informações.</p>
-                <article>
-                    <Form />
-                </article>
+                {data.content.map((process) => (
+                    <JobsPreview
+                        key={process.id}
+                        process={process}
+                    />
+                ))}
             </section>
         </main>
     );

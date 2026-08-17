@@ -1,6 +1,9 @@
 @charset "UTF-8";
 @import '../../colors.css';
 
+/* NOTA: #edit-and-delete, #edit e #delete viraram classes — ficavam dentro de
+   um .map(), repetindo o mesmo id em cada item da lista. Id tem que ser único. */
+
 main#rp {
     display: flex;
     flex-direction: column;
@@ -39,7 +42,7 @@ main#rp article.process {
     border-radius: 15px;
 }
 
-main#rp article.process section#edit-and-delete button {
+main#rp article.process section.edit-and-delete button {
     color: black;
     border: none;
     font-size: 1.1em;
@@ -49,29 +52,29 @@ main#rp article.process section#edit-and-delete button {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-main#rp article.process section#edit-and-delete {
+main#rp article.process section.edit-and-delete {
     margin-top: 15px;
 }
 
 
-main#rp article.process section#edit-and-delete button#edit {
+main#rp article.process section.edit-and-delete button.edit {
     background-color: yellow;
     box-shadow: 2px 2px 10px rgba(255, 255, 0, 0.1);
 }
 
 
-main#rp article.process section#edit-and-delete button#delete {
+main#rp article.process section.edit-and-delete button.delete {
     background-color: red;
     box-shadow: 2px 2px 10px rgba(255, 0, 0, 0.1);
 }
 
-main#rp article.process section#edit-and-delete button#edit:hover {
+main#rp article.process section.edit-and-delete button.edit:hover {
     transform: scale(1.05);
     box-shadow: 2px 2px 10px rgba(255, 255, 0, 0.9);
 }
 
 
-main#rp article.process section#edit-and-delete button#delete:hover {
+main#rp article.process section.edit-and-delete button.delete:hover {
     transform: scale(1.05);
     box-shadow: 2px 2px 10px rgba(255, 0, 0, 0.9);
 }

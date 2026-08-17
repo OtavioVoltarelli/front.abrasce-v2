@@ -4,7 +4,7 @@
 
 form {
     border: solid 2px rgba(0, 0, 0, 0.2);
-    display: inline-block;
+    display: block;
     padding: 20px;
     border-radius: 20px;
     margin: 10px;
@@ -16,10 +16,11 @@ input,
 select {
     border: solid 1px rgba(0, 0, 0, 0.2);
     border-radius: 10px;
-    margin-bottom: 20px;
-    width: 350px;
+    margin: 0 30px 20px 0;
+    width: 40%;
     height: 50px;
-    text-align: center;
+    text-align: left;
+    text-indent: 10px;
     font-size: 1em;
 }
 

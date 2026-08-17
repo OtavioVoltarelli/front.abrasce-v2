@@ -29,6 +29,7 @@ import RecruitmentProcess from "../pages/RecruitmentProcess";
 import Candidates from "../pages/Candidates";
 import ContactManagement from "../pages/Contact-Management";
 import NewsManagement from "../pages/News-Management";
+import TransparencyManagement from "../pages/Transparency-Management";
 import PrivateRoute from "../components/PrivateRoute";
 import Login from "../pages/Login";
 import SportsProjects from "../components/All-Projects/Sport-Projects";
@@ -36,6 +37,7 @@ import EducationalProjects from "../components/All-Projects/Educational-Projects
 import CulturalProjects from "../components/All-Projects/Cultural-Projects copy";
 import SocialAssistence from "../components/All-Projects/SocialAssistence-Projects";
 import LeisureProjects from "../components/All-Projects/Leisure-Projects";
+import CompleteJobs from "../components/Jobs";
 
 function AppRoutes() {
     return (
@@ -44,16 +46,21 @@ function AppRoutes() {
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/contato" element={<Contact />} />
+
                 <Route path="/noticias" element={<News />} />
+                <Route path="/noticias/:id" element={<CompleteNew />} />
+
                 <Route path="/projetos" element={<Projects />} />
                 <Route path="/projetos/esporte" element={<SportsProjects />} />
                 <Route path="/projetos/educacao" element={<EducationalProjects />} />
                 <Route path="/projetos/cultura" element={<CulturalProjects />} />
                 <Route path="/projetos/assistencia-social" element={<SocialAssistence />} />
                 <Route path="/projetos/lazer" element={<LeisureProjects />} />
-                <Route path="/transparencia" element={<Transparency />} />
+
                 <Route path="/trabalhe-conosco" element={<WorkWithUs />} />
-                <Route path="/noticias/:title" element={<CompleteNew />} />
+                <Route path="/processo-seletivo/:id" element={<CompleteJobs />} />
+
+                <Route path="/transparencia" element={<Transparency />} />
                 <Route path="/transparencia/casa-branca" element={<CasaBranca />} />
                 <Route path="/transparencia/casa-branca-ri" element={<CasaBrancaRi />} />
                 <Route path="/transparencia/casa-branca-cese" element={<CasaBrancaCESE />} />
@@ -70,12 +77,22 @@ function AppRoutes() {
                 <Route path="/transparencia/sao-vicente" element={<SaoVicente />} />
                 <Route path="/transparencia/sede-abrasce" element={<SedeAbrace />} />
                 <Route path="/transparencia/tuiuti" element={<Tuiuti />} />
-                <Route path="/area-restrita" element={<PrivateRoute><RestrictedArea /></PrivateRoute>} />
+
+                <Route path="/login" element={<Login />} />
+
+                {/* <Route path="/area-restrita" element={<PrivateRoute><RestrictedArea /></PrivateRoute>} />
                 <Route path="/area-restrita/processos-seletivos" element={<PrivateRoute><RecruitmentProcess /></PrivateRoute>} />
                 <Route path="/area-restrita/candidatos" element={<PrivateRoute><Candidates /></PrivateRoute>} />
                 <Route path="/area-restrita/contatos" element={<PrivateRoute><ContactManagement /></PrivateRoute>} />
                 <Route path="/area-restrita/noticias" element={<PrivateRoute><NewsManagement /></PrivateRoute>} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/area-restrita/transparencia" element={<PrivateRoute><TransparencyManagement /></PrivateRoute>} /> */}
+
+                <Route path="/area-restrita" element={<RestrictedArea />} />
+                <Route path="/area-restrita/processos-seletivos" element={<RecruitmentProcess />} />
+                <Route path="/area-restrita/candidatos" element={<Candidates />} />
+                <Route path="/area-restrita/contatos" element={<ContactManagement />} />
+                <Route path="/area-restrita/noticias" element={<NewsManagement />} />
+                <Route path="/area-restrita/transparencia" element={<TransparencyManagement />} />
             </Routes>
             <Footer />
         </Router>
