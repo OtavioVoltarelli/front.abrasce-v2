@@ -1,0 +1,183 @@
+/* ---------------------------------------------------------------------------
+   ABRASCE Social — design system
+   ---------------------------------------------------------------------------
+   Tailwind v4 completo, AGORA COM O PREFLIGHT LIGADO.
+
+   O preflight é o "reset" do Tailwind: ele zera margens, tira o estilo padrão
+   de h1–h6, faz `img` virar block, etc. Nas sessões anteriores ele estava
+   desligado de propósito, porque ~47 arquivos de CSS legado dependiam do
+   estilo padrão do navegador. Esses arquivos foram removidos nesta refatoração,
+   então o reset pode entrar — e ele é o que garante que dois navegadores
+   diferentes comecem do mesmo ponto.
+--------------------------------------------------------------------------- */
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   @theme — no Tailwind v4 a configuração mora no CSS, não existe mais
+   tailwind.config.js. Cada variável aqui vira uma classe utilitária:
+   --color-brand-600  ->  bg-brand-600, text-brand-600, border-brand-600...
+--------------------------------------------------------------------------- */
+@theme {
+  /* -- Azul institucional -------------------------------------------------
+     Escala completa em vez de uma cor só. Por quê: um botão precisa de um
+     tom para o fundo, outro mais escuro para o hover, outro bem claro para
+     o fundo de um aviso. Com uma cor só você acaba inventando opacidades
+     aleatórias (`bg-brand/10`) espalhadas pelo projeto. */
+  --color-brand-50:  #EEF2FF;
+  --color-brand-100: #DFE6FF;
+  --color-brand-200: #C4D0FF;
+  --color-brand-300: #9DB0FF;
+  --color-brand-400: #7188FB;
+  --color-brand-500: #4F63F2;
+  --color-brand-600: #2B4BE0;  /* cor principal da marca */
+  --color-brand-700: #2239C4;
+  --color-brand-800: #1E309E;
+  --color-brand-900: #1D2F7C;
+  --color-brand-950: #141C4B;
+
+  /* -- Tinta: azul-marinho quase preto, para seções escuras e títulos ----- */
+  --color-ink-950: #070C24;
+  --color-ink-900: #0B1338;
+  --color-ink-800: #131E4E;
+  --color-ink-700: #1D2B69;
+  --color-ink-600: #2C3D85;
+
+  /* -- Neutros frios ------------------------------------------------------
+     Cinzas puxados para o azul, não neutros. Cinza puro ao lado de azul
+     saturado parece "sujo"; puxar o cinza para a mesma família de matiz
+     faz a paleta inteira parecer intencional. */
+  --color-slate-25:  #FAFCFF;
+  --color-sand:      #F2F6FC;  /* fundo alternado de seção */
+  --color-line:      #DDE5F0;  /* bordas e divisórias */
+  --color-muted:     #5A6A8A;  /* texto secundário — 4.9:1 no branco */
+
+  /* -- Acentos ------------------------------------------------------------ */
+  --color-aqua:  #12D8E6;   /* destaque vibrante — só em detalhes gráficos */
+  --color-coral: #FF6B4A;   /* ação de destaque, energia */
+  --color-coral-ink: #C2410C; /* versão legível como texto no branco */
+
+  /* -- Tipografia ---------------------------------------------------------
+     Bricolage Grotesque: grotesca variável com eixo óptico. Tem imperfeições
+     propositais nas curvas — dá personalidade sem virar "fonte divertida".
+     Public Sans: desenhada para sites de governo dos EUA, otimizada para
+     legibilidade em texto corrido longo. É a fonte que carrega os parágrafos
+     institucionais da ABRASCE, que são compridos. */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Public Sans', system-ui, -apple-system, sans-serif;
+
+  /* -- Sombras ------------------------------------------------------------
+     Sombras coloridas (azul, não preto). Sombra preta sobre fundo claro
+     parece fumaça; sombra na cor da marca parece luz. */
+  --shadow-card: 0 1px 2px 0 rgb(20 28 75 / 0.06), 0 4px 16px -4px rgb(20 28 75 / 0.10);
+  --shadow-lift: 0 2px 4px 0 rgb(20 28 75 / 0.08), 0 12px 32px -8px rgb(20 28 75 / 0.18);
+}
+
+/* ---------------------------------------------------------------------------
+   BASE
+--------------------------------------------------------------------------- */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /* Quem configurou "reduzir movimento" no sistema não deve receber scroll
+     animado — para parte das pessoas isso causa enjoo de verdade. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink-900);
+    background-color: white;
+    line-height: 1.65;
+    /* Rede de segurança contra scroll horizontal: se algum componente vazar
+       alguns pixels, o site não ganha aquela barra horizontal que arruína a
+       navegação no celular.
+
+       ATENÇÃO AO `clip` — NÃO troque por `hidden`.
+       `overflow-x: hidden` transforma o <body> num CONTAINER DE ROLAGEM. E
+       `position: sticky` gruda em relação ao container de rolagem mais
+       próximo — que passaria a ser o body, e o body não rola (quem rola é a
+       janela). Resultado: a navbar e o índice de Projetos parariam de grudar
+       e sumiriam ao rolar a página.
+       `overflow-x: clip` corta o transbordo sem criar container de rolagem.
+       Foi feito exatamente para este caso. */
+    overflow-x: clip;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance; /* evita títulos com uma palavra órfã na última linha */
+  }
+
+  p { text-wrap: pretty; }
+
+  /* Foco visível e consistente no site inteiro. O padrão do navegador varia
+     e às vezes some sob um fundo escuro — isso quebra navegação por teclado. */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Rolagem para âncora não pode esconder o alvo atrás da navbar fixa. */
+  :target { scroll-margin-top: 6rem; }
+}
+
+/* ---------------------------------------------------------------------------
+   UTILITÁRIOS PRÓPRIOS
+   Só o que o Tailwind não resolve bem sozinho.
+--------------------------------------------------------------------------- */
+@layer utilities {
+  /* Limita um parágrafo a N linhas com reticências. Usado nos cards de
+     notícia, onde a descrição curta pode ter tamanhos muito diferentes e
+     cards de alturas diferentes quebram o alinhamento do grid. */
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Tipografia do corpo de uma notícia: o único lugar do site onde o HTML
+     vem do banco e não posso pôr classe em cada tag. */
+  .prose-abrasce {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: var(--color-ink-800);
+    max-width: 68ch; /* linha longa demais faz o olho perder a próxima */
+  }
+  .prose-abrasce > * + * { margin-top: 1.25em; }
+  .prose-abrasce strong { font-weight: 700; color: var(--color-ink-900); }
+  .prose-abrasce a { color: var(--color-brand-700); text-decoration: underline; }
+}
+
+/* ---------------------------------------------------------------------------
+   ANIMAÇÕES
+   Poucas e curtas. Animação longa em celular parece lentidão, não capricho.
+--------------------------------------------------------------------------- */
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

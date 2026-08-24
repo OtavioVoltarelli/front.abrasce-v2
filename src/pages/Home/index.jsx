@@ -1,119 +1,256 @@
-import './style.css';
-import './media-query.css';
-import { Link } from 'react-router-dom'
-import Carousel from "../../components/Carousel";
-import educacional from './assets/educacional.jpg'
-import esporte from './assets/esporte.jpg'
-import lazer from './assets/lazer.jpg'
-import saude from './assets/saude.jpg'
-import cultura from './assets/cultura.jpg'
-import mission from './assets/mission-white.png'
-import vision from './assets/vision-white.png'
-import value from './assets/value-white.png'
-import assistsocial from './assets/assistsocial.jpg'
+import { Link } from 'react-router-dom';
+import Container from '../../components/ui/Container';
+import Button from '../../components/ui/Button';
+import TriangleMark from '../../components/ui/TriangleMark';
+import SectionHeading from '../../components/ui/SectionHeading';
+import AreaRange from '../../components/AreaRange';
+import AreaCard from '../../components/cards/AreaCard';
+import NewsCard from '../../components/cards/NewsCard';
+import QueryBoundary from '../../components/feedback/QueryBoundary';
+import Skeleton from '../../components/feedback/Skeleton';
+import { useLatestNews } from '../../hooks/useNews';
+import { AREAS, areaVars } from '../../content/areas';
+import { ABOUT, MISSION, VISION, VALUES, ORGANIZATION } from '../../content/institutional';
 
+/**
+ * Página inicial.
+ *
+ * ---------------------------------------------------------------------------
+ * O QUE SAIU: O CARROSSEL
+ * ---------------------------------------------------------------------------
+ * A Home antiga abria com um carrossel de três imagens. Ele foi removido, e
+ * a razão vale para qualquer projeto:
+ *
+ *  · As três imagens eram banners com o TEXTO DESENHADO DENTRO DO PIXEL
+ *    ("VAGAS EM ABERTO", "CONFIRA NOSSAS NOTÍCIAS"). Texto dentro de imagem
+ *    não redimensiona — num celular de 360px aquele banner de 2000px de largura
+ *    fica com letras minúsculas. Leitor de tela não lê. Buscador não indexa.
+ *  · As três somavam 2 MB. A maior sozinha tinha 1,3 MB, mais que todo o resto
+ *    do site junto. Em 4G ruim isso é a diferença entre abrir e desistir.
+ *  · Carrossel que troca sozinho a cada 5 segundos rouba o conteúdo de quem
+ *    lê devagar, e quase ninguém vê o segundo slide.
+ *
+ * No lugar entrou um hero tipográfico: ele aparece INSTANTANEAMENTE, porque
+ * não depende de nenhuma imagem baixar.
+ *
+ * TODO O TEXTO INSTITUCIONAL É O ORIGINAL, palavra por palavra
+ * (ver src/content/institutional.js).
+ */
+export default function Home() {
+    const latestNews = useLatestNews(3);
 
-
-function Home() {
     return (
-        <div>
-        <Carousel />
+        <>
+            {/* ================================================== HERO ===== */}
+            <section className="relative overflow-hidden bg-ink-900">
+                {/* Assinatura: o triângulo do logo, gigante e cortado pela borda.
+                    Fica em opacidade baixíssima — é textura, não desenho. */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                    <TriangleMark
+                        className="absolute -right-24 -top-28 h-[26rem] w-[26rem] opacity-[0.06] sm:-right-10 sm:h-[34rem] sm:w-[34rem]"
+                        color="white"
+                    />
+                    <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-brand-600/30 blur-[100px]" />
+                    <div className="absolute right-1/4 -bottom-20 h-72 w-72 rounded-full bg-aqua/10 blur-[90px]" />
+                </div>
 
-        <section className='quem-somos'>
-            <h2>Quem somos?</h2>
-            <p>A Associação Brasileira de Apoio a Saúde, a Cultura e a Educação - ABRASCE - foi fundada em 15 de janeiro de 2008, no município de São Paulo (Capital), sob a forma de entidade de interesse social e utilidade pública, sendo atualmente uma entidade da sociedade civil sem fins lucrativos, com sede na Rua Paulo De Faria, 146, Andar 10 Conjunto 1006, Vila Gustavo - CEP 04004-906 - São Paulo/SP, inscrita no CNPJ sob nº 09.428.862/0001-94.</p>
-        </section>
-        <section className='missao-visao-valores'>
-            <div className='titulo'>
-                <h2>Missão, Visão e Valores</h2>
-            </div>
+                <Container className="relative">
+                    <div className="pb-14 pt-14 sm:pb-20 sm:pt-20 lg:pb-24 lg:pt-28">
+                        <p className="max-w-lg text-xs font-bold uppercase leading-relaxed tracking-[0.14em] text-aqua">
+                            {ORGANIZATION.fullName}
+                        </p>
 
-            <div className='caixas'>
-                <article>
-                    <img src={mission} alt="Imagem representando missão" />
-                    <h3>Nossa missão:</h3>
-                    <p>Promover o bem-estar e a inclusão social por meio de iniciativas que atendam às necessidades da comunidade, oferecendo suporte em saúde, educação e cultura.</p>
-                </article>
-                <article>
-                    <img src={vision} alt="Imagem representando visão" />
-                    <h3>Nossa visão:</h3>
-                    <p>Ser uma referência em ações sociais transformadoras, inspirando outras organizações e mobilizando a sociedade para um mundo mais justo e igualitário.</p>
-                </article>
-                <article>
-                    <img src={value} alt="Imagem representando valor" />
-                    <h3>Nossos valores:</h3>
-                    <p><strong>Compromisso: </strong>Dedicamo-nos a trabalhar incansavelmente pelo bem-estar da comunidade.</p>
-                    <p><strong>Respeito: </strong>Valorizamos a dignidade e os direitos de todas as pessoas.</p>
-                    <p><strong>Soliedariedade: </strong>Acreditamos na importância de apoiar uns aos outros em tempos de necessidade.</p>
-                    <p><strong>Transparência: </strong>Atuamos com clareza e honestidade em todas as nossas ações e comunicações.</p>
-                    <p><strong>Inovação: </strong>Buscamos constantemente novas formas de impactar positivamente a vida das pessoas.</p>
-                </article>
-            </div>
-        </section>
+                        <h1 className="mt-5 max-w-4xl text-[2.25rem] leading-[1.04] text-white sm:text-6xl lg:text-7xl">
+                            Promover o bem-estar e a inclusão social.
+                        </h1>
 
-        <section className='atuacao'>
-            <div className='titulo'>
-                <h2>Campos em que atuamos</h2>
-            </div>
-            <article>
-                <Link to="/projetos/educacional">
-                    <img src={educacional} alt="Imagem representando educação" />
-                </Link>
-                <div className='texto'>
-                    <h3>Educação:</h3>
-                    <p>Promovemos o acesso ao conhecimento com programas que capacitam jovens e adultos.
-                    Nossa missão é abrir portas para o crescimento pessoal e profissional através da educação.</p>
+                        <p className="mt-6 max-w-2xl text-base leading-relaxed text-brand-200 sm:text-xl">
+                            Por meio de iniciativas que atendam às necessidades da comunidade,
+                            oferecendo suporte em saúde, educação e cultura.
+                        </p>
+
+                        <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                            <Button to="/projetos" variant="inverse" size="lg">
+                                Conheça nossos projetos
+                            </Button>
+                            <Button to="/trabalhe-conosco" variant="outlineInverse" size="lg">
+                                Trabalhe conosco
+                            </Button>
+                        </div>
+
+                        {/* Atalho para as seis áreas. Aparece já no primeiro
+                            scroll: quem chega pelo Google procurando "projeto de
+                            esporte" tem o caminho direto, sem ler a página toda. */}
+                        <ul className="mt-11 flex flex-wrap gap-2">
+                            {AREAS.map((area) => (
+                                <li key={area.slug}>
+                                    <Link
+                                        to={`/projetos#${area.slug}`}
+                                        style={areaVars(area)}
+                                        className="flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/20"
+                                    >
+                                        <span aria-hidden="true" className="size-2 rounded-full bg-[var(--area)]" />
+                                        {area.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </Container>
+
+                {/* A serra: seis picos, um por área, na divisa entre o hero e a
+                    página. É o elemento que dá identidade ao site. */}
+                <AreaRange className="h-5 sm:h-8" />
+            </section>
+
+            {/* ============================================ QUEM SOMOS ===== */}
+            <section className="bg-white py-14 sm:py-20">
+                <Container size="narrow">
+                    <SectionHeading eyebrow="Quem somos" title={ABOUT.heading} level={2} />
+                    <p className="mt-6 text-[1.0625rem] leading-[1.8] text-ink-800">
+                        {ABOUT.text}
+                    </p>
+                </Container>
+            </section>
+
+            {/* ============================== MISSÃO, VISÃO E VALORES ====== */}
+            <section className="bg-sand py-14 sm:py-20">
+                <Container>
+                    <SectionHeading
+                        eyebrow="O que nos guia"
+                        title="Missão, visão e valores"
+                        level={2}
+                    />
+
+                    <div className="mt-10 grid gap-5 lg:grid-cols-3 lg:gap-6">
+                        {[MISSION, VISION].map((block) => (
+                            <article
+                                key={block.heading}
+                                className="rounded-2xl bg-white p-6 shadow-card ring-1 ring-line sm:p-7"
+                            >
+                                <TriangleMark className="h-5 w-5 text-brand-600" color="currentColor" />
+                                <h3 className="mt-4 text-xl text-ink-900">{block.heading}</h3>
+                                <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
+                                    {block.text}
+                                </p>
+                            </article>
+                        ))}
+
+                        {/* Os valores em <dl>: cada um é um par nome + definição.
+                            No site antigo eram cinco parágrafos com <strong> na
+                            frente. A lista de definições diz ao leitor de tela
+                            que "Compromisso" é o TERMO e o resto é a DEFINIÇÃO —
+                            o negrito sozinho não diz nada disso. */}
+                        <article className="rounded-2xl bg-ink-900 p-6 text-white shadow-card sm:p-7">
+                            <TriangleMark className="h-5 w-5 text-aqua" color="currentColor" />
+                            <h3 className="mt-4 text-xl">{VALUES.heading}</h3>
+                            <dl className="mt-4 space-y-3">
+                                {VALUES.items.map((value) => (
+                                    <div key={value.name}>
+                                        <dt className="text-sm font-bold text-aqua">{value.name}</dt>
+                                        <dd className="text-sm leading-relaxed text-brand-200">{value.text}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </article>
+                    </div>
+                </Container>
+            </section>
+
+            {/* ========================================= ÁREAS DE ATUAÇÃO == */}
+            <section className="bg-white py-14 sm:py-20">
+                <Container>
+                    <SectionHeading
+                        eyebrow="Onde atuamos"
+                        title="Campos em que atuamos"
+                        description="Seis frentes de trabalho, cada uma com projetos próprios nos municípios onde a ABRASCE está presente."
+                        level={2}
+                    />
+
+                    {/* Uma coluna no celular, duas no tablet, três no notebook.
+                        Começar por uma coluna é o "mobile first" na prática:
+                        `grid-cols-1` é o padrão e cada breakpoint só ACRESCENTA. */}
+                    <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+                        {AREAS.map((area) => (
+                            <AreaCard key={area.slug} area={area} to={`/projetos#${area.slug}`} />
+                        ))}
+                    </div>
+                </Container>
+            </section>
+
+            {/* =============================================== NOTÍCIAS ==== */}
+            <section className="bg-sand py-14 sm:py-20">
+                <Container>
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                        <SectionHeading
+                            eyebrow="Acontece na ABRASCE"
+                            title="Últimas notícias"
+                            level={2}
+                            className="flex-1"
+                        />
+                        <Button to="/noticias" variant="secondary" className="self-start sm:self-auto">
+                            Ver todas as notícias
+                        </Button>
+                    </div>
+
+                    <div className="mt-10">
+                        <QueryBoundary
+                            query={latestNews}
+                            errorTitle="Não foi possível carregar as notícias"
+                            skeleton={
+                                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+                                    {[0, 1, 2].map((index) => (
+                                        <div key={index} className="overflow-hidden rounded-2xl bg-white p-0 shadow-card ring-1 ring-line">
+                                            <Skeleton className="aspect-[16/9] rounded-none" />
+                                            <div className="space-y-3 p-5">
+                                                <Skeleton className="h-3 w-24" />
+                                                <Skeleton className="h-5 w-full" />
+                                                <Skeleton className="h-5 w-3/4" />
+                                                <Skeleton className="h-4 w-full" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            }
+                            empty={{
+                                title: 'Ainda não há notícias publicadas',
+                                description: 'Assim que a ABRASCE publicar a primeira notícia, ela aparece aqui.',
+                            }}
+                        >
+                            {(news) => (
+                                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+                                    {news.map((item) => (
+                                        <NewsCard key={item.id} news={item} />
+                                    ))}
+                                </div>
+                            )}
+                        </QueryBoundary>
+                    </div>
+                </Container>
+            </section>
+
+            {/* ================================================== FAIXA ==== */}
+            <section className="relative overflow-hidden bg-brand-600">
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                    <TriangleMark className="absolute -bottom-24 -left-16 h-80 w-80 opacity-10" color="white" />
                 </div>
-            </article>
-            <article>
-                <Link to="/projetos/esporte">
-                    <img src={esporte} alt="Imagem representando esporte" />
-                </Link>
-                <div className='texto'>
-                    <h3>Esporte:</h3>
-                    <p>O esporte é um agente de inclusão e transformação. Promovemos atividades que incentivam o trabalho em equipe, a saúde e a disciplina, fortalecendo a convivência e os vínculos sociais</p>
-                </div>
-            </article>
-            <article>
-                <Link to="/projetos/lazer">
-                    <img src={lazer} alt="Imagem representando lazer" />
-                </Link>
-                <div className='texto'>
-                    <h3>Lazer:</h3>
-                    <p>Oferecemos momentos de lazer para melhorar o bem-estar da comunidade. Com eventos culturais e atividades recreativas, promovemos integração e saúde mental.</p>
-                </div>
-            </article>
-            <article>
-                <Link to="/projetos/saude">
-                    <img src={saude} alt="Imagem representando saúde" />
-                </Link>
-                <div className='texto'>
-                    <h3>Saúde:</h3>
-                    <p>Apoiamos a saúde comunitária com ações de prevenção e conscientização. 
-                    Nosso objetivo é que todos tenham acesso a informações e cuidados essenciais para uma vida saudável.</p>
-                </div>
-            </article>
-            <article>
-                <Link to="/projetos/cultura">
-                    <img src={cultura} alt="Imagem representando cultura" />
-                </Link>
-                <div className='texto'>
-                    <h3>Cultura:</h3>
-                    <p>Promovemos a cultura local por meio de eventos e oficinas que celebram a diversidade, incentivando o acesso à arte e ao patrimônio cultural da comunidade.</p>
-                </div>
-            </article>
-            <article>
-                <Link to="/projetos/assistencia-social">
-                    <img src={assistsocial} alt="Imagem representando saúde" />
-                </Link>
-                <div className='texto'>
-                    <h3>Assistência Social:</h3>
-                    <p>Oferecemos apoio para pessoas em vulnerabilidade, promovendo ações de inclusão e desenvolvimento para fortalecer a autonomia e a qualidade de vida da comunidade.</p>
-                </div>
-            </article>
-        </section>
-        </div>
-    )
+                <Container className="relative">
+                    <div className="flex flex-col gap-6 py-12 sm:py-16 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="max-w-xl">
+                            <h2 className="text-2xl text-white sm:text-4xl">
+                                Faça parte da equipe
+                            </h2>
+                            <p className="mt-3 text-[0.9375rem] text-brand-100 sm:text-lg">
+                                Os processos seletivos abertos, com edital completo e inscrição
+                                pelo próprio site.
+                            </p>
+                        </div>
+                        <Button to="/trabalhe-conosco" variant="inverse" size="lg" className="shrink-0 self-start lg:self-auto">
+                            Ver vagas abertas
+                        </Button>
+                    </div>
+                </Container>
+            </section>
+        </>
+    );
 }
-
-export default Home;

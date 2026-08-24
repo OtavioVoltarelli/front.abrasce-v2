@@ -1,102 +1,141 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "../pages/Home";
-import Contact from "../pages/Contact";
-import News from "../pages/News";
-import Projects from "../pages/Projects";
-import Transparency from "../pages/Transparency";
-import WorkWithUs from "../pages/WorkWithUs";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
-import CompleteNew from "../pages/CompleteNews";
-import CasaBranca from "../pages/Cities/CasaBranca";
-import CasaBrancaRi from "../pages/Cities/CasaBranca/Projects/CasaBranca-RI";
-import CasaBrancaPAIE from "../pages/Cities/CasaBranca/Projects/CasaBranca-PAIE";
-import CasaBrancaCESE from "../pages/Cities/CasaBranca/Projects/CasaBranca-CESE";
-import FMorato from "../pages/Cities/FMorato";
-import FestaDoQuitute from "../pages/Cities/Jaboticabal/Projects/FestaDoQuitute";
-import EscolaDaArte from "../pages/Cities/Jaboticabal/Projects/EscolaDaArte";
-import JabotiFolia from "../pages/Cities/Jaboticabal/Projects/JabotiFolia";
-import Jaboticabal from "../pages/Cities/Jaboticabal";
-import Guaruja from "../pages/Cities/Guaruja";
-import AssistenciaSocial from "../pages/Cities/Guaruja/Projects/AssistenciaSocial";
-import Pereque from "../pages/Cities/Guaruja/Projects/Pereque";
-import VilaJulia from "../pages/Cities/Guaruja/Projects/VilaJulia";
-import SaoVicente from "../pages/Cities/SaoVicente";
-import SedeAbrace from "../pages/Cities/SedeAbrasce";
-import Tuiuti from "../pages/Cities/Tuiuti";
-import RestrictedArea from "../pages/RestrictedArea";
-import RecruitmentProcess from "../pages/RecruitmentProcess";
-import Candidates from "../pages/Candidates";
-import ContactManagement from "../pages/Contact-Management";
-import NewsManagement from "../pages/News-Management";
-import TransparencyManagement from "../pages/Transparency-Management";
-import PrivateRoute from "../components/PrivateRoute";
-import Login from "../pages/Login";
-import SportsProjects from "../components/All-Projects/Sport-Projects";
-import EducationalProjects from "../components/All-Projects/Educational-Projects";
-import CulturalProjects from "../components/All-Projects/Cultural-Projects copy";
-import SocialAssistence from "../components/All-Projects/SocialAssistence-Projects";
-import LeisureProjects from "../components/All-Projects/Leisure-Projects";
-import CompleteJobs from "../components/Jobs";
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import PublicLayout from '../components/layout/PublicLayout';
+import AdminLayout from '../components/layout/AdminLayout';
+import Spinner from '../components/ui/Spinner';
 
-function AppRoutes() {
+/**
+ * Rotas do site.
+ *
+ * ---------------------------------------------------------------------------
+ * DIVISÃO DE CÓDIGO (code splitting)
+ * ---------------------------------------------------------------------------
+ * `lazy(() => import('...'))` diz ao Vite: gere um arquivo .js separado para
+ * esta página e só baixe quando alguém entrar nela.
+ *
+ * Antes, todas as páginas iam num arquivo único. Quem abria a Home baixava
+ * junto o painel administrativo, a biblioteca de planilhas e a árvore de
+ * arquivos da transparência — sem nunca usar nada disso. Com o painel pronto,
+ * a diferença ficou maior ainda: nenhuma das nove telas de administração pesa
+ * um byte para quem só quer ler uma notícia.
+ *
+ * `<Suspense>` é o que o React mostra enquanto o pedaço está sendo baixado.
+ *
+ * ---------------------------------------------------------------------------
+ * DUAS MOLDURAS
+ * ---------------------------------------------------------------------------
+ * `<Route element={<PublicLayout />}>` e `<Route element={<AdminLayout />}>`
+ * são "rotas de layout": elas não têm caminho próprio, só envolvem as rotas
+ * de dentro. É o que permite ao site ter navbar + rodapé e ao painel ter barra
+ * inferior, sem um único `if` decidindo qual mostrar.
+ *
+ * ---------------------------------------------------------------------------
+ * ENDEREÇOS ANTIGOS
+ * ---------------------------------------------------------------------------
+ * Os endereços mudaram, mas os antigos podem estar num e-mail ou nos favoritos
+ * de alguém. Cada um ganhou um redirecionamento em vez de virar erro 404.
+ */
+
+/* ------------------------------------------------------------------ público */
+const Home = lazy(() => import('../pages/Home'));
+const WorkWithUs = lazy(() => import('../pages/WorkWithUs'));
+const WorkWithUsDetail = lazy(() => import('../pages/WorkWithUs/Detail'));
+const News = lazy(() => import('../pages/News'));
+const NewsDetail = lazy(() => import('../pages/News/Detail'));
+const Projects = lazy(() => import('../pages/Projects'));
+const Contact = lazy(() => import('../pages/Contact'));
+const Transparency = lazy(() => import('../pages/Transparency'));
+const NotFound = lazy(() => import('../pages/NotFound'));
+
+/* -------------------------------------------------------------------- admin */
+const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
+const AdminRecruitmentList = lazy(() => import('../pages/admin/RecruitmentList'));
+const AdminRecruitmentForm = lazy(() => import('../pages/admin/RecruitmentForm'));
+const AdminNewsList = lazy(() => import('../pages/admin/NewsList'));
+const AdminNewsForm = lazy(() => import('../pages/admin/NewsForm'));
+const AdminCandidates = lazy(() => import('../pages/admin/Candidates'));
+const AdminContacts = lazy(() => import('../pages/admin/Contacts'));
+
+/** Tela mostrada enquanto o arquivo da página está sendo baixado. */
+function RouteFallback() {
     return (
-        <Router>
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/contato" element={<Contact />} />
-
-                <Route path="/noticias" element={<News />} />
-                <Route path="/noticias/:id" element={<CompleteNew />} />
-
-                <Route path="/projetos" element={<Projects />} />
-                <Route path="/projetos/esporte" element={<SportsProjects />} />
-                <Route path="/projetos/educacao" element={<EducationalProjects />} />
-                <Route path="/projetos/cultura" element={<CulturalProjects />} />
-                <Route path="/projetos/assistencia-social" element={<SocialAssistence />} />
-                <Route path="/projetos/lazer" element={<LeisureProjects />} />
-
-                <Route path="/trabalhe-conosco" element={<WorkWithUs />} />
-                <Route path="/processo-seletivo/:id" element={<CompleteJobs />} />
-
-                <Route path="/transparencia" element={<Transparency />} />
-                <Route path="/transparencia/casa-branca" element={<CasaBranca />} />
-                <Route path="/transparencia/casa-branca-ri" element={<CasaBrancaRi />} />
-                <Route path="/transparencia/casa-branca-cese" element={<CasaBrancaCESE />} />
-                <Route path="/transparencia/casa-branca-paie" element={<CasaBrancaPAIE />} />
-                <Route path="/transparencia/francisco-morato" element={<FMorato />} />
-                <Route path="/transparencia/jaboticabal" element={<Jaboticabal />} />
-                <Route path="/transparencia/jaboticabal/escola-da-arte" element={<EscolaDaArte />} />
-                <Route path="/transparencia/jaboticabal/festa-do-quitute" element={<FestaDoQuitute />} />
-                <Route path="/transparencia/jaboticabal/jabotifolia" element={<JabotiFolia />} />
-                <Route path="/transparencia/guaruja" element={<Guaruja />} />
-                <Route path="/transparencia/guaruja/vila-julia" element={<VilaJulia />} />
-                <Route path="/transparencia/guaruja/pereque" element={<Pereque />} />
-                <Route path="/transparencia/guaruja/assistencia-social" element={<AssistenciaSocial />} />
-                <Route path="/transparencia/sao-vicente" element={<SaoVicente />} />
-                <Route path="/transparencia/sede-abrasce" element={<SedeAbrace />} />
-                <Route path="/transparencia/tuiuti" element={<Tuiuti />} />
-
-                <Route path="/login" element={<Login />} />
-
-                {/* <Route path="/area-restrita" element={<PrivateRoute><RestrictedArea /></PrivateRoute>} />
-                <Route path="/area-restrita/processos-seletivos" element={<PrivateRoute><RecruitmentProcess /></PrivateRoute>} />
-                <Route path="/area-restrita/candidatos" element={<PrivateRoute><Candidates /></PrivateRoute>} />
-                <Route path="/area-restrita/contatos" element={<PrivateRoute><ContactManagement /></PrivateRoute>} />
-                <Route path="/area-restrita/noticias" element={<PrivateRoute><NewsManagement /></PrivateRoute>} />
-                <Route path="/area-restrita/transparencia" element={<PrivateRoute><TransparencyManagement /></PrivateRoute>} /> */}
-
-                <Route path="/area-restrita" element={<RestrictedArea />} />
-                <Route path="/area-restrita/processos-seletivos" element={<RecruitmentProcess />} />
-                <Route path="/area-restrita/candidatos" element={<Candidates />} />
-                <Route path="/area-restrita/contatos" element={<ContactManagement />} />
-                <Route path="/area-restrita/noticias" element={<NewsManagement />} />
-                <Route path="/area-restrita/transparencia" element={<TransparencyManagement />} />
-            </Routes>
-            <Footer />
-        </Router>
+        <div className="flex min-h-[60vh] items-center justify-center">
+            <Spinner label="Carregando a página" />
+        </div>
     );
 }
 
-export default AppRoutes;
+/**
+ * As antigas páginas por área (`/projetos/esporte`) viraram âncoras dentro de
+ * `/projetos`. `replace` troca a entrada no histórico em vez de empilhar outra,
+ * para o botão "voltar" não devolver a pessoa ao endereço antigo num laço.
+ */
+function RedirectToAreaAnchor() {
+    const { area } = useParams();
+    return <Navigate to={`/projetos#${area}`} replace />;
+}
+
+function RedirectToJobDetail() {
+    const { id } = useParams();
+    return <Navigate to={`/trabalhe-conosco/${id}`} replace />;
+}
+
+export default function AppRoutes() {
+    return (
+        <BrowserRouter>
+            <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                    {/* ============================================ PÚBLICO === */}
+                    <Route element={<PublicLayout />}>
+                        <Route path="/" element={<Home />} />
+
+                        <Route path="/trabalhe-conosco" element={<WorkWithUs />} />
+                        <Route path="/trabalhe-conosco/:id" element={<WorkWithUsDetail />} />
+
+                        <Route path="/noticias" element={<News />} />
+                        <Route path="/noticias/:id" element={<NewsDetail />} />
+
+                        <Route path="/projetos" element={<Projects />} />
+                        <Route path="/contato" element={<Contact />} />
+                        <Route path="/transparencia" element={<Transparency />} />
+
+                        {/* ------------- endereços antigos ------------- */}
+                        <Route path="/projetos/:area" element={<RedirectToAreaAnchor />} />
+                        <Route path="/processo-seletivo/:id" element={<RedirectToJobDetail />} />
+                        <Route path="/area-restrita" element={<Navigate to="/admin" replace />} />
+                        <Route path="/area-restrita/*" element={<Navigate to="/admin" replace />} />
+                        {/* As páginas de transparência por município eram da v1 e
+                            apontavam para endpoints que não existem no backend v2. */}
+                        <Route path="/transparencia/*" element={<Navigate to="/transparencia" replace />} />
+
+                        {/* "*" casa com qualquer coisa que não tenha casado antes,
+                            então precisa ser a última do bloco. */}
+                        <Route path="*" element={<NotFound />} />
+                    </Route>
+
+                    {/* ============================================== ADMIN === */}
+                    {/* ⚠️ SEM PROTEÇÃO DE ROTA. É intencional nesta etapa: o
+                        backend v2 ainda não tem autenticação, e esconder a tela
+                        no front não protege nada — quem souber o endereço da API
+                        chama direto. Precisa entrar antes de publicar. */}
+                    <Route path="/admin" element={<AdminLayout />}>
+                        <Route index element={<AdminDashboard />} />
+
+                        <Route path="processos-seletivos" element={<AdminRecruitmentList />} />
+                        <Route path="processos-seletivos/novo" element={<AdminRecruitmentForm />} />
+                        <Route path="processos-seletivos/:id" element={<AdminRecruitmentForm />} />
+
+                        <Route path="noticias" element={<AdminNewsList />} />
+                        <Route path="noticias/nova" element={<AdminNewsForm />} />
+                        <Route path="noticias/:id" element={<AdminNewsForm />} />
+
+                        <Route path="candidatos" element={<AdminCandidates />} />
+                        <Route path="contatos" element={<AdminContacts />} />
+
+                        <Route path="*" element={<Navigate to="/admin" replace />} />
+                    </Route>
+                </Routes>
+            </Suspense>
+        </BrowserRouter>
+    );
+}

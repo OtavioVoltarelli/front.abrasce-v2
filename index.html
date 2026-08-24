@@ -1,31 +1,36 @@
 <!doctype html>
-<html lang="pt-br">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <!-- favicon -->
-    <link rel="icon" href="/favicon.ico" />
-    <!-- responsividade -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- tema -->
-    <meta name="theme-color" content="#000000" />
-    <!-- descrição -->
-    <meta name="description" content="Abrasce Social" />
-    <!-- fontes -->
-    <link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&display=swap"
-      rel="stylesheet">
 
-    <title>Abrasce Social</title>
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="theme-color" content="#0B1338" />
+
+    <title>ABRASCE Social — Saúde, cultura e educação desde 2008</title>
+    <meta
+      name="description"
+      content="A ABRASCE é uma associação sem fins lucrativos que atua em educação, esporte, lazer, saúde, cultura e assistência social em municípios do estado de São Paulo."
+    />
+
+    <!--
+      Fontes: preconnect abre a conexão com o servidor de fontes em paralelo ao
+      download do HTML, em vez de esperar o CSS chegar para só então descobrir
+      que precisa falar com outro domínio. Em 3G isso economiza ~300ms.
+      display=swap: o texto aparece na fonte do sistema e troca quando a fonte
+      chega, em vez de ficar invisível esperando (o "flash de texto invisível").
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Public+Sans:ital,wght@0,400..700;1,400&display=swap"
+    />
   </head>
 
   <body>
-    <noscript>Você precisa habilitar o JavaScript para rodar este app.</noscript>
-
+    <noscript>Você precisa habilitar o JavaScript para usar este site.</noscript>
     <div id="root"></div>
-
-    <!-- ESSENCIAL no Vite -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

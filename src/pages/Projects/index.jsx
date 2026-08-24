@@ -1,91 +1,155 @@
-import './style.css';
-import './media-query.css';
-import {Link} from 'react-router-dom';
-import educacional from '../Home/assets/educacional.jpg'
-import esporte from '../Home/assets/esporte.jpg'
-import lazer from '../Home/assets/lazer.jpg'
-import saude from '../Home/assets/saude.jpg'
-import cultura from '../Home/assets/cultura.jpg'
-import assistsocial from '../Home/assets/assistsocial.jpg'
+import Container from '../../components/ui/Container';
+import PageHeader from '../../components/layout/PageHeader';
+import ProjectCard from '../../components/cards/ProjectCard';
+import TriangleMark from '../../components/ui/TriangleMark';
+import Button from '../../components/ui/Button';
+import { AREAS, areaVars } from '../../content/areas';
+import { PROJECTS, PROJECT_CITIES, projectsByArea } from '../../content/projects';
+import { PROJECTS_TAGLINE } from '../../content/institutional';
 
-
-function Projects() {
+/**
+ * Projetos.
+ *
+ * ---------------------------------------------------------------------------
+ * O QUE MUDOU
+ * ---------------------------------------------------------------------------
+ * A página antiga era uma pilha de seis blocos "texto + foto" iguais, e os
+ * links levavam a páginas (`/projetos/esporte`, `/projetos/cultura`…) que
+ * mostravam só nome, cidade e logo de cada projeto — pouco conteúdo espalhado
+ * por seis rotas, com quatro delas repetindo o mesmo projeto.
+ *
+ * Aqui tudo vive numa página só, com âncoras (`/projetos#esporte`). Ganhos:
+ *  · Menos toques para ver tudo. No celular, cada navegação é uma espera.
+ *  · Os projetos reais aparecem DENTRO da área a que pertencem, em vez de
+ *    numa página separada que quase ninguém abria.
+ *  · O menu de áreas no topo funciona como índice — e como âncora, o link
+ *    continua compartilhável.
+ *
+ * Todo o texto das seis áreas é o ORIGINAL da página antiga, integral.
+ */
+export default function Projects() {
     return (
-        <div>
-            <section className="titulo">
-                <h2>Mudando o presente, transformando o futuro.</h2>
-            </section>
-            <section className="projetos">
-                <article>
-                    <div className='texto'>
-                        <Link to="/projetos/educacao">
-                            <h3>PROJETOS EDUCACIONAIS</h3>
-                        </Link>
-                        <p>Visamos promover o aprendizado e o desenvolvimento pessoal por meio de iniciativas voltadas à educação formal e informal. Nossa organização desenvolve programas que abrangem desde reforço escolar até cursos de qualificação profissional, buscando oferecer oportunidades para que crianças, jovens e adultos ampliem seu conhecimento e construam um futuro mais promissor. Acreditamos que a educação é a base para o crescimento social e individual, e nosso objetivo é tornar o aprendizado acessível e transformador para todas as idades.</p>
-                    </div>
-                    <Link to="/projetos/educacao">
-                        <img src={educacional} alt="Imagem representando educação"/>
-                    </Link>
-                </article>
-                <article>
-                    <div className='texto'>
-                        <Link to="/projetos/esporte">
-                            <h3>PROJETOS ESPORTIVOS </h3>
-                        </Link>
-                        <p>Nossos projetos esportivos incentivam a prática de atividades físicas como um caminho para a saúde, disciplina e desenvolvimento pessoal. Com atividades que vão desde escolinhas de esporte até competições e eventos esportivos, buscamos envolver crianças, jovens e adultos em uma rotina saudável, onde o esporte é uma ferramenta de inclusão e transformação. Esses projetos são criados para inspirar o espírito de equipe, a superação de limites e o respeito ao próximo, valores essenciais que o esporte ensina e que contribuem para a formação de cidadãos comprometidos com o bem-estar coletivo.</p>
-                    </div>
-                    <Link to="/projetos/esporte">
-                        <img src={esporte} alt="Imagem representando esporte"/>
-                    </Link>
-                </article>
-                <article>
-                    <div className='texto'>
-                        <Link to="/projetos/lazer">
-                            <h3>PROJETOS DE LAZER</h3>
-                        </Link>
-                        <p>Os projetos de lazer são voltados ao bem-estar e à qualidade de vida, oferecendo atividades recreativas e culturais que promovem momentos de relaxamento, integração social e entretenimento para todos os públicos. Com ações que incluem eventos, oficinas de arte, cinema e atividades lúdicas, buscamos proporcionar espaços de convivência e diversão, onde a comunidade possa desfrutar de experiências enriquecedoras. Esses projetos incentivam a criatividade, a expressão cultural e o fortalecimento dos laços sociais, essenciais para uma vida saudável e equilibrada.</p>
-                    </div>
-                    <Link to="/projetos/lazer">
-                        <img src={lazer} alt="Imagem representando lazer"/>
-                    </Link>
-                </article>
-                <article>
-                    <div className='texto'>
-                        <Link >
-                            <h3>PROJETOS DE SAÚDE</h3>
-                        </Link>
-                        <p>Temos como objetivo promover o bem-estar físico e mental da comunidade, oferecendo ações preventivas e de conscientização sobre temas fundamentais para uma vida saudável. Por meio de campanhas de saúde, atendimento básico e palestras educativas, buscamos capacitar os participantes para adotarem hábitos mais saudáveis e cuidar melhor de si mesmos e de suas famílias. Estes projetos são desenvolvidos com a missão de construir uma sociedade mais informada, ativa e comprometida com a prevenção de doenças e a promoção da saúde.</p>
-                    </div>
-                    <Link to="/projetos/saude">
-                        <img src={saude} alt="Imagem representando saúde"/>
-                    </Link>
-                </article>
-                <article>
-                    <div className='texto'>
-                        <Link to="/projetos/cultura">
-                            <h3>PROJETOS CULTURAIS</h3>
-                        </Link>
-                        <p>O Projeto Cultural visa enriquecer a comunidade com acesso e incentivo a atividades culturais, promovendo eventos e oficinas que celebram a diversidade e o patrimônio cultural local. Esses projetos estimulam a criatividade e a expressão artística, além de contribuir para a formação de um senso de identidade e pertencimento. Com o propósito de fortalecer o envolvimento da comunidade, o projeto valoriza as tradições e inovações culturais, proporcionando experiências transformadoras que ampliam o horizonte cultural de todos os envolvidos.</p>
-                    </div>
-                    <Link to="/projetos/cultura">
-                        <img src={cultura} alt="Imagem representando cultura"/>
-                    </Link>
-                </article>
-                <article>
-                    <div className='texto'>
-                        <Link to="/projetos/assistencia-social">
-                            <h3>PROJETOS DE ASSISTÊNCIA SOCIAL</h3>
-                        </Link>
-                        <p>O Projeto de Assistência Social tem como objetivo apoiar as pessoas em situação de vulnerabilidade, promovendo ações que contribuam para a melhoria da qualidade de vida e o acesso a direitos básicos. Através de programas de orientação, capacitação e suporte material, esse projeto busca fortalecer as redes de apoio e inclusão social, proporcionando uma assistência integral que vai além do auxílio imediato, visando o desenvolvimento de habilidades e a autonomia dos beneficiados.</p>
-                    </div>
-                    <Link to="/projetos/assistencia-social">
-                        <img src={assistsocial} alt="Imagem representando assistencia social"/>
-                    </Link>
-                </article>
-            </section>
-            
-        </div>
-    )
-}
+        <>
+            <PageHeader eyebrow="Projetos" title={PROJECTS_TAGLINE}>
+                <p className="text-sm text-brand-200">
+                    {PROJECTS.length} projetos ativos em {PROJECT_CITIES.length} municípios:{' '}
+                    {PROJECT_CITIES.join(', ')}.
+                </p>
+            </PageHeader>
 
-export default Projects;
+            {/* ------------------------------------------ ÍNDICE DAS ÁREAS -- */}
+            {/* `sticky` gruda o índice logo abaixo da navbar enquanto a pessoa
+                rola. Numa página longa como esta, é o que evita ter que voltar
+                ao topo para trocar de área. */}
+            <nav
+                aria-label="Áreas de atuação"
+                className="sticky top-16 z-30 border-b border-line bg-white/95 backdrop-blur sm:top-18"
+            >
+                <Container size="wide">
+                    {/* Rolagem horizontal APENAS aqui dentro, nunca na página.
+                        `-mx-5 px-5` faz o primeiro e o último item encostarem
+                        na margem, sinalizando que a lista continua. */}
+                    <ul className="-mx-5 flex gap-2 overflow-x-auto px-5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {AREAS.map((area) => (
+                            <li key={area.slug}>
+                                <a
+                                    href={`#${area.slug}`}
+                                    style={areaVars(area)}
+                                    className="flex min-h-10 items-center gap-2 whitespace-nowrap rounded-full bg-sand px-4 text-sm font-semibold text-ink-800 transition-colors hover:bg-[var(--area-tint)] hover:text-[var(--area-ink)]"
+                                >
+                                    <span aria-hidden="true" className="size-2 rounded-full bg-[var(--area)]" />
+                                    {area.label}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </Container>
+            </nav>
+
+            {/* ------------------------------------------------- AS ÁREAS --- */}
+            {AREAS.map((area, index) => {
+                const projects = projectsByArea(area.slug);
+                // Fundo alternado: separa as seções sem precisar de linha
+                // divisória nem de moldura em cada bloco.
+                const isAlternate = index % 2 === 1;
+
+                return (
+                    <section
+                        key={area.slug}
+                        id={area.slug}
+                        style={areaVars(area)}
+                        className={`scroll-mt-32 py-12 sm:py-16 ${isAlternate ? 'bg-sand' : 'bg-white'}`}
+                    >
+                        <Container>
+                            <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
+                                <div className={isAlternate ? 'lg:order-2' : undefined}>
+                                    <img
+                                        src={area.image}
+                                        alt={area.imageAlt}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="aspect-[4/3] w-full rounded-2xl object-cover shadow-card"
+                                    />
+                                </div>
+
+                                <div className={isAlternate ? 'lg:order-1' : undefined}>
+                                    <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--area-ink)]">
+                                        <TriangleMark className="h-2.5 w-2.5" />
+                                        {area.label}
+                                    </p>
+
+                                    <h2 className="mt-3 text-2xl text-ink-900 sm:text-3xl lg:text-4xl">
+                                        {area.projectTitle}
+                                    </h2>
+
+                                    <p className="mt-4 text-[0.9375rem] leading-[1.8] text-ink-800 sm:text-base">
+                                        {area.description}
+                                    </p>
+
+                                    {/* Só aparece se houver projeto cadastrado nesta
+                                        área — nada de "Projetos: nenhum". */}
+                                    {projects.length > 0 && (
+                                        <div className="mt-8">
+                                            <h3 className="text-sm font-bold uppercase tracking-wider text-muted">
+                                                {projects.length === 1
+                                                    ? 'Projeto nesta área'
+                                                    : `Projetos nesta área (${projects.length})`}
+                                            </h3>
+                                            <ul className="mt-4 space-y-3">
+                                                {projects.map((project) => (
+                                                    <li key={project.slug}>
+                                                        <ProjectCard project={project} />
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </Container>
+                    </section>
+                );
+            })}
+
+            {/* ----------------------------------------------------- FAIXA -- */}
+            <section className="bg-ink-900 py-12 sm:py-16">
+                <Container>
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="max-w-xl">
+                            <h2 className="text-2xl text-white sm:text-3xl">
+                                Quer levar um projeto para a sua cidade?
+                            </h2>
+                            <p className="mt-3 text-[0.9375rem] text-brand-200">
+                                Fale com a equipe da ABRASCE sobre parcerias, apoio institucional
+                                ou trabalho voluntário.
+                            </p>
+                        </div>
+                        <Button to="/contato" variant="inverse" size="lg" className="shrink-0 self-start lg:self-auto">
+                            Entrar em contato
+                        </Button>
+                    </div>
+                </Container>
+            </section>
+        </>
+    );
+}

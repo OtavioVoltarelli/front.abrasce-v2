@@ -1,84 +1,106 @@
-export function isValidCPF(cpf) {
-    const cleaned = cpf.replace(/\D/g, '');
-    if (cleaned.length !== 11 || /^(\d)\1+$/.test(cleaned)) return false;
+/**
+ * Validação do formulário de candidatura.
+ *
+ * Roda no navegador para dar resposta imediata — mas NÃO substitui a validação
+ * do backend. Validação no front é conveniência para quem preenche; validação
+ * no servidor é segurança. Qualquer pessoa consegue enviar dados direto para a
+ * API sem passar por esta tela.
+ *
+ * As regras espelham as anotações do `CandidateInput` do backend v2:
+ * name, email, phoneNumber, cpf, state e city são @NotBlank;
+ * companyName e cnpj são opcionais.
+ */
 
-    let sum = 0;
-    for (let i = 0; i < 9; i++) sum += parseInt(cleaned[i]) * (10 - i);
-    let remainder = (sum * 10) % 11;
-    if (remainder === 10 || remainder === 11) remainder = 0;
-    if (remainder !== parseInt(cleaned[9])) return false;
+const MAX_CV_SIZE = 1 * 1024 * 1024; // 1 MB — o limite anunciado ao candidato
+const ACCEPTED_CV_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
-    sum = 0;
-    for (let i = 0; i < 10; i++) sum += parseInt(cleaned[i]) * (11 - i);
-    remainder = (sum * 10) % 11;
-    if (remainder === 10 || remainder === 11) remainder = 0;
+export function isValidCPF(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false;
 
-    return remainder === parseInt(cleaned[10]);
-}
-
-export function isValidCNPJ(cnpj) {
-    const cleaned = cnpj.replace(/\D/g, '');
-    if (cleaned.length !== 14 || /^(\d)\1+$/.test(cleaned)) return false;
-
-    const calcDigit = (str, weights) =>
-        weights.reduce((sum, w, i) => sum + parseInt(str[i]) * w, 0);
-
-    const mod = (n) => {
-        const r = n % 11;
-        return r < 2 ? 0 : 11 - r;
+    // Dígito verificador: soma ponderada dos 9 primeiros, resto por 11.
+    const check = (length) => {
+        let sum = 0;
+        for (let i = 0; i < length; i += 1) sum += Number(digits[i]) * (length + 1 - i);
+        const remainder = (sum * 10) % 11;
+        return remainder === 10 || remainder === 11 ? 0 : remainder;
     };
 
-    const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    const w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-
-    if (mod(calcDigit(cleaned, w1)) !== parseInt(cleaned[12])) return false;
-    if (mod(calcDigit(cleaned, w2)) !== parseInt(cleaned[13])) return false;
-
-    return true;
+    return check(9) === Number(digits[9]) && check(10) === Number(digits[10]);
 }
 
-export function isValidPhone(phone) {
-    const cleaned = phone.replace(/\D/g, '');
-    return cleaned.length >= 10 && cleaned.length <= 11;
+export function isValidCNPJ(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) return false;
+
+    const digitFor = (weights) => {
+        const sum = weights.reduce((total, weight, index) => total + Number(digits[index]) * weight, 0);
+        const remainder = sum % 11;
+        return remainder < 2 ? 0 : 11 - remainder;
+    };
+
+    const firstWeights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const secondWeights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+    return digitFor(firstWeights) === Number(digits[12]) && digitFor(secondWeights) === Number(digits[13]);
 }
 
-export function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+export function isValidPhone(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    return digits.length === 10 || digits.length === 11;
 }
 
-export function validateForm(formData) {
+export function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(value ?? '').trim());
+}
+
+/**
+ * Devolve um objeto `{ campo: mensagem }`, vazio quando está tudo certo.
+ *
+ * As mensagens dizem O QUE FAZER, não só o que está errado: "Use 10 ou 11
+ * dígitos, com DDD" resolve; "Telefone inválido" deixa a pessoa adivinhando.
+ */
+export function validateCandidate(form) {
     const errors = {};
 
-    if (!formData.name.trim()) {
-        errors.name = 'Nome é obrigatório.';
+    if (!form.name?.trim()) {
+        errors.name = 'Informe seu nome completo.';
+    } else if (form.name.trim().length > 255) {
+        errors.name = 'O nome pode ter no máximo 255 caracteres.';
     }
 
-    if (!formData.email.trim()) {
-        errors.email = 'Email é obrigatório.';
-    } else if (!isValidEmail(formData.email)) {
-        errors.email = 'Email inválido.';
+    if (!form.email?.trim()) {
+        errors.email = 'Informe um e-mail para a ABRASCE entrar em contato.';
+    } else if (!isValidEmail(form.email)) {
+        errors.email = 'Confira o e-mail: falta o @ ou o domínio.';
     }
 
-    if (!formData.phoneNumber.trim()) {
-        errors.phoneNumber = 'Telefone é obrigatório.';
-    } else if (!isValidPhone(formData.phoneNumber)) {
-        errors.phoneNumber = 'Telefone inválido. Use entre 10 e 11 dígitos.';
+    if (!form.phoneNumber?.trim()) {
+        errors.phoneNumber = 'Informe um telefone com DDD.';
+    } else if (!isValidPhone(form.phoneNumber)) {
+        errors.phoneNumber = 'Use 10 ou 11 dígitos, com DDD. Exemplo: (11) 98888-7777.';
     }
 
-    if (formData.cpf && !isValidCPF(formData.cpf)) {
-        errors.cpf = 'CPF inválido.';
+    if (!form.cpf?.trim()) {
+        errors.cpf = 'Informe seu CPF.';
+    } else if (!isValidCPF(form.cpf)) {
+        errors.cpf = 'Este CPF não é válido. Confira os números digitados.';
     }
 
-    if (formData.cnpj && !isValidCNPJ(formData.cnpj)) {
-        errors.cnpj = 'CNPJ inválido.';
+    // Opcionais: só validam se a pessoa preencheu.
+    if (form.cnpj?.trim() && !isValidCNPJ(form.cnpj)) {
+        errors.cnpj = 'Este CNPJ não é válido. Confira os números digitados.';
     }
 
-    if (!formData.city.trim()) {
-        errors.city = 'Cidade é obrigatória.';
-    }
+    if (!form.state) errors.state = 'Selecione o estado.';
+    if (!form.city?.trim()) errors.city = 'Informe a cidade onde você mora.';
 
-    if (!formData.cvUrl) {
-        errors.cvUrl = 'O envio do currículo é obrigatório.';
+    if (!form.cv) {
+        errors.cv = 'Anexe seu currículo para concluir a inscrição.';
+    } else if (form.cv.size > MAX_CV_SIZE) {
+        errors.cv = 'O arquivo passa de 1 MB. Tente salvar o currículo em PDF, que costuma ficar menor.';
+    } else if (form.cv.type && !ACCEPTED_CV_TYPES.includes(form.cv.type)) {
+        errors.cv = 'Envie o currículo em PDF ou Word.';
     }
 
     return errors;

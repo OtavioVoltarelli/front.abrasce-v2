@@ -1,30 +1,31 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { recruitmentProcessService } from "../services/recruitmentProcessService";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { recruitmentProcessService } from '../services/recruitmentProcessService';
 
-const RP_KEY = ["recruitmentProcesses"];
+const RP_KEY = ['recruitmentProcesses'];
 
 /* -------------------------------------------------------------------- leitura */
 
-export function useActivesRecruitmentProcesses() {
+/** Só os processos abertos — é o que o site público mostra. */
+export function useActiveRecruitmentProcesses() {
     return useQuery({
-        queryKey: [...RP_KEY, "actives"],
-        queryFn: recruitmentProcessService.getActivesRecruitmentProcesses,
+        queryKey: [...RP_KEY, 'actives'],
+        queryFn: () => recruitmentProcessService.getActives(),
+    });
+}
+
+/** Ativos e encerrados — usado no painel administrativo. */
+export function useAllRecruitmentProcesses() {
+    return useQuery({
+        queryKey: [...RP_KEY, 'all'],
+        queryFn: () => recruitmentProcessService.getAll(),
     });
 }
 
 export function useRecruitmentProcessById(id) {
     return useQuery({
-        queryKey: [...RP_KEY, "detail", id],
-        queryFn: () => recruitmentProcessService.getRecruitmentProcessById(id),
+        queryKey: [...RP_KEY, 'detail', String(id)],
         enabled: Boolean(id),
-    });
-}
-
-/** Listagem completa (ativos e inativos) da área restrita. */
-export function useAllRecruitmentProcesses() {
-    return useQuery({
-        queryKey: [...RP_KEY, "all"],
-        queryFn: recruitmentProcessService.getAllRecruitmentProcesses,
+        queryFn: () => recruitmentProcessService.getById(id),
     });
 }
 
@@ -33,7 +34,7 @@ export function useAllRecruitmentProcesses() {
 export function useCreateRecruitmentProcess() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (payload) => recruitmentProcessService.createRecruitmentProcess(payload),
+        mutationFn: (payload) => recruitmentProcessService.create(payload),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: RP_KEY }),
     });
 }
@@ -41,7 +42,7 @@ export function useCreateRecruitmentProcess() {
 export function useUpdateRecruitmentProcess() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, payload }) => recruitmentProcessService.updateRecruitmentProcess(id, payload),
+        mutationFn: ({ id, payload }) => recruitmentProcessService.update(id, payload),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: RP_KEY }),
     });
 }
@@ -49,7 +50,7 @@ export function useUpdateRecruitmentProcess() {
 export function useDeleteRecruitmentProcess() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id) => recruitmentProcessService.deleteRecruitmentProcess(id),
+        mutationFn: (id) => recruitmentProcessService.remove(id),
         onSuccess: () => queryClient.invalidateQueries({ queryKey: RP_KEY }),
     });
 }
