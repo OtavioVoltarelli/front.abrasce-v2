@@ -70,7 +70,7 @@ export default function NewsDetail() {
             <Container size="narrow">
                 <Link
                     to="/noticias"
-                    className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+                    className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-coral-ink transition-colors hover:brightness-90"
                 >
                     <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M16 10H5M9 5 4 10l5 5" />
@@ -81,7 +81,7 @@ export default function NewsDetail() {
                 <header className="mt-5">
                     <time
                         dateTime={toIsoDate(news.creationDate)}
-                        className="text-xs font-bold uppercase tracking-wider text-brand-600"
+                        className="text-xs font-bold uppercase tracking-wider text-coral-ink"
                     >
                         {formatDate(news.creationDate)}
                     </time>
@@ -91,10 +91,10 @@ export default function NewsDetail() {
                 </header>
             </Container>
 
-            {news.coverImagePath && (
+            {news.coverImage && (
                 <Container size="narrow" className="mt-8">
                     <img
-                        src={fileUrl('admin', news.coverImagePath)}
+                        src={fileUrl('admin', news.coverImage.storedName)}
                         alt=""
                         fetchPriority="high"
                         decoding="async"

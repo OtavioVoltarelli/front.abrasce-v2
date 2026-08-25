@@ -22,10 +22,20 @@ export default function ConfirmDialog({
     cancelLabel = 'Cancelar',
     isPending = false,
     tone = 'danger',
+    error,
 }) {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
             <p className="text-[0.9375rem] text-ink-800">{description}</p>
+
+            {/* A falha aparece DENTRO do diálogo, e ele não fecha. Fechar em
+                caso de erro joga a mensagem numa tela que a pessoa já deixou
+                para trás — e a ação que ela pediu não aconteceu. */}
+            {error && (
+                <p role="alert" className="mt-4 rounded-xl bg-berry-tint p-3 text-sm font-semibold text-berry-ink">
+                    {error}
+                </p>
+            )}
 
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button variant="secondary" onClick={onClose} disabled={isPending}>

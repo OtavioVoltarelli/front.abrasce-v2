@@ -4,7 +4,7 @@ import AdminPage from '../../components/admin/AdminPage';
 import Input from '../../components/ui/Input';
 import Textarea from '../../components/ui/Textarea';
 import Button from '../../components/ui/Button';
-import ImageUpload from '../../components/ui/ImageUpload';
+import MediaField from '../../components/media/MediaField';
 import MultiFileUpload from '../../components/ui/MultiFileUpload';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import ErrorState from '../../components/feedback/ErrorState';
@@ -15,7 +15,6 @@ import {
     useNewsById,
     useUpdateNews,
 } from '../../hooks/useNews';
-import { fileUrl } from '../../services/config';
 
 /**
  * Criar e editar uma notícia.
@@ -24,8 +23,25 @@ import { fileUrl } from '../../services/config';
  *   title            (obrigatório, máx. 255)
  *   shortDescription (obrigatório, máx. 255) — é a chamada da listagem
  *   longDescription  (obrigatório)           — o texto da notícia
- *   coverImagePath   (obrigatório, máx. 255)
+ *   coverImageId     (obrigatório) — id de um arquivo da BIBLIOTECA
  * Mais os anexos, que vão na parte "files" do multipart.
+ *
+ * ---------------------------------------------------------------------------
+ * A CAPA NÃO É MAIS UM UPLOAD
+ * ---------------------------------------------------------------------------
+ * Antes este formulário subia uma imagem junto com a notícia. Agora ele ESCOLHE
+ * uma imagem que já está na biblioteca de arquivos reutilizáveis, porque foi
+ * isso que o backend passou a exigir: `News.coverImage` é chave estrangeira
+ * para `ReusableFile`.
+ *
+ * Isso resolve um problema que o upload direto tinha e que só aparecia com o
+ * tempo: a mesma foto de campanha subia de novo a cada notícia, virando cinco
+ * arquivos iguais no servidor e cinco lugares para corrigir quando a imagem
+ * mudasse. Com a biblioteca, a foto sobe uma vez e cinco notícias apontam para
+ * ela — e trocá-la troca as cinco de uma vez.
+ *
+ * Criar e editar usam o MESMO componente (`MediaField`) e o MESMO seletor. A
+ * única diferença é que, ao editar, o campo já vem preenchido com a capa atual.
  *
  * O contador de caracteres nos dois campos limitados a 255 existe porque o
  * limite é do BANCO: passar dele não dá erro de digitação, dá erro 400 ao
@@ -91,7 +107,10 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
             }
             : EMPTY_FORM
     );
-    const [coverImage, setCoverImage] = useState(null);
+    /* Guarda o OBJETO do arquivo, não só o id: o campo precisa do nome e do
+       `storedName` para desenhar a pré-visualização. Na hora de salvar,
+       manda só o id, que é o que o backend espera. */
+    const [coverImage, setCoverImage] = useState(news?.coverImage ?? null);
     const [files, setFiles] = useState(null);
     const [errors, setErrors] = useState({});
     const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -122,16 +141,20 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
 
         if (!form.longDescription.trim()) validation.longDescription = 'Escreva o texto da notícia.';
 
-        // Ao criar, a capa é obrigatória. Ao editar, deixar em branco significa
-        // "manter a que já está publicada".
-        if (!isEditing && !coverImage) validation.coverImage = 'Escolha a imagem de capa.';
+        /* Obrigatória nos DOIS casos, e não só ao criar. Antes, editar sem
+           mexer na capa mandava o campo vazio e o service entendia "mantenha a
+           atual". Isso deixou de ser possível — e de ser necessário: como o
+           campo já vem preenchido com a capa atual, "vazio" agora só acontece
+           se a pessoa remover de propósito, e aí é erro mesmo.
+           O backend concorda: `coverImageId` é `@NotNull`. */
+        if (!coverImage) validation.coverImage = 'Escolha a imagem de capa na biblioteca.';
 
         setErrors(validation);
         if (Object.keys(validation).length > 0) return;
 
         const payload = {
             ...form,
-            coverImage: coverImage ?? undefined,
+            coverImageId: coverImage.id,
             files: files ?? undefined,
         };
 
@@ -169,7 +192,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
         >
             <Link
                 to="/admin/noticias"
-                className="mb-5 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
+                className="mb-5 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-coral-ink hover:brightness-90"
             >
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M16 10H5M9 5 4 10l5 5" />
@@ -188,13 +211,21 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                 )}
 
                 <div className="space-y-5 rounded-2xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6">
-                    <ImageUpload
+                    <MediaField
                         label="Imagem de capa"
-                        required={!isEditing}
-                        hint="Aparece no card da listagem e no topo da notícia."
-                        currentImageUrl={news ? fileUrl('admin', news.coverImagePath) : null}
+                        required
+                        kind="image"
+                        hint="Aparece no card da listagem e no topo da notícia. Escolha da biblioteca de arquivos reutilizáveis."
+                        pickerTitle="Escolher a imagem de capa"
                         value={coverImage}
-                        onChange={setCoverImage}
+                        onChange={(file) => {
+                            setCoverImage(file);
+                            setErrors((previous) => {
+                                const next = { ...previous };
+                                delete next.coverImage;
+                                return next;
+                            });
+                        }}
                         error={errors.coverImage}
                     />
 
@@ -239,7 +270,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                         value={form.longDescription}
                         onChange={(event) => setField('longDescription', event.target.value)}
                         error={errors.longDescription}
-                        hint="Deixe uma linha em branco entre os parágrafos. Eles são separados automaticamente no site."
+                        hint="Deixe uma linha em branco entre os parágrafos. Endereços de site e e-mails viram links clicáveis sozinhos — basta escrevê-los por extenso (https://… ou www.…)."
                     />
 
                     <MultiFileUpload

@@ -13,6 +13,11 @@ import { fileUrl } from '../../services/config';
  * · `clamp-2` no título e `clamp-3` no resumo: com títulos de tamanhos
  *   diferentes, cards da mesma linha ficariam com alturas diferentes e o
  *   grid perderia o alinhamento.
+ * · A data e o "Ler notícia" são CORAL, não azuis. A cor aqui não é enfeite:
+ *   ela diz "isto é uma notícia". O card aparece na Home (página azul) e na
+ *   listagem de Notícias (página coral) — em ambas, o coral identifica o tipo
+ *   de conteúdo antes de qualquer leitura. É o mesmo princípio das seis cores
+ *   de área: cor que carrega informação, não cor que decora.
  * · Data em <time datetime="..."> — o formato legível para gente fica no
  *   texto, o formato legível para máquina no atributo.
  * · Só o TÍTULO é o link, e ele é esticado por cima do card inteiro com
@@ -37,7 +42,7 @@ export default function NewsCard({ news, featured = false }) {
                 }`}
             >
                 <img
-                    src={fileUrl('admin', news.coverImagePath)}
+                    src={fileUrl('admin', news.coverImage?.storedName)}
                     alt=""
                     loading="lazy"
                     decoding="async"
@@ -48,7 +53,7 @@ export default function NewsCard({ news, featured = false }) {
             <div className="flex flex-1 flex-col p-5 sm:p-6">
                 <time
                     dateTime={toIsoDate(news.creationDate)}
-                    className="text-xs font-bold uppercase tracking-wider text-brand-600"
+                    className="text-xs font-bold uppercase tracking-wider text-coral-ink"
                 >
                     {formatDate(news.creationDate)}
                 </time>
@@ -58,7 +63,7 @@ export default function NewsCard({ news, featured = false }) {
                 >
                     <Link
                         to={`/noticias/${news.id}`}
-                        className="after:absolute after:inset-0 hover:text-brand-700"
+                        className="after:absolute after:inset-0 hover:text-coral-ink"
                     >
                         {news.title}
                     </Link>
@@ -68,7 +73,7 @@ export default function NewsCard({ news, featured = false }) {
                     {news.shortDescription}
                 </p>
 
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-brand-700">
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-coral-ink">
                     Ler notícia
                     <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 10h11M11 5l5 5-5 5" />

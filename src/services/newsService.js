@@ -9,32 +9,39 @@ import { newsMockService } from '../mocks/newsMock';
  *   GET    /api/news/top                últimas, paginado (PagedModel)
  *   GET    /api/news/{id}
  *   POST   /api/news                    multipart: "data" (JSON) + "files"
- *   PUT    /api/news/{id}/data          multipart: "data" (JSON) + "coverImage" (String)
+ *   PUT    /api/news/{id}/data          JSON puro (a capa é um id, não arquivo)
  *   PUT    /api/news/{id}/attachment    multipart: "files"
  *   DELETE /api/news/{id}
  *
  * ---------------------------------------------------------------------------
- * ⚠️ TRÊS PONTOS DO BACKEND QUE PRECISAM SER RESOLVIDOS ANTES DA INTEGRAÇÃO
+ * A CAPA MUDOU: DE ARQUIVO PARA REFERÊNCIA
  * ---------------------------------------------------------------------------
- * 1. NÃO EXISTE UPLOAD DA IMAGEM DE CAPA. `NewsInput.coverImagePath` é uma
- *    String @NotBlank, e a parte "files" do POST vira a lista de ANEXOS
- *    (`filesPath`), não a capa. Ou seja: hoje o administrador teria que digitar
- *    à mão o nome de um arquivo que já esteja no servidor. O formulário desta
- *    tela oferece o upload da capa, que é o certo do ponto de vista de uso;
- *    o backend precisa aceitá-la como uma parte do multipart.
+ * O backend deixou de aceitar upload de capa. `News.coverImage` virou uma
+ * `@ManyToOne` para `ReusableFile` — chave estrangeira — e o `NewsInput` pede
+ * `coverImageId` (Long, obrigatório).
  *
- * 2. A PARTE "files" É OBRIGATÓRIA. `@RequestPart("files")` sem
- *    `required = false` faz o Spring recusar a requisição com 400 quando ela
- *    não vem. Mas o briefing diz que uma notícia PODE não ter anexo. Um dos
- *    dois precisa mudar — e o certo é o backend aceitar a lista vazia.
+ * O ganho é grande e vale entender: com a capa guardada como texto, nada
+ * garantia que o arquivo existisse (qualquer string passava) e apagar a imagem
+ * quebrava em silêncio a capa de todas as notícias que a usavam. Com chave
+ * estrangeira, quem valida a existência é o banco, e ele se recusa a apagar um
+ * arquivo em uso.
  *
- * 3. ATUALIZAR EXIGE DUAS CHAMADAS. Os dados vão em `PUT {id}/data` e os
- *    anexos em `PUT {id}/attachment`. Se a segunda falhar, a notícia fica com
- *    o texto novo e os anexos velhos, sem nada avisando. O ideal é um endpoint
- *    só, numa transação só.
+ * Consequência prática: o formulário de notícia não sobe imagem nenhuma. Ele
+ * ESCOLHE um arquivo da biblioteca (ver `components/media/MediaField`).
  *
- * Enquanto isso, `update` abaixo faz as duas chamadas em sequência e a segunda
- * só acontece se o formulário realmente trocou os anexos.
+ * Consequência 2: `PUT {id}/data` deixou de ser multipart e virou JSON puro —
+ * não há mais arquivo nenhum naquela requisição.
+ *
+ * ---------------------------------------------------------------------------
+ * O QUE AINDA FALTA NO BACKEND
+ * ---------------------------------------------------------------------------
+ * 1. A PARTE "files" É OBRIGATÓRIA NO POST. `@RequestPart("files")` sem
+ *    `required = false` faz o Spring recusar com 400 quando ela não vem — mas
+ *    uma notícia pode não ter anexo. `create` abaixo contorna mandando uma
+ *    parte vazia; o certo é o backend aceitar a ausência.
+ * 2. ATUALIZAR AINDA EXIGE DUAS CHAMADAS (`/data` e `/attachment`), sem
+ *    transação entre elas. Se a segunda falhar, a notícia fica com o texto novo
+ *    e os anexos velhos, sem nada avisando.
  */
 
 /** A parte "data" tem que ir como Blob com type application/json, senão o
@@ -63,21 +70,30 @@ const newsHttpService = {
         return data;
     },
 
-    create: async ({ coverImage, files = [], ...input }) => {
+    create: async ({ coverImageId, files = [], ...input }) => {
         const form = new FormData();
-        form.append('data', jsonPart({ ...input, coverImagePath: coverImage?.name ?? '' }));
-        files.forEach((file) => form.append('files', file));
+        form.append('data', jsonPart({ ...input, coverImageId: Number(coverImageId) }));
+
+        if (files.length > 0) {
+            files.forEach((file) => form.append('files', file));
+        } else {
+            /* Contorno do item 1 acima: o Spring exige a parte "files". Um Blob
+               vazio com nome vazio faz a parte existir sem enviar arquivo
+               nenhum. É gambiarra, está marcada como tal, e sai no dia em que o
+               backend puser `required = false`. */
+            form.append('files', new Blob([]), '');
+        }
 
         const { data } = await api.post('/news', form);
         return data;
     },
 
-    update: async (id, { coverImage, files, ...input }) => {
-        const form = new FormData();
-        form.append('data', jsonPart({ ...input, coverImagePath: coverImage?.name ?? '' }));
-        form.append('coverImage', coverImage?.name ?? '');
-
-        const { data } = await api.put(`/news/${id}/data`, form);
+    update: async (id, { coverImageId, files, ...input }) => {
+        /* JSON puro: a capa é um id e não há mais arquivo nesta requisição. */
+        const { data } = await api.put(`/news/${id}/data`, {
+            ...input,
+            coverImageId: Number(coverImageId),
+        });
 
         // `files` só vem definido quando a pessoa mexeu nos anexos. Sem esta
         // checagem, editar apenas o título apagaria todos os anexos.

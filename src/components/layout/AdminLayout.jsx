@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { cn } from '../../lib/cn';
 import { ADMIN_NAV } from '../../lib/adminNavigation';
 import TriangleMark from '../ui/TriangleMark';
+import { accentVars } from '../../lib/palette';
 
 /**
  * Moldura do painel administrativo.
@@ -23,6 +24,11 @@ import TriangleMark from '../ui/TriangleMark';
  * A partir de 1024px a barra vira uma coluna lateral: no desktop existe espaço
  * de sobra na horizontal, e o mouse alcança qualquer canto igualmente.
  *
+ * CADA SEÇÃO TEM UMA COR, e ela aparece quando o item está ativo. No celular
+ * não cabe uma trilha de navegação ("Painel > Notícias > Editar"), então a cor
+ * é o que responde "onde eu estou?" sem ocupar espaço nenhum. São as mesmas
+ * cores do site público — Processos verde, Notícias coral, Contatos turquesa.
+ *
  * `pb-[env(safe-area-inset-bottom)]` afasta a barra da faixa de gestos do
  * iPhone. Sem isso, o último item fica embaixo da barrinha do sistema e o
  * toque abre o multitarefa em vez do link.
@@ -34,6 +40,13 @@ export default function AdminLayout() {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, [pathname]);
 
+    /* UMA função de classes serve às cinco seções, apesar de cada uma ter a sua
+       cor. O truque é que a cor não está na classe: `bg-[var(--accent-tint)]` é
+       sempre a mesma string, e o VALOR de `--accent-tint` é injetado no `style`
+       de cada NavLink. É o mesmo mecanismo das seis áreas de atuação — e é
+       obrigatório, porque o Tailwind procura classes escritas por extenso no
+       código-fonte e uma classe concatenada em tempo de execução nunca é
+       encontrada: ela simplesmente não existe no CSS final. */
     const itemClasses = ({ isActive }) =>
         cn(
             /* 10px na tela mais estreita, 11px a partir de 360px.
@@ -43,8 +56,8 @@ export default function AdminLayout() {
             'flex flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[0.625rem] font-semibold transition-colors min-[360px]:text-[0.6875rem]',
             'lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:py-3 lg:text-sm',
             isActive
-                ? 'bg-brand-50 text-brand-700 lg:bg-brand-600 lg:text-white'
-                : 'text-muted hover:text-ink-900 lg:hover:bg-brand-50 lg:hover:text-brand-700'
+                ? 'bg-[var(--accent-tint)] text-[var(--accent-ink)] lg:bg-[var(--accent-ink)] lg:text-white'
+                : 'text-muted hover:text-ink-900 lg:hover:bg-sand lg:hover:text-ink-900'
         );
 
     return (
@@ -60,7 +73,13 @@ export default function AdminLayout() {
 
                 <nav aria-label="Seções do painel" className="flex-1 space-y-1 p-3">
                     {ADMIN_NAV.map((item) => (
-                        <NavLink key={item.to} to={item.to} end={item.end} className={itemClasses}>
+                        <NavLink
+                            key={item.to}
+                            to={item.to}
+                            end={item.end}
+                            style={accentVars(item.accent)}
+                            className={itemClasses}
+                        >
                             <span className="size-5 shrink-0">{item.icon}</span>
                             {item.fullLabel ?? item.label}
                         </NavLink>
@@ -87,12 +106,19 @@ export default function AdminLayout() {
                 {/* -------------------------------------- TOPO (celular) -- */}
                 <header className="sticky top-0 z-30 border-b border-line bg-white lg:hidden">
                     <div className="flex h-14 items-center justify-between px-4">
-                        <span className="flex items-center gap-2">
+                        {/* O título é o caminho de volta para o Início, que saiu
+                            da barra inferior para abrir espaço à sexta seção.
+                            Logotipo que leva à página inicial é a convenção mais
+                            antiga da web — não precisa ser ensinada. */}
+                        <Link
+                            to="/admin"
+                            className="-ml-2 flex min-h-11 items-center gap-2 rounded-lg px-2 transition-colors hover:bg-sand"
+                        >
                             <TriangleMark aria-hidden="true" className="h-3.5 w-3.5 text-brand-600" />
                             <span className="font-display text-sm font-bold tracking-tight text-ink-900">
                                 Painel ABRASCE
                             </span>
-                        </span>
+                        </Link>
                         <Link
                             to="/"
                             className="-mr-2 flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted"
@@ -118,9 +144,14 @@ export default function AdminLayout() {
                 className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
             >
                 <ul className="grid grid-cols-5">
-                    {ADMIN_NAV.map((item) => (
+                    {ADMIN_NAV.filter((item) => item.inBottomBar !== false).map((item) => (
                         <li key={item.to}>
-                            <NavLink to={item.to} end={item.end} className={itemClasses}>
+                            <NavLink
+                                to={item.to}
+                                end={item.end}
+                                style={accentVars(item.accent)}
+                                className={itemClasses}
+                            >
                                 {({ isActive }) => (
                                     <>
                                         <span className="size-5.5 shrink-0">{item.icon}</span>

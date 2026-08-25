@@ -77,7 +77,7 @@ export default function AdminNewsList() {
                                         className="group flex items-center gap-4 rounded-2xl bg-white p-4 shadow-card ring-1 ring-line transition-shadow hover:shadow-lift sm:p-5"
                                     >
                                         <img
-                                            src={fileUrl('admin', item.coverImagePath)}
+                                            src={fileUrl('admin', item.coverImage?.storedName)}
                                             alt=""
                                             loading="lazy"
                                             decoding="async"
