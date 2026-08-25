@@ -1,6 +1,7 @@
 import Container from '../../components/ui/Container';
 import PageHeader from '../../components/layout/PageHeader';
 import ProjectCard from '../../components/cards/ProjectCard';
+import AreaRange from '../../components/AreaRange';
 import TriangleMark from '../../components/ui/TriangleMark';
 import Button from '../../components/ui/Button';
 import { AREAS, areaVars } from '../../content/areas';
@@ -30,8 +31,11 @@ import { PROJECTS_TAGLINE } from '../../content/institutional';
 export default function Projects() {
     return (
         <>
-            <PageHeader eyebrow="Projetos" title={PROJECTS_TAGLINE}>
-                <p className="text-sm text-brand-200">
+            {/* `rule="areas"` troca o filete de cor única pela serra de seis cores.
+                Projetos é a única página que não pertence a UMA área — pertence
+                às seis, e o cabeçalho precisa dizer isso. */}
+            <PageHeader eyebrow="Projetos" title={PROJECTS_TAGLINE} rule="areas">
+                <p className="text-sm text-white/75">
                     {PROJECTS.length} projetos ativos em {PROJECT_CITIES.length} municípios:{' '}
                     {PROJECT_CITIES.join(', ')}.
                 </p>
@@ -69,17 +73,34 @@ export default function Projects() {
             {/* ------------------------------------------------- AS ÁREAS --- */}
             {AREAS.map((area, index) => {
                 const projects = projectsByArea(area.slug);
-                // Fundo alternado: separa as seções sem precisar de linha
-                // divisória nem de moldura em cada bloco.
+                // A imagem troca de lado a cada seção. Sem isso, seis blocos
+                // "foto à esquerda, texto à direita" viram uma coluna só de
+                // fotos e o olho para de registrar onde uma seção termina.
                 const isAlternate = index % 2 === 1;
 
                 return (
+                    /* CADA SEÇÃO GANHA O FUNDO DA PRÓPRIA ÁREA.
+                       Antes elas alternavam entre branco e `sand` — um cinza
+                       puxado para o azul, igual nas seis. A cor da área ficava
+                       confinada a uma faixa de 6px e a um pontinho.
+                       Agora o fundo inteiro muda de temperatura: quem clica em
+                       "Saúde" no índice vê a página inteira mudar, o que é a
+                       confirmação de que a âncora funcionou. Os `tint` têm
+                       saturação baixíssima (~5%), então seis fundos diferentes
+                       ainda leem como "claro e institucional", não como arco-íris. */
                     <section
                         key={area.slug}
                         id={area.slug}
                         style={areaVars(area)}
-                        className={`scroll-mt-32 py-12 sm:py-16 ${isAlternate ? 'bg-sand' : 'bg-white'}`}
+                        className="relative scroll-mt-32 bg-[var(--area-tint)] py-12 sm:py-16"
                     >
+                        {/* Filete na cor da área separando de quem vem antes:
+                            dois `tint` vizinhos são claros demais para se
+                            distinguirem sozinhos. */}
+                        <span
+                            aria-hidden="true"
+                            className="absolute inset-x-0 top-0 h-px bg-[var(--area)]"
+                        />
                         <Container>
                             <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
                                 <div className={isAlternate ? 'lg:order-2' : undefined}>
@@ -110,7 +131,7 @@ export default function Projects() {
                                         área — nada de "Projetos: nenhum". */}
                                     {projects.length > 0 && (
                                         <div className="mt-8">
-                                            <h3 className="text-sm font-bold uppercase tracking-wider text-muted">
+                                            <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--area-ink)]">
                                                 {projects.length === 1
                                                     ? 'Projeto nesta área'
                                                     : `Projetos nesta área (${projects.length})`}
@@ -132,14 +153,21 @@ export default function Projects() {
             })}
 
             {/* ----------------------------------------------------- FAIXA -- */}
-            <section className="bg-ink-900 py-12 sm:py-16">
-                <Container>
+            <section className="relative overflow-hidden bg-ink-900">
+                {/* A serra fecha a página com as mesmas seis cores que a
+                    abriram — o começo e o fim rimam. */}
+                <AreaRange className="h-3 sm:h-4" flip />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -bottom-20 right-0 h-72 w-72 rounded-full bg-iris opacity-25 blur-[90px]"
+                />
+                <Container className="relative py-12 sm:py-16">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                         <div className="max-w-xl">
                             <h2 className="text-2xl text-white sm:text-3xl">
                                 Quer levar um projeto para a sua cidade?
                             </h2>
-                            <p className="mt-3 text-[0.9375rem] text-brand-200">
+                            <p className="mt-3 text-[0.9375rem] text-white/75">
                                 Fale com a equipe da ABRASCE sobre parcerias, apoio institucional
                                 ou trabalho voluntário.
                             </p>

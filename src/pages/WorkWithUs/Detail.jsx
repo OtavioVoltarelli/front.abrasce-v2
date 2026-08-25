@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import Container from '../../components/ui/Container';
 import Button from '../../components/ui/Button';
+import { accentVars } from '../../lib/palette';
 import Badge from '../../components/ui/Badge';
 import RichText from '../../components/RichText';
 import AttachmentList from '../../components/AttachmentList';
@@ -62,12 +63,24 @@ export default function WorkWithUsDetail() {
 
     return (
         <>
-            <div className="relative overflow-hidden bg-ink-900">
+            {/* Mesmo verde da listagem de processos seletivos: quem clicou num
+                card verde precisa chegar numa página verde, senão a navegação
+                parece ter levado para outro lugar. */}
+            <div style={accentVars('leaf')} className="relative overflow-hidden bg-ink-900">
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 bg-[linear-gradient(125deg,var(--color-ink-950)_0%,var(--color-ink-900)_38%,var(--accent-deep)_100%)]"
+                />
+                <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-[var(--accent)] opacity-30 blur-[90px]"
+                />
                 <TriangleMark
                     aria-hidden="true"
                     className="pointer-events-none absolute -right-20 -top-24 h-80 w-80 opacity-[0.07]"
                     color="white"
                 />
+                <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 bg-[var(--accent)]" />
                 <Container className="relative">
                     <div className="py-10 sm:py-14">
                         {/* Voltar explícito: no celular o botão do sistema existe,
@@ -75,7 +88,7 @@ export default function WorkWithUsDetail() {
                             onde voltar. */}
                         <Link
                             to="/trabalhe-conosco"
-                            className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-brand-200 transition-colors hover:text-white"
+                            className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-white/70 transition-colors hover:text-white"
                         >
                             <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M16 10H5M9 5 4 10l5 5" />
@@ -91,7 +104,7 @@ export default function WorkWithUsDetail() {
                             )}
                             <time
                                 dateTime={toIsoDate(process.creationDate)}
-                                className="text-xs font-bold uppercase tracking-wider text-brand-200"
+                                className="text-xs font-bold uppercase tracking-wider text-leaf-bright"
                             >
                                 Publicado em {formatDate(process.creationDate)}
                             </time>
@@ -127,7 +140,7 @@ export default function WorkWithUsDetail() {
             </Container>
 
             {/* ------------------------------------------------- INSCRIÇÃO -- */}
-            <section id="inscricao" className="scroll-mt-24 bg-sand py-12 sm:py-16">
+            <section id="inscricao" className="scroll-mt-24 bg-leaf-tint py-12 sm:py-16">
                 <Container size="narrow">
                     {process.active ? (
                         <>

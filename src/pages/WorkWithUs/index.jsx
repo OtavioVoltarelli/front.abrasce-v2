@@ -18,6 +18,7 @@ export default function WorkWithUs() {
     return (
         <>
             <PageHeader
+                accent="leaf"
                 eyebrow="Trabalhe conosco"
                 title="Processos seletivos abertos"
                 description="Leia o edital, confira os requisitos e faça sua inscrição pelo próprio site. Cada processo tem seu formulário."

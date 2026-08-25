@@ -13,9 +13,12 @@ import { PUBLIC_NAV } from '../../lib/navigation';
 export default function NotFound() {
     return (
         <Container className="flex flex-col items-center py-20 text-center sm:py-28">
-            <TriangleMark aria-hidden="true" className="h-12 w-12 text-brand-200" />
+            {/* Âmbar, não vermelho: um endereço errado é um desencontro, não
+                um erro grave. Vermelho no site está reservado para "isto apaga
+                algo" — usar a mesma cor aqui gastaria o alarme à toa. */}
+            <TriangleMark aria-hidden="true" className="h-12 w-12 text-sun" />
 
-            <p className="mt-6 text-sm font-bold uppercase tracking-[0.16em] text-brand-600">
+            <p className="mt-6 text-sm font-bold uppercase tracking-[0.16em] text-sun-ink">
                 Erro 404
             </p>
             <h1 className="mt-3 text-3xl text-ink-900 sm:text-4xl">

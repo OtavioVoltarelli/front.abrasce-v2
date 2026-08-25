@@ -10,6 +10,7 @@ import QueryBoundary from '../../components/feedback/QueryBoundary';
 import Skeleton from '../../components/feedback/Skeleton';
 import { useLatestNews } from '../../hooks/useNews';
 import { AREAS, areaVars } from '../../content/areas';
+import { accentVars } from '../../lib/palette';
 import { ABOUT, MISSION, VISION, VALUES, ORGANIZATION } from '../../content/institutional';
 
 /**
@@ -50,8 +51,14 @@ export default function Home() {
                         className="absolute -right-24 -top-28 h-[26rem] w-[26rem] opacity-[0.06] sm:-right-10 sm:h-[34rem] sm:w-[34rem]"
                         color="white"
                     />
-                    <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-brand-600/30 blur-[100px]" />
-                    <div className="absolute right-1/4 -bottom-20 h-72 w-72 rounded-full bg-aqua/10 blur-[90px]" />
+                    {/* Três brilhos de cores diferentes em vez de dois azuis.
+                        Em opacidade baixa e muito desfocados eles não leem como
+                        "manchas coloridas" — leem como profundidade. É o que
+                        tira o fundo escuro do azul chapado sem custar contraste
+                        nenhum ao texto branco por cima. */}
+                    <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-brand-600 opacity-30 blur-[100px]" />
+                    <div className="absolute right-1/4 -bottom-24 h-72 w-72 rounded-full bg-iris opacity-25 blur-[90px]" />
+                    <div className="absolute -right-16 top-0 h-64 w-64 rounded-full bg-lagoon opacity-20 blur-[80px]" />
                 </div>
 
                 <Container className="relative">
@@ -114,23 +121,37 @@ export default function Home() {
             </section>
 
             {/* ============================== MISSÃO, VISÃO E VALORES ====== */}
-            <section className="bg-sand py-14 sm:py-20">
+            <section className="bg-white py-14 sm:py-20">
                 <Container>
                     <SectionHeading
                         eyebrow="O que nos guia"
                         title="Missão, visão e valores"
+                        accent="iris"
                         level={2}
                     />
 
+                    {/* Os três cards eram brancos com o mesmo triângulo azul.
+                        Agora cada um tem o seu acento — âmbar para a Missão,
+                        turquesa para a Visão, azul-marinho para os Valores.
+                        A cor não muda a informação; ela dá ao olho três blocos
+                        distinguíveis de relance, em vez de três retângulos
+                        iguais que precisam ser lidos para serem diferenciados.
+                        O `ring-black/5` substitui o `ring-line` (azulado):
+                        uma borda azul em volta de um card âmbar denunciava que
+                        a cor tinha sido "pintada por cima" de um card azul. */}
                     <div className="mt-10 grid gap-5 lg:grid-cols-3 lg:gap-6">
-                        {[MISSION, VISION].map((block) => (
+                        {[
+                            { block: MISSION, accent: 'sun' },
+                            { block: VISION, accent: 'lagoon' },
+                        ].map(({ block, accent }) => (
                             <article
                                 key={block.heading}
-                                className="rounded-2xl bg-white p-6 shadow-card ring-1 ring-line sm:p-7"
+                                style={accentVars(accent)}
+                                className="rounded-2xl bg-[var(--accent-tint)] p-6 shadow-card ring-1 ring-black/5 sm:p-7"
                             >
-                                <TriangleMark className="h-5 w-5 text-brand-600" color="currentColor" />
+                                <TriangleMark className="h-5 w-5 text-[var(--accent)]" color="currentColor" />
                                 <h3 className="mt-4 text-xl text-ink-900">{block.heading}</h3>
-                                <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted">
+                                <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-800/85">
                                     {block.text}
                                 </p>
                             </article>
@@ -162,6 +183,7 @@ export default function Home() {
                 <Container>
                     <SectionHeading
                         eyebrow="Onde atuamos"
+                        accent="lagoon"
                         title="Campos em que atuamos"
                         description="Seis frentes de trabalho, cada uma com projetos próprios nos municípios onde a ABRASCE está presente."
                         level={2}
@@ -179,12 +201,15 @@ export default function Home() {
             </section>
 
             {/* =============================================== NOTÍCIAS ==== */}
-            <section className="bg-sand py-14 sm:py-20">
+            {/* Fundo coral bem claro — a mesma família de cor da data e do
+                "Ler notícia" nos cards, e da página de Notícias inteira. */}
+            <section className="bg-coral-tint py-14 sm:py-20">
                 <Container>
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <SectionHeading
                             eyebrow="Acontece na ABRASCE"
                             title="Últimas notícias"
+                            accent="coral"
                             level={2}
                             className="flex-1"
                         />
@@ -230,7 +255,13 @@ export default function Home() {
             </section>
 
             {/* ================================================== FAIXA ==== */}
-            <section className="relative overflow-hidden bg-brand-600">
+            {/* A faixa é VERDE porque leva a Trabalhe conosco, e Trabalhe
+                conosco é a página verde. Antes ela era azul como tudo o mais,
+                e não dava nenhuma pista de para onde ia. O degradê usa só tons
+                escuros o bastante para o texto branco de 15px passar em 4.5:1
+                em qualquer ponto dele — um verde mais vivo seria mais bonito e
+                deixaria o subtítulo ilegível. */}
+            <section className="relative overflow-hidden bg-[linear-gradient(120deg,var(--color-leaf-deep)_0%,var(--color-leaf-ink)_55%,var(--color-lagoon-ink)_100%)]">
                 <div aria-hidden="true" className="pointer-events-none absolute inset-0">
                     <TriangleMark className="absolute -bottom-24 -left-16 h-80 w-80 opacity-10" color="white" />
                 </div>
@@ -240,7 +271,7 @@ export default function Home() {
                             <h2 className="text-2xl text-white sm:text-4xl">
                                 Faça parte da equipe
                             </h2>
-                            <p className="mt-3 text-[0.9375rem] text-brand-100 sm:text-lg">
+                            <p className="mt-3 text-[0.9375rem] text-white/80 sm:text-lg">
                                 Os processos seletivos abertos, com edital completo e inscrição
                                 pelo próprio site.
                             </p>

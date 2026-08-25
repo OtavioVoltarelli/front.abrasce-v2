@@ -24,6 +24,8 @@
  * Os textos são os originais do site atual, preservados palavra por palavra.
  */
 
+import { PALETTE } from '../lib/palette';
+
 import educacao from '../assets/areas/educacao.jpg';
 import esporte from '../assets/areas/esporte.jpg';
 import lazer from '../assets/areas/lazer.jpg';
@@ -31,14 +33,12 @@ import saude from '../assets/areas/saude.jpg';
 import cultura from '../assets/areas/cultura.jpg';
 import assistenciaSocial from '../assets/areas/assistencia-social.jpg';
 
-export const AREAS = [
+const AREA_DEFINITIONS = [
     {
         slug: 'educacao',
         label: 'Educação',
         projectTitle: 'Projetos educacionais',
-        color: '#2B4BE0',
-        ink: '#1E309E',
-        tint: '#EEF2FF',
+        accent: 'brand',
         image: educacao,
         imageAlt: 'Corredor de uma biblioteca com estantes cheias de livros',
         summary:
@@ -50,9 +50,7 @@ export const AREAS = [
         slug: 'esporte',
         label: 'Esporte',
         projectTitle: 'Projetos esportivos',
-        color: '#0E9AA7',
-        ink: '#0E7490',
-        tint: '#ECFEFF',
+        accent: 'lagoon',
         image: esporte,
         imageAlt: 'Pessoas praticando atividade esportiva ao ar livre',
         summary:
@@ -64,9 +62,7 @@ export const AREAS = [
         slug: 'lazer',
         label: 'Lazer',
         projectTitle: 'Projetos de lazer',
-        color: '#F59E0B',
-        ink: '#B45309',
-        tint: '#FFFBEB',
+        accent: 'sun',
         image: lazer,
         imageAlt: 'Grupo reunido em um momento de lazer',
         summary:
@@ -78,9 +74,7 @@ export const AREAS = [
         slug: 'saude',
         label: 'Saúde',
         projectTitle: 'Projetos de saúde',
-        color: '#E14B5A',
-        ink: '#BE123C',
-        tint: '#FFF1F2',
+        accent: 'berry',
         image: saude,
         imageAlt: 'Profissional de saúde em atendimento à comunidade',
         summary:
@@ -92,9 +86,7 @@ export const AREAS = [
         slug: 'cultura',
         label: 'Cultura',
         projectTitle: 'Projetos culturais',
-        color: '#8B5CF6',
-        ink: '#6D28D9',
-        tint: '#F5F3FF',
+        accent: 'iris',
         image: cultura,
         imageAlt: 'Apresentação cultural com participação da comunidade',
         summary:
@@ -106,9 +98,7 @@ export const AREAS = [
         slug: 'assistencia-social',
         label: 'Assistência social',
         projectTitle: 'Projetos de assistência social',
-        color: '#16A34A',
-        ink: '#15803D',
-        tint: '#F0FDF4',
+        accent: 'leaf',
         image: assistenciaSocial,
         imageAlt: 'Voluntários organizando doações para a comunidade',
         summary:
@@ -125,8 +115,20 @@ export const findArea = (slug) => AREAS.find((area) => area.slug === slug);
  * Variáveis CSS de uma área, para injetar via `style` no elemento.
  * Uso: <div style={areaVars(area)} className="border-l-4 border-[var(--area)]">
  */
+/**
+ * Cada área recebe os quatro tons do seu acento (color, ink, tint, deep)
+ * espalhados por cima da definição. Assim os hexadecimais existem em UM lugar
+ * só — `lib/palette.js` — e mudar o verde da assistência social muda junto o
+ * card da área, a etiqueta, a serra do topo e a página de Processos do painel.
+ */
+export const AREAS = AREA_DEFINITIONS.map((area) => ({
+    ...area,
+    ...PALETTE[area.accent],
+}));
+
 export const areaVars = (area) => ({
     '--area': area.color,
     '--area-ink': area.ink,
     '--area-tint': area.tint,
+    '--area-deep': area.deep,
 });

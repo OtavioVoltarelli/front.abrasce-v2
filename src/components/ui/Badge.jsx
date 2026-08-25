@@ -25,11 +25,21 @@ export default function Badge({ area, tone = 'neutral', children, className }) {
         );
     }
 
+    /* Os tons vêm da PALETA DO SITE, não das cores padrão do Tailwind. Antes
+       `success` era `green-50/green-800` e `warning` era `amber-50/amber-800`
+       — verdes e âmbares que não existiam em nenhum outro lugar do projeto.
+       Agora "inscrições abertas" usa exatamente o mesmo verde da assistência
+       social e da página Trabalhe conosco. Uma etiqueta verde perdida no meio
+       de um site sem verde nenhum parece um acidente; a mesma etiqueta num
+       site que já tem aquele verde parece um sistema. */
     const tones = {
         neutral: 'bg-sand text-muted',
         brand: 'bg-brand-50 text-brand-700',
-        success: 'bg-green-50 text-green-800',
-        warning: 'bg-amber-50 text-amber-800',
+        success: 'bg-leaf-tint text-leaf-ink',
+        warning: 'bg-sun-tint text-sun-ink',
+        danger: 'bg-berry-tint text-berry-ink',
+        news: 'bg-coral-tint text-coral-ink',
+        info: 'bg-lagoon-tint text-lagoon-ink',
         inverse: 'bg-white/15 text-white',
     };
 

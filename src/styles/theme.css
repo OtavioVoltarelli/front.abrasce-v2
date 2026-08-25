@@ -51,10 +51,61 @@
   --color-line:      #DDE5F0;  /* bordas e divisórias */
   --color-muted:     #5A6A8A;  /* texto secundário — 4.9:1 no branco */
 
-  /* -- Acentos ------------------------------------------------------------ */
-  --color-aqua:  #12D8E6;   /* destaque vibrante — só em detalhes gráficos */
-  --color-coral: #FF6B4A;   /* ação de destaque, energia */
-  --color-coral-ink: #C2410C; /* versão legível como texto no branco */
+  /* -- Acentos ------------------------------------------------------------
+     As SEIS cores das áreas de atuação, promovidas a cores do sistema inteiro.
+     Antes elas só existiam dentro dos cards de área; agora cada página do site
+     adota uma delas como assinatura. É o que evita que todas as telas fiquem
+     azuis — sem inventar cor nova nenhuma: a paleta continua tendo sete
+     matizes e nem uma a mais.
+
+     Quatro papéis por matiz, e cada papel só serve para uma coisa:
+       (sem sufixo) -> preenche formas. NÃO use como texto sobre branco.
+       -ink         -> a única aprovada para TEXTO sobre branco ou sobre -tint.
+       -tint        -> fundo de etiqueta, de card e de seção.
+       -deep        -> só para o degradê dos cabeçalhos escuros.
+       -bright      -> o espelho do -ink: a única aprovada para TEXTO SOBRE
+                       FUNDO ESCURO (todas passam de 8:1 no azul-marinho).
+                       O azul da marca não precisa de um: `brand-300` já é ele.
+
+     Os mesmos valores estão em `lib/palette.js`, que é a fonte de verdade
+     para quando a cor só é conhecida em tempo de execução. Mudou aqui, mude lá. */
+  --color-aqua: #12D8E6;   /* destaque vibrante — só sobre fundo escuro */
+
+  --color-lagoon:      #0E9AA7;  /* turquesa — Transparência, Contatos */
+  --color-lagoon-ink:  #0E7490;
+  --color-lagoon-tint: #ECFEFF;
+  --color-lagoon-deep: #0A3C46;
+  --color-lagoon-bright: #67E8F9;
+
+  --color-sun:      #F59E0B;     /* âmbar — avisos, página de erro */
+  --color-sun-ink:  #B45309;
+  --color-sun-tint: #FFFBEB;
+  --color-sun-deep: #432A06;
+  --color-sun-bright: #FCD34D;
+
+  --color-berry:      #E14B5A;   /* vermelho-rosado — saúde */
+  --color-berry-ink:  #BE123C;
+  --color-berry-tint: #FFF1F2;
+  --color-berry-deep: #4A1024;
+  --color-berry-bright: #FDA4AF;
+
+  --color-iris:      #8B5CF6;    /* violeta — Contato, Candidatos */
+  --color-iris-ink:  #6D28D9;
+  --color-iris-tint: #F5F3FF;
+  --color-iris-deep: #2E1065;
+  --color-iris-bright: #C4B5FD;
+
+  --color-leaf:      #16A34A;    /* verde — vagas, processos seletivos */
+  --color-leaf-ink:  #15803D;
+  --color-leaf-tint: #F0FDF4;
+  --color-leaf-deep: #0A3A21;
+  --color-leaf-bright: #86EFAC;
+
+  --color-coral:      #FF6B4A;   /* coral — notícias */
+  --color-coral-ink:  #C2410C;
+  --color-coral-tint: #FFF3EE;
+  --color-coral-deep: #481709;
+  --color-coral-bright: #FDBA9B;
 
   /* -- Tipografia ---------------------------------------------------------
      Bricolage Grotesque: grotesca variável com eixo óptico. Tem imperfeições
@@ -165,7 +216,28 @@
   }
   .prose-abrasce > * + * { margin-top: 1.25em; }
   .prose-abrasce strong { font-weight: 700; color: var(--color-ink-900); }
-  .prose-abrasce a { color: var(--color-brand-700); text-decoration: underline; }
+  /* Links dentro do texto da notícia.
+     `text-underline-offset` afasta o sublinhado da linha de base: colado, ele
+     corta as descidas do "p" e do "g" e atrapalha a leitura.
+     AS DUAS LINHAS DE `overflow-wrap` SÃO PROPOSITAIS — não apague a primeira.
+     Uma URL é uma "palavra" só: sem quebra, ela empurra a largura da página e
+     cria a barra de rolagem horizontal que este projeto não admite.
+       · `anywhere` é o certo: quebra E reduz a largura mínima que o elemento
+         pede ao layout. Só existe no Safari 15.4+ (março de 2022).
+       · `break-word` é o que sobra num iPhone mais velho: o navegador descarta
+         o valor que não conhece e fica com a declaração anterior. Quebra a
+         palavra, embora sem reduzir a largura mínima — resolve o nosso caso,
+         que é texto em fluxo normal.
+     É o padrão de fallback do CSS: do pior para o melhor, na mesma regra. */
+  .prose-abrasce a {
+    color: var(--color-brand-700);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  .prose-abrasce a:hover { color: var(--color-brand-800); text-decoration-thickness: 2px; }
 }
 
 /* ---------------------------------------------------------------------------

@@ -10,6 +10,11 @@ import Badge from '../ui/Badge';
  * de música — Escola de Artes" virar quatro linhas de uma palavra. Card
  * empilha naturalmente e cresce conforme o conteúdo.
  *
+ * A barra lateral e o botão são VERDES, a mesma cor da etiqueta "Inscrições
+ * abertas" e da página Trabalhe conosco inteira. Antes a barra era azul e a
+ * etiqueta verde, dentro de um card que não tinha mais nada verde — duas
+ * cores discordando sobre o mesmo assunto.
+ *
  * A quantidade de anexos aparece como informação, não como ícone solto: quem
  * está se candidatando quer saber se existe edital para ler ANTES de abrir.
  */
@@ -20,7 +25,7 @@ export default function JobCard({ process }) {
         <article className="group relative flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line transition-shadow hover:shadow-lift sm:flex-row sm:items-center sm:gap-6 sm:p-6">
             {/* Barra de cor na lateral: âncora visual da lista, e o único
                 lugar do card onde a marca aparece. */}
-            <span aria-hidden="true" className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-brand-600 sm:inset-y-6" />
+            <span aria-hidden="true" className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-leaf sm:inset-y-6" />
 
             <div className="min-w-0 flex-1 pl-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -40,7 +45,7 @@ export default function JobCard({ process }) {
                 <h3 className="mt-2 text-lg text-ink-900 sm:text-xl">
                     <Link
                         to={`/trabalhe-conosco/${process.id}`}
-                        className="after:absolute after:inset-0 hover:text-brand-700"
+                        className="after:absolute after:inset-0 hover:text-leaf-ink"
                     >
                         {process.title}
                     </Link>
@@ -56,7 +61,7 @@ export default function JobCard({ process }) {
                 )}
             </div>
 
-            <span className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-xl bg-brand-50 px-4 py-2.5 text-sm font-bold text-brand-700 transition-colors group-hover:bg-brand-600 group-hover:text-white sm:self-auto">
+            <span className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-xl bg-leaf-tint px-4 py-2.5 text-sm font-bold text-leaf-ink transition-colors group-hover:bg-leaf-ink group-hover:text-white sm:self-auto">
                 Ver detalhes
                 <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 10h11M11 5l5 5-5 5" />

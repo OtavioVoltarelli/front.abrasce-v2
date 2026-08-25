@@ -13,6 +13,11 @@ import { CONTACT, ORGANIZATION } from '../../content/institutional';
  * links do rodapé eram escritos à mão, então menu e rodapé podiam discordar
  * sobre quais páginas existem. Uma fonte só resolve isso de vez.
  *
+ * Os três títulos de coluna têm cores diferentes, e não é enfeite: cada um usa
+ * a cor da PÁGINA correspondente — "Contato" em violeta como a página Contato,
+ * "Endereços" em turquesa. É a última repetição do sistema de cores antes de a
+ * pessoa sair do site.
+ *
  * O e-mail está com `mailto:` correto. No site antigo estava escrito
  * `malito:` — um typo silencioso: o link parecia funcionar, mas o navegador
  * não reconhecia o esquema e o clique não abria nada.
@@ -78,7 +83,7 @@ export default function Footer() {
                     </nav>
 
                     <div>
-                        <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-aqua">
+                        <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-iris-bright">
                             <TriangleMark className="h-2 w-2" />
                             Contato
                         </h3>
@@ -103,7 +108,7 @@ export default function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-aqua">
+                        <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-lagoon-bright">
                             <TriangleMark className="h-2 w-2" />
                             Endereços
                         </h3>

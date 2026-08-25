@@ -36,6 +36,7 @@ export default function Contact() {
     return (
         <>
             <PageHeader
+                accent="iris"
                 eyebrow="Contato"
                 title="Fale com a ABRASCE"
                 description="Dúvidas sobre os projetos, propostas de parceria, trabalho voluntário ou doações — escolha o canal que preferir."
@@ -51,7 +52,7 @@ export default function Contact() {
                     <aside className="order-1 space-y-4 lg:order-2">
                         <a
                             href={CONTACT.phone.href}
-                            className="flex items-center gap-4 rounded-2xl bg-brand-600 p-5 text-white shadow-card transition-colors hover:bg-brand-700"
+                            className="flex items-center gap-4 rounded-2xl bg-iris-ink p-5 text-white shadow-card transition-colors hover:bg-iris-deep"
                         >
                             <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/15">
                                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +60,7 @@ export default function Contact() {
                                 </svg>
                             </span>
                             <span>
-                                <span className="block text-xs font-bold uppercase tracking-wider text-brand-100">
+                                <span className="block text-xs font-bold uppercase tracking-wider text-iris-bright">
                                     Telefone
                                 </span>
                                 <span className="block text-lg font-bold">{CONTACT.phone.label}</span>
@@ -68,9 +69,9 @@ export default function Contact() {
 
                         <a
                             href={`mailto:${CONTACT.email}`}
-                            className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line transition-colors hover:bg-brand-50 hover:ring-brand-300"
+                            className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line transition-colors hover:bg-iris-tint hover:ring-iris"
                         >
-                            <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                            <span aria-hidden="true" className="grid size-11 shrink-0 place-items-center rounded-xl bg-iris-tint text-iris-ink">
                                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="3" y="5" width="18" height="14" rx="2" />
                                     <path d="m3 7 9 6 9-6" />
@@ -118,7 +119,7 @@ export default function Contact() {
             </Container>
 
             {/* --------------------------------------------------- MAPAS ---- */}
-            <section className="bg-sand py-12 sm:py-16">
+            <section className="bg-iris-tint py-12 sm:py-16">
                 <Container>
                     <h2 className="text-2xl text-ink-900 sm:text-3xl">Onde estamos</h2>
 
@@ -140,8 +141,8 @@ export default function Contact() {
                                     className={cn(
                                         'min-h-11 rounded-xl px-4 text-sm font-semibold transition-colors',
                                         isActive
-                                            ? 'bg-brand-600 text-white shadow-card'
-                                            : 'bg-white text-ink-800 ring-1 ring-inset ring-line hover:bg-brand-50'
+                                            ? 'bg-iris-ink text-white shadow-card'
+                                            : 'bg-white text-ink-800 ring-1 ring-inset ring-line hover:bg-iris-tint'
                                     )}
                                 >
                                     {address.label}
@@ -167,7 +168,7 @@ export default function Contact() {
                                 href={activeAddress.mapLink}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-50 px-5 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-100"
+                                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-iris-tint px-5 text-sm font-bold text-iris-ink transition-colors hover:brightness-95"
                             >
                                 Abrir no Google Maps
                                 <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

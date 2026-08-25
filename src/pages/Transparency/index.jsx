@@ -107,7 +107,7 @@ export default function Transparency() {
 
     return (
         <>
-            <PageHeader eyebrow="Prestação de contas" title="Transparência" />
+            <PageHeader accent="lagoon" eyebrow="Prestação de contas" title="Transparência" />
 
             <section className="bg-ink-900 pb-14 sm:pb-20">
                 <Container size="narrow">

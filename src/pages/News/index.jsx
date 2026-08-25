@@ -23,6 +23,7 @@ export default function News() {
     return (
         <>
             <PageHeader
+                accent="coral"
                 eyebrow="Notícias"
                 title="Acontece na ABRASCE"
                 description="Ações, resultados e avisos dos projetos nos municípios onde a associação atua."
