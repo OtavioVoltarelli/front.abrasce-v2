@@ -95,13 +95,124 @@ export const newsService = USE_MOCKS ? newsMockService : newsHttpService;
 **Para integrar com o backend:** `VITE_USE_MOCKS=false` no `.env.development`,
 subir o backend, testar, e então apagar `src/mocks/` e os ternários.
 
-### Sistema de cores das áreas
+### Sistema de cores — `src/lib/palette.js` é a fonte única
 
-`src/content/areas.js` é a fonte única. Cada área tem `color` / `ink` / `tint`.
-Os componentes injetam via `style={areaVars(area)}` e usam `bg-[var(--area)]`.
+O site trabalha com **sete matizes e nem uma a mais**: o azul da marca e as
+seis cores das áreas de atuação. Cada matiz tem **cinco papéis**, e cada papel
+só serve para uma coisa:
+
+| papel | para quê | regra |
+|---|---|---|
+| `color` | preencher formas (faixas, pontos, ícones) | **nunca** como texto sobre branco |
+| `ink` | texto sobre branco ou sobre `tint` | todos ≥ 4.5:1 |
+| `tint` | fundo de etiqueta, card e seção | saturação ~5% |
+| `deep` | degradê de cabeçalho escuro | texto branco ≥ 12:1 |
+| `bright` | texto sobre fundo escuro | todos ≥ 8.6:1 no azul-marinho |
+
+`src/content/areas.js` não guarda mais hexadecimal nenhum: cada área declara
+`accent: 'leaf'` e recebe os cinco tons por spread. Mudar um verde muda junto
+o card da área, a etiqueta, a serra do topo e o painel.
+
+**Uma cor por página**, aplicada sempre nos mesmos quatro lugares do
+`PageHeader` (degradê, brilho, sobretítulo, filete da base):
+
+| página | acento | painel correspondente |
+|---|---|---|
+| Home | `brand` | Início |
+| Trabalhe conosco | `leaf` (verde) | Processos seletivos |
+| Notícias | `coral` | Notícias |
+| Contato | `iris` (violeta) | Contatos usa `lagoon` |
+| Transparência | `lagoon` (turquesa) | — |
+| Projetos | as seis áreas (`rule="areas"`) | — |
+| Erro 404 | `sun` (âmbar) | — |
+
 **Nunca monte classe Tailwind concatenando string** — o Tailwind lê o
 código-fonte procurando classes por extenso e não encontra as montadas em
-tempo de execução.
+tempo de execução. Quando a cor só é conhecida em tempo de execução, use
+`style={accentVars('leaf')}` + `bg-[var(--accent-tint)]`. Custa **uma regra**
+no CSS final para servir os sete acentos.
+
+Verificado: 28/28 combinações de contraste passam em AA, as 34 cores que
+aparecem no HTML gerado pertencem todas à paleta, e não há **nenhum**
+hexadecimal escrito direto em arquivo `.jsx`.
+
+---
+
+### Biblioteca de arquivos reutilizáveis
+
+O backend **já tinha** o módulo `reusablefile` pronto quando esta tela foi
+feita — entidade, controller, service e três DTOs. O front espelha o contrato
+real, não uma invenção.
+
+`ReusableFileOutput` = `{ id, name, storedName, originalName, contentType, creationDate }`
+
+Os três nomes são diferentes de propósito: `name` é o rótulo da biblioteca,
+`originalName` é o que a pessoa enviou (e o que ela recebe ao baixar) e
+`storedName` é o nome físico (`uuid_arquivo.jpg`), que é o que vai na URL da
+imagem.
+
+| Camada | Arquivo |
+|---|---|
+| Contrato HTTP + chave de mock | `services/reusableFileService.js` |
+| Dados falsos (14 arquivos, 4 tipos) | `mocks/reusableFileMock.js` |
+| React Query + uso + filtro | `hooks/useReusableFiles.js` |
+| Classificação de tipo | `lib/fileKind.jsx` |
+| Grade, busca, upload | `pages/admin/MediaLibrary.jsx` |
+| Gaveta de ações do arquivo | `components/media/MediaFileSheet.jsx` |
+| **Seletor reutilizável** | `components/media/MediaPicker.jsx` |
+| **Campo de formulário** | `components/media/MediaField.jsx` |
+
+**`MediaField` + `MediaPicker` são o par reutilizável.** Nenhum dos dois sabe o
+que é uma notícia. Para usar a biblioteca em outro formulário amanhã:
+
+```jsx
+<MediaField label="Imagem do projeto" kind="image" value={img} onChange={setImg} />
+```
+
+### A capa da notícia deixou de ser upload
+
+`News.coverImage` virou `@ManyToOne` para `ReusableFile` e `NewsInput` pede
+`coverImageId` (`@NotNull`). Consequências no front, todas já aplicadas:
+
+- `NewsOutput.coverImage` é um **objeto**, não uma String — `NewsCard`,
+  `NewsList`, `News/Detail` leem `coverImage.storedName`.
+- `PUT /news/{id}/data` virou **JSON puro** (não é mais multipart).
+- Criar **e** editar usam o mesmo `MediaField`; ao editar, ele já vem
+  preenchido com a capa atual.
+- `ImageUpload.jsx` ficou **órfão** — nada mais o importa.
+
+### Endereços no texto viram links
+
+`lib/autolink.js` parte o texto em pedaços `{type:'text'|'link'}`; `RichText`
+monta os elementos. **Nunca `dangerouslySetInnerHTML`** — o React escapa tudo.
+
+Detecta `https?://`, `www.` e e-mail (vira `mailto:`). Quantos houver no texto.
+Vale para notícia **e** processo seletivo, que usam o mesmo `RichText`.
+
+Regras que não podem ser afrouxadas:
+
+- **Lista de permissão de esquemas**: só `http`, `https`, `mailto`. Qualquer
+  outro (`javascript:`, `data:`, `file:`) volta a ser texto comum. Isso importa
+  porque a área administrativa ainda está sem autenticação — o texto da notícia
+  é conteúdo **não confiável**.
+- **Pontuação final não entra na URL** (`…/edital.` → o ponto é da frase), mas
+  parêntese que faz parte do endereço é preservado (Wikipédia).
+- **Rótulo encurtado** preservando domínio e fim do caminho, mais
+  `break-words` — uma URL de 120 caracteres é uma "palavra" só e criaria
+  rolagem horizontal em 320px.
+- `mailto:` **não** abre aba nova (evita a aba órfã), links de site abrem com
+  `rel="noreferrer"` e aviso `sr-only`.
+
+Verificado: 29 casos na lógica pura + 17 no HTML renderizado, incluindo 6
+tentativas de injeção.
+
+### Exclusão com integridade
+
+O backend recusa apagar um arquivo em uso (`existsByCoverImageId`). Não existe
+endpoint que responda "quem usa o arquivo 7?", então `useFileUsage` cruza a
+biblioteca com a lista de notícias que já está no cache — **zero requisição
+extra**. O botão de excluir fica desabilitado enquanto a checagem não volta,
+e não só quando ela volta positiva.
 
 ---
 

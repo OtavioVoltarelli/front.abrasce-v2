@@ -196,7 +196,7 @@ function RecruitmentFormFields({
                         value={form.description}
                         onChange={(event) => setField('description', event.target.value)}
                         error={errors.description}
-                        hint="Atribuições, requisitos, carga horária e como se inscrever. Deixe uma linha em branco entre os parágrafos."
+                        hint="Requisitos, etapas e prazos. Endereços de site e e-mails viram links clicáveis sozinhos."
                     />
 
                     {/* Interruptor em vez de caixa de seleção: no celular o alvo
