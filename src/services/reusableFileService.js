@@ -5,7 +5,8 @@ import { reusableFileMockService } from '../mocks/reusableFileMock';
 /**
  * Biblioteca de arquivos reutilizáveis — `ReusableFileController` do backend v2.
  *
- *   GET    /api/reusable-files              lista completa (sem paginação)
+ *   GET    /api/reusable-files              sempre paginado (PagedModel), igual
+ *                                           a todo outro GET de lista do backend
  *   GET    /api/reusable-files/{id}
  *   GET    /api/reusable-files/{id}/download   baixa com o nome original
  *   POST   /api/reusable-files              multipart: "file" + "data" (JSON)
@@ -28,11 +29,13 @@ import { reusableFileMockService } from '../mocks/reusableFileMock';
  * ---------------------------------------------------------------------------
  * O QUE FALTA NO BACKEND
  * ---------------------------------------------------------------------------
- * · `GET /api/reusable-files` devolve a lista INTEIRA, sem paginação, busca ou
- *   filtro por tipo. Com algumas dezenas de arquivos está ótimo; passando de
- *   algumas centenas, a busca precisa ir para o servidor. Hoje ela é feita no
- *   navegador (`useFilteredFiles`), e é por isso que a filtragem está isolada
- *   num hook: no dia em que virar `?search=&type=`, muda um arquivo só.
+ * · `GET /api/reusable-files` não tem busca nem filtro por tipo no servidor —
+ *   e É paginado (`size=100` abaixo é a mesma gambiarra de "trazer tudo" que
+ *   os outros services HTTP usam, até existir paginação de verdade na tela).
+ *   Com algumas dezenas de arquivos está ótimo; passando de cem por vez, a
+ *   busca precisa ir para o servidor. Hoje ela é feita no navegador
+ *   (`useFilteredFiles`), e é por isso que a filtragem está isolada num hook:
+ *   no dia em que virar `?search=&type=`, muda um arquivo só.
  * · Não existe endpoint que diga QUANTAS notícias usam um arquivo. O backend
  *   sabe (`existsByCoverImageId`), mas só usa isso para recusar o DELETE. A
  *   tela calcula a contagem cruzando com a lista de notícias que já está em
@@ -46,8 +49,8 @@ const jsonPart = (payload) =>
 
 const reusableFileHttpService = {
     getAll: async () => {
-        const { data } = await api.get('/reusable-files');
-        return data;
+        const { data } = await api.get('/reusable-files', { params: { size: 100 } });
+        return data.content ?? [];
     },
 
     getById: async (id) => {

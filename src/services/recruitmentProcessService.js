@@ -5,8 +5,8 @@ import { recruitmentProcessMockService } from '../mocks/recruitmentProcessMock';
 /**
  * Processos seletivos — endpoints reais (`RecruitmentProcessController`):
  *
- *   GET    /api/recruitment-process           todos
- *   GET    /api/recruitment-process/actives   só os ativos
+ *   GET    /api/recruitment-process           sempre paginado (PagedModel)
+ *   GET    /api/recruitment-process/actives   idem, só os ativos
  *   GET    /api/recruitment-process/{id}
  *   POST   /api/recruitment-process           multipart: "data" + "files"
  *   PUT    /api/recruitment-process/{id}      multipart: "data" + "files"
@@ -16,23 +16,28 @@ import { recruitmentProcessMockService } from '../mocks/recruitmentProcessMock';
  * Nenhuma data de abertura ou encerramento — quem controla se o processo está
  * aberto é o booleano `active`.
  *
- * ⚠️ Mesmo problema das notícias: `@RequestPart("files")` é obrigatório, então
- * criar um processo SEM anexo devolve 400. O briefing diz que um processo pode
- * não ter edital anexo. O backend precisa aceitar a lista vazia.
+ * Até pouco tempo atrás, `@RequestPart("files")` sem `required = false` fazia
+ * criar um processo SEM anexo devolver 400 (mesmo bug das notícias — testei
+ * ao vivo e confirmei). Um processo pode perfeitamente não ter edital anexo.
+ * `create`/`update` abaixo já faziam a coisa certa do lado do cliente (só
+ * mandam "files" quando há arquivo de verdade); o backend corrigiu a falta e
+ * reconfirmei ao vivo depois do fix.
  */
 
 const jsonPart = (payload) =>
     new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
 const recruitmentProcessHttpService = {
+    // size=100: mesma gambiarra de "trazer tudo" do newsService/contactService.
+    // Ver o comentário lá — vale a mesma pendência de paginação real aqui.
     getAll: async () => {
-        const { data } = await api.get('/recruitment-process');
-        return data;
+        const { data } = await api.get('/recruitment-process', { params: { size: 100 } });
+        return data.content ?? [];
     },
 
     getActives: async () => {
-        const { data } = await api.get('/recruitment-process/actives');
-        return data;
+        const { data } = await api.get('/recruitment-process/actives', { params: { size: 100 } });
+        return data.content ?? [];
     },
 
     getById: async (id) => {

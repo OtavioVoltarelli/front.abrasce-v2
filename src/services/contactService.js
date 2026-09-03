@@ -4,13 +4,22 @@ import { contactMockService } from '../mocks/contactMock';
 
 /**
  * Contatos — endpoints reais (`ContactController`):
- *   GET  /api/contacts
+ *   GET  /api/contacts   sempre paginado (PagedModel) — não existe filtro de
+ *                        data no backend; `admin/Contacts.jsx` filtra no
+ *                        cliente depois de buscar tudo.
  *   POST /api/contacts   JSON puro (este não é multipart)
  */
 const contactHttpService = {
+    /**
+     * `size=100` é a mesma gambiarra do `newsService`: sem paginação real na
+     * tela nem filtro de data no backend, é o jeito de "trazer tudo" com o
+     * contrato atual. Para de funcionar de verdade no dia em que a ABRASCE
+     * receber mais de 100 contatos — nesse ponto o backend precisa ganhar um
+     * filtro por data (como `CandidateFilterInput` já tem) e a tela, paginação.
+     */
     getAll: async () => {
-        const { data } = await api.get('/contacts');
-        return data;
+        const { data } = await api.get('/contacts', { params: { size: 100 } });
+        return data.content ?? [];
     },
 
     /**

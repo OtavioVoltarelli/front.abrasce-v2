@@ -5,8 +5,10 @@ import { newsMockService } from '../mocks/newsMock';
 /**
  * Notícias — endpoints reais do backend v2 (`NewsController`):
  *
- *   GET    /api/news                    lista completa
- *   GET    /api/news/top                últimas, paginado (PagedModel)
+ *   GET    /api/news                    ÚNICA rota de listagem — sempre paginada
+ *                                        (PagedModel), mesmo sem parâmetro nenhum.
+ *                                        Não existe `/api/news/top`: "últimas N" é
+ *                                        só `?size=N` nesta mesma rota.
  *   GET    /api/news/{id}
  *   POST   /api/news                    multipart: "data" (JSON) + "files"
  *   PUT    /api/news/{id}/data          JSON puro (a capa é um id, não arquivo)
@@ -33,15 +35,22 @@ import { newsMockService } from '../mocks/newsMock';
  * não há mais arquivo nenhum naquela requisição.
  *
  * ---------------------------------------------------------------------------
+ * "files" JÁ FOI OPCIONAL — HISTÓRICO
+ * ---------------------------------------------------------------------------
+ * Até pouco tempo atrás, `@RequestPart("files")` sem `required = false` fazia
+ * o Spring recusar com 400 quando a notícia não tinha anexo — testei ao vivo
+ * e confirmei que era IMPOSSÍVEL criar notícia sem arquivo. O backend corrigiu
+ * (`required = false` + `FileService.saveFileList` tratando `null` como lista
+ * vazia); reconfirmei ao vivo depois do fix. `create` abaixo já fazia a coisa
+ * certa do lado do cliente (só manda "files" quando existe arquivo de
+ * verdade) — não precisou mudar nada aqui, só esperar o backend.
+ *
+ * ---------------------------------------------------------------------------
  * O QUE AINDA FALTA NO BACKEND
  * ---------------------------------------------------------------------------
- * 1. A PARTE "files" É OBRIGATÓRIA NO POST. `@RequestPart("files")` sem
- *    `required = false` faz o Spring recusar com 400 quando ela não vem — mas
- *    uma notícia pode não ter anexo. `create` abaixo contorna mandando uma
- *    parte vazia; o certo é o backend aceitar a ausência.
- * 2. ATUALIZAR AINDA EXIGE DUAS CHAMADAS (`/data` e `/attachment`), sem
- *    transação entre elas. Se a segunda falhar, a notícia fica com o texto novo
- *    e os anexos velhos, sem nada avisando.
+ * ATUALIZAR AINDA EXIGE DUAS CHAMADAS (`/data` e `/attachment`), sem transação
+ * entre elas. Se a segunda falhar, a notícia fica com o texto novo e os
+ * anexos velhos, sem nada avisando.
  */
 
 /** A parte "data" tem que ir como Blob com type application/json, senão o
@@ -50,18 +59,24 @@ const jsonPart = (payload) =>
     new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
 const newsHttpService = {
+    /**
+     * `/news` responde um PagedModel do Spring: os itens vêm dentro de
+     * `content`, não no corpo direto. Desembrulhamos AQUI para que nenhuma
+     * tela precise saber que o endpoint é paginado.
+     *
+     * PENDÊNCIA: `size=100` é gambiarra, não paginação de verdade — funciona
+     * enquanto o site tiver poucas dezenas de notícias e para de trazer tudo
+     * no dia em que passar de 100. `News/index.jsx` e `admin/NewsList.jsx`
+     * foram escritas para uma lista completa (sem "carregar mais"); paginação
+     * real exige mudar as duas telas, não só este service.
+     */
     getAll: async () => {
-        const { data } = await api.get('/news');
-        return data;
+        const { data } = await api.get('/news', { params: { size: 100 } });
+        return data.content ?? [];
     },
 
-    /**
-     * `/news/top` responde um PagedModel do Spring: os itens vêm dentro de
-     * `content`. Desembrulhamos AQUI para que nenhuma tela precise saber que
-     * este endpoint é paginado e os outros não.
-     */
     getLatest: async (quantity = 6) => {
-        const { data } = await api.get('/news/top', { params: { size: quantity } });
+        const { data } = await api.get('/news', { params: { size: quantity } });
         return data.content ?? [];
     },
 
@@ -74,15 +89,9 @@ const newsHttpService = {
         const form = new FormData();
         form.append('data', jsonPart({ ...input, coverImageId: Number(coverImageId) }));
 
-        if (files.length > 0) {
-            files.forEach((file) => form.append('files', file));
-        } else {
-            /* Contorno do item 1 acima: o Spring exige a parte "files". Um Blob
-               vazio com nome vazio faz a parte existir sem enviar arquivo
-               nenhum. É gambiarra, está marcada como tal, e sai no dia em que o
-               backend puser `required = false`. */
-            form.append('files', new Blob([]), '');
-        }
+        // Só manda a parte "files" quando existe arquivo de verdade — sem
+        // anexo, o backend aceita a ausência da parte (ver histórico acima).
+        files.forEach((file) => form.append('files', file));
 
         const { data } = await api.post('/news', form);
         return data;

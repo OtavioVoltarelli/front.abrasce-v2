@@ -13,11 +13,14 @@ import { candidateMockService } from '../mocks/candidateMock';
  * `phoneNumber`, `candidationDate` em vez de `candidateDate`).
  */
 const candidateHttpService = {
+    // Também paginado (PagedModel) — mesma gambiarra de `size=100` do
+    // newsService/contactService/recruitmentProcessService até a tela ganhar
+    // paginação de verdade.
     findByFilter: async ({ recruitmentProcessId, startDate, finalDate }) => {
         const { data } = await api.get('/candidates/recruitment-process', {
-            params: { recruitmentProcessId, startDate, finalDate },
+            params: { recruitmentProcessId, startDate, finalDate, size: 100 },
         });
-        return data;
+        return data.content ?? [];
     },
 
     /**
