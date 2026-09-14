@@ -111,9 +111,3 @@ export function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
-
-/** Extrai o nome legível de um caminho de arquivo vindo do backend. */
-export function fileNameFromPath(path) {
-    if (!path) return 'Anexo';
-    return decodeURIComponent(String(path).split('/').pop());
-}

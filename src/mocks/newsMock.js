@@ -3,7 +3,9 @@
  *
  * Cada objeto tem EXATAMENTE os campos de `NewsOutput` do backend v2:
  * id, title, shortDescription, longDescription, creationDate,
- * coverImage (objeto ReusableFileOutput ou null), filesPath[].
+ * coverImage (objeto ReusableFileOutput ou null),
+ * filesPath (lista de `StoredFileOutput` — `{ storedName, originalName,
+ * contentType }` — nunca null, lista vazia quando não há anexo).
  *
  * ---------------------------------------------------------------------------
  * A CAPA VIRO REFERÊNCIA, NÃO CÓPIA
@@ -29,6 +31,10 @@
 import { findReusableFileById } from './reusableFileMock';
 import { delay } from './delay';
 
+/** Imita `StoredFileOutput.from` do backend a partir de um nome de arquivo
+ *  fixo — sem servidor de verdade, `storedName` e `originalName` coincidem. */
+const toStoredFile = (name) => ({ storedName: name, originalName: name, contentType: 'application/pdf' });
+
 let NEWS = [
     {
         id: 1,
@@ -39,7 +45,7 @@ let NEWS = [
             'A Escola de Artes de Jaboticabal, mantida pela ABRASCE em parceria com a prefeitura municipal, abriu 120 novas vagas para as oficinas de música e dança do segundo semestre.\n\nAs turmas atendem crianças e adolescentes de 7 a 17 anos e acontecem no contraturno escolar, de segunda a sexta-feira. Serão oferecidas oficinas de violão, percussão, canto coral, dança contemporânea e dança de salão.\n\nAs inscrições podem ser feitas presencialmente na sede do projeto ou pelo formulário em https://www.abrascesocial.org.br/oficinas/inscricao, mediante apresentação de documento com foto do responsável, comprovante de residência e declaração de matrícula escolar do aluno. Não há cobrança de mensalidade ou taxa de inscrição.\n\nO edital completo está em https://www.prefeitura.jaboticabal.sp.gov.br/cultura/editais/2026/edital-oficinas-musica-danca-versao-final.pdf e as dúvidas podem ser enviadas para oficinas@abrascesocial.org.br.\n\nAs aulas começam na primeira semana do mês seguinte. Em caso de dúvidas, a coordenação atende pelo telefone da associação.',
         creationDate: '2026-07-28T09:15:00',
         coverImageId: 2,
-        filesPath: ['edital-oficinas-2026.pdf', 'ficha-de-inscricao.pdf'],
+        filesPath: ['edital-oficinas-2026.pdf', 'ficha-de-inscricao.pdf'].map(toStoredFile),
     },
     {
         id: 2,
@@ -61,7 +67,7 @@ let NEWS = [
             'O projeto Esporte Moratense, de Francisco Morato, encerrou a temporada com um torneio comunitário que reuniu mais de 200 atletas de 8 a 16 anos no ginásio municipal.\n\nA competição contou com modalidades de futsal, vôlei e handebol, divididas por faixa etária. Além das partidas, o evento teve apresentação da fanfarra da escola municipal e distribuição de lanches às famílias presentes.\n\nAo longo do ano, o projeto atendeu 380 crianças e adolescentes em treinos regulares de segunda a sábado.',
         creationDate: '2026-06-30T17:00:00',
         coverImageId: 4,
-        filesPath: ['relatorio-temporada.pdf'],
+        filesPath: ['relatorio-temporada.pdf'].map(toStoredFile),
     },
     {
         id: 4,
@@ -71,7 +77,7 @@ let NEWS = [
             'O balanço financeiro referente ao exercício anterior, auditado por empresa independente, já está disponível na área de transparência do site.\n\nO documento detalha a origem de todos os recursos recebidos, sua destinação por projeto e município, e os custos administrativos da associação no período.\n\nO documento pode ser consultado na área de transparência do site (www.abrascesocial.org.br/transparencia). A ABRASCE reforça seu compromisso com a prestação de contas clara e acessível a doadores, parceiros e à comunidade atendida.',
         creationDate: '2026-06-05T08:00:00',
         coverImageId: 1,
-        filesPath: ['balanco-financeiro.pdf', 'parecer-auditoria.pdf', 'notas-explicativas.pdf'],
+        filesPath: ['balanco-financeiro.pdf', 'parecer-auditoria.pdf', 'notas-explicativas.pdf'].map(toStoredFile),
     },
     {
         id: 5,
@@ -131,15 +137,15 @@ const withCover = (news) => ({
 });
 
 /**
- * Transforma o que o formulário entrega no formato que o backend devolveria.
- *
- * Arquivos escolhidos pelo formulário são objetos `File` do navegador; o
- * backend devolveria nomes de arquivo (String). `URL.createObjectURL` cria um
- * endereço temporário que o <img> consegue exibir — é o suficiente para ver a
- * tela funcionando sem servidor.
+ * Transforma o que o formulário entrega (um `File` do navegador) no formato
+ * que o backend devolveria (`StoredFileOutput`). `URL.createObjectURL` cria
+ * um endereço temporário que a tela consegue abrir — é o suficiente para ver
+ * a tela funcionando sem servidor.
  */
-const fileToPath = (file) =>
-    file instanceof File ? URL.createObjectURL(file) : file;
+const fileToStoredFile = (file) =>
+    file instanceof File
+        ? { storedName: URL.createObjectURL(file), originalName: file.name, contentType: file.type }
+        : file;
 
 export const newsMockService = {
     getAll: async () => {
@@ -174,7 +180,7 @@ export const newsMockService = {
             id: nextId,
             creationDate: new Date().toISOString(),
             coverImageId: Number(coverImageId),
-            filesPath: files.map(fileToPath),
+            filesPath: files.map(fileToStoredFile),
         };
 
         nextId += 1;
@@ -195,7 +201,7 @@ export const newsMockService = {
             // Campo em branco = "não mexi nisso", e não "apague". Sem esta
             // checagem, editar só o título limparia a capa e os anexos.
             coverImageId: coverImageId ? Number(coverImageId) : current.coverImageId,
-            filesPath: files ? files.map(fileToPath) : current.filesPath,
+            filesPath: files ? files.map(fileToStoredFile) : current.filesPath,
         };
 
         NEWS = NEWS.with(index, updated);

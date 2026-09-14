@@ -1,6 +1,6 @@
 import { useId, useRef } from 'react';
 import { cn } from '../../lib/cn';
-import { formatFileSize, fileNameFromPath } from '../../lib/format';
+import { formatFileSize } from '../../lib/format';
 
 /**
  * Envio de VÁRIOS arquivos — os anexos de uma notícia ou o edital de um
@@ -14,7 +14,8 @@ import { formatFileSize, fileNameFromPath } from '../../lib/format';
  *
  * · A lista mostra os anexos QUE JÁ EXISTEM na notícia sendo editada, marcados
  *   como "já publicado". Sem isso, ao editar, a pessoa vê um campo vazio e
- *   conclui que os anexos sumiram.
+ *   conclui que os anexos sumiram. `existingFiles` é a lista de
+ *   `StoredFileOutput` do backend (`{ storedName, originalName, contentType }`).
  *
  * · Trocar os anexos é uma ação explícita ("Substituir todos os anexos"), e não
  *   um efeito colateral de tocar no campo. O motivo é o backend: ele não sabe
@@ -57,7 +58,7 @@ export default function MultiFileUpload({
                 <ul className="space-y-2">
                     {existingFiles.map((file) => (
                         <li
-                            key={file}
+                            key={file.storedName}
                             className="flex items-center gap-3 rounded-xl bg-sand p-3 ring-1 ring-inset ring-line"
                         >
                             <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-white text-brand-600 ring-1 ring-line">
@@ -67,7 +68,7 @@ export default function MultiFileUpload({
                             </span>
                             <span className="min-w-0 flex-1">
                                 <span className="block truncate text-sm font-semibold text-ink-900">
-                                    {fileNameFromPath(file)}
+                                    {file.originalName}
                                 </span>
                                 <span className="block text-xs text-muted">Já publicado</span>
                             </span>

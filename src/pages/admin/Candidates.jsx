@@ -51,7 +51,7 @@ const EXPORT_COLUMNS = [
         // O código antigo removia esta coluna da planilha. Ela volta como
         // ENDEREÇO COMPLETO: um caminho interno ("cv/ana.pdf") não serve para
         // nada em um Excel; um link abre o arquivo com um clique.
-        value: (row) => (USE_MOCKS ? row.cvUrl : `${API_URL}/candidates/${row.id}/cv`),
+        value: (row) => (row.cv ? (USE_MOCKS ? row.cv.storedName : `${API_URL}/candidates/${row.id}/cv`) : ''),
         width: 40,
     },
 ];
@@ -239,7 +239,7 @@ export default function AdminCandidates() {
                                         {candidate.cnpj && <Field label="CNPJ">{formatCnpj(candidate.cnpj)}</Field>}
                                     </dl>
 
-                                    {candidate.cvUrl && (
+                                    {candidate.cv && (
                                         <a
                                             href={USE_MOCKS ? '#' : `${API_URL}/candidates/${candidate.id}/cv`}
                                             target="_blank"

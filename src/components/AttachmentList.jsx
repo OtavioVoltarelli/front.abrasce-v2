@@ -1,6 +1,5 @@
 import { useId } from 'react';
 import { fileUrl } from '../services/config';
-import { fileNameFromPath } from '../lib/format';
 
 /**
  * Lista de anexos de uma notícia ou processo seletivo.
@@ -16,6 +15,11 @@ import { fileNameFromPath } from '../lib/format';
  * Cada anexo é um link comum. Não é `<a download>` porque a ideia é ABRIR o
  * PDF — no celular, o navegador mostra o documento na hora; forçar o download
  * joga o arquivo numa pasta que a pessoa vai ter que caçar.
+ *
+ * `files` é a lista de `StoredFileOutput` que o backend devolve —
+ * `{ storedName, originalName, contentType }`, sem `id`. `storedName` é o
+ * nome físico no servidor (entra na URL); `originalName` é o nome que a
+ * pessoa que fez upload usou (é o que aparece na tela).
  */
 export default function AttachmentList({ files, category, title = 'Documentos' }) {
     // `useId` em vez de um id fixo: se um dia a página tiver duas listas
@@ -32,9 +36,9 @@ export default function AttachmentList({ files, category, title = 'Documentos' }
 
             <ul className="mt-4 space-y-2">
                 {files.map((file) => (
-                    <li key={file}>
+                    <li key={file.storedName}>
                         <a
-                            href={fileUrl(category, file)}
+                            href={fileUrl(category, file.storedName)}
                             target="_blank"
                             rel="noreferrer"
                             className="flex min-h-14 items-center gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-line transition-colors hover:bg-brand-50 hover:ring-brand-300"
@@ -47,7 +51,7 @@ export default function AttachmentList({ files, category, title = 'Documentos' }
 
                             <span className="min-w-0 flex-1">
                                 <span className="block truncate text-sm font-semibold text-ink-900">
-                                    {fileNameFromPath(file)}
+                                    {file.originalName}
                                 </span>
                                 {/* Avisar que abre em outra aba é uma exigência de
                                     acessibilidade: uma aba nova sem aviso desorienta

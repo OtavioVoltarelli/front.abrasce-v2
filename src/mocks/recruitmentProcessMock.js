@@ -1,6 +1,8 @@
 /**
  * Processos seletivos — espelha `RecruitmentProcessOutput` do backend v2:
- * id, title, description, active, creationDate, filesPaths[].
+ * id, title, description, active, creationDate,
+ * filesPaths (lista de `StoredFileOutput` — `{ storedName, originalName,
+ * contentType }` — nunca null, lista vazia quando não há anexo).
  *
  * Atenção ao nome do campo de anexos: aqui é `filesPaths` (com S no meio),
  * enquanto em notícias é `filesPath`. É assim no backend — a inconsistência é
@@ -13,6 +15,10 @@
 
 import { delay } from './delay';
 
+/** Imita `StoredFileOutput.from` do backend a partir de um nome de arquivo
+ *  fixo — sem servidor de verdade, `storedName` e `originalName` coincidem. */
+const toStoredFile = (name) => ({ storedName: name, originalName: name, contentType: 'application/pdf' });
+
 let RECRUITMENT_PROCESSES = [
     {
         id: 1,
@@ -21,7 +27,7 @@ let RECRUITMENT_PROCESSES = [
             'A ABRASCE seleciona professor de música para atuar nas oficinas da Escola de Artes de Jaboticabal.\n\nATRIBUIÇÕES\nMinistrar oficinas de violão e percussão para crianças e adolescentes de 7 a 17 anos, no contraturno escolar; planejar aulas e registrar frequência; participar das reuniões pedagógicas mensais.\n\nREQUISITOS\nFormação em música ou experiência comprovada de no mínimo dois anos com ensino musical para crianças e adolescentes. Disponibilidade para trabalhar de segunda a sexta-feira, 20 horas semanais.\n\nCARGA HORÁRIA E REMUNERAÇÃO\n20 horas semanais. Remuneração e benefícios detalhados no edital anexo.\n\nINSCRIÇÕES\nAs inscrições são feitas exclusivamente por este site, com o envio do currículo no formulário ao final desta página. Leia o edital completo antes de se inscrever.\n\nO edital na íntegra está em https://www.abrascesocial.org.br/vagas/edital-2026.pdf e as dúvidas devem ser enviadas para selecao@abrascesocial.org.br.',
         active: true,
         creationDate: '2026-08-04T09:00:00',
-        filesPaths: ['edital-professor-musica.pdf', 'anexo-i-cronograma.pdf'],
+        filesPaths: ['edital-professor-musica.pdf', 'anexo-i-cronograma.pdf'].map(toStoredFile),
     },
     {
         id: 2,
@@ -30,7 +36,7 @@ let RECRUITMENT_PROCESSES = [
             'Vaga para assistente social na Residência Inclusiva de Casa Branca.\n\nATRIBUIÇÕES\nAcompanhamento social dos residentes e de suas famílias; elaboração de relatórios técnicos; articulação com a rede de proteção social do município.\n\nREQUISITOS\nGraduação em Serviço Social e registro ativo no CRESS. Experiência com serviços de acolhimento institucional será considerada diferencial.\n\nCARGA HORÁRIA\n30 horas semanais, de segunda a sexta-feira.',
         active: true,
         creationDate: '2026-07-21T13:30:00',
-        filesPaths: ['edital-assistente-social.pdf'],
+        filesPaths: ['edital-assistente-social.pdf'].map(toStoredFile),
     },
     {
         id: 3,
@@ -48,7 +54,7 @@ let RECRUITMENT_PROCESSES = [
             'Seleção de cuidadores para a Residência Inclusiva de Casa Branca, em regime de escala 12x36.\n\nATRIBUIÇÕES\nApoio nas atividades da vida diária dos residentes: higiene, alimentação, medicação sob orientação da enfermagem, acompanhamento em consultas e atividades de convivência.\n\nREQUISITOS\nEnsino médio completo e curso de cuidador de idosos ou de pessoas com deficiência. Experiência anterior em serviço de acolhimento é desejável, mas não obrigatória.\n\nO processo contempla análise curricular, entrevista e formação inicial obrigatória de 16 horas, remunerada.',
         active: true,
         creationDate: '2026-06-27T08:45:00',
-        filesPaths: ['edital-cuidador.pdf', 'anexo-escala.pdf', 'declaracao-de-experiencia.pdf'],
+        filesPaths: ['edital-cuidador.pdf', 'anexo-escala.pdf', 'declaracao-de-experiencia.pdf'].map(toStoredFile),
     },
     {
         id: 5,
@@ -57,7 +63,7 @@ let RECRUITMENT_PROCESSES = [
             'Vaga encerrada. Coordenação pedagógica do programa Apoio Escolar, com responsabilidade sobre o planejamento das turmas de reforço e a formação continuada dos professores voluntários.',
         active: false,
         creationDate: '2026-03-11T15:20:00',
-        filesPaths: ['edital-coordenador.pdf'],
+        filesPaths: ['edital-coordenador.pdf'].map(toStoredFile),
     },
     {
         id: 6,
@@ -74,7 +80,12 @@ let nextId = Math.max(...RECRUITMENT_PROCESSES.map((item) => item.id)) + 1;
 
 const clone = (value) => structuredClone(value);
 
-const fileToPath = (file) => (file instanceof File ? URL.createObjectURL(file) : file);
+/** Transforma um `File` do navegador no formato que o backend devolveria
+ *  (`StoredFileOutput`) — mesma lógica do `newsMock.js`. */
+const fileToStoredFile = (file) =>
+    file instanceof File
+        ? { storedName: URL.createObjectURL(file), originalName: file.name, contentType: file.type }
+        : file;
 
 export const recruitmentProcessMockService = {
     getAll: async () => {
@@ -105,7 +116,7 @@ export const recruitmentProcessMockService = {
             ...data,
             id: nextId,
             creationDate: new Date().toISOString(),
-            filesPaths: files.map(fileToPath),
+            filesPaths: files.map(fileToStoredFile),
         };
 
         nextId += 1;
@@ -123,7 +134,7 @@ export const recruitmentProcessMockService = {
         const updated = {
             ...current,
             ...data,
-            filesPaths: files ? files.map(fileToPath) : current.filesPaths,
+            filesPaths: files ? files.map(fileToStoredFile) : current.filesPaths,
         };
 
         RECRUITMENT_PROCESSES = RECRUITMENT_PROCESSES.with(index, updated);
