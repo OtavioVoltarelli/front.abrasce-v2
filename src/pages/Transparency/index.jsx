@@ -33,7 +33,18 @@ import { TRANSPARENCY_TEXT } from '../../content/institutional';
  * dentro de um componente. Nenhum dos dois sobrevive ao mundo real.
  */
 
-/** Ícone e rótulo de cada linha da árvore. */
+/**
+ * Ícone e rótulo de cada linha da árvore.
+ *
+ * `event.stopPropagation()` no clique é OBRIGATÓRIO aqui, não estilo. Este
+ * `<div>` fica dentro do `<div>` que o próprio react-arborist desenha pra
+ * linha, e aquele `<div>` de fora já tem seu PRÓPRIO `onClick`
+ * (`node.handleClick`, definido na lib) que faz `select()` + `activate()`
+ * sozinho. Sem parar a propagação, um clique dispara os dois: o nosso
+ * `activate()` aqui embaixo, e o `handleClick` da lib lá em cima — cada um
+ * chamando `onActivate` (que abre o PDF), duas vezes. Era exatamente isso
+ * que abria duas guias por clique.
+ */
 function TreeNode({ node, style, dragHandle }) {
     const isFolder = node.isInternal;
 
@@ -41,7 +52,12 @@ function TreeNode({ node, style, dragHandle }) {
         <div
             ref={dragHandle}
             style={style}
-            onClick={() => (isFolder ? node.toggle() : node.activate())}
+            onClick={(event) => {
+                event.stopPropagation();
+                node.select();
+                if (isFolder) node.toggle();
+                else node.activate();
+            }}
             className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 text-white/90 transition-colors hover:bg-white/10"
         >
             {isFolder ? (
