@@ -1,6 +1,11 @@
 import './styles/theme.css';
 import AppRoutes from './routes/AppRoutes';
+import { AuthProvider } from './context/AuthProvider';
 
 export default function App() {
-    return <AppRoutes />;
+    return (
+        <AuthProvider>
+            <AppRoutes />
+        </AuthProvider>
+    );
 }

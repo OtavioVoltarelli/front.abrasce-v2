@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import PublicLayout from '../components/layout/PublicLayout';
 import AdminLayout from '../components/layout/AdminLayout';
+import PrivateRoute from './PrivateRoute';
 import Spinner from '../components/ui/Spinner';
 
 /**
@@ -48,6 +49,7 @@ const Transparency = lazy(() => import('../pages/Transparency'));
 const NotFound = lazy(() => import('../pages/NotFound'));
 
 /* -------------------------------------------------------------------- admin */
+const Login = lazy(() => import('../pages/Login'));
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
 const AdminRecruitmentList = lazy(() => import('../pages/admin/RecruitmentList'));
 const AdminRecruitmentForm = lazy(() => import('../pages/admin/RecruitmentForm'));
@@ -114,28 +116,33 @@ export default function AppRoutes() {
                         <Route path="*" element={<NotFound />} />
                     </Route>
 
+                    {/* ============================================== LOGIN === */}
+                    <Route path="/login" element={<Login />} />
+
                     {/* ============================================== ADMIN === */}
-                    {/* ⚠️ SEM PROTEÇÃO DE ROTA. É intencional nesta etapa: o
-                        backend v2 ainda não tem autenticação, e esconder a tela
-                        no front não protege nada — quem souber o endereço da API
-                        chama direto. Precisa entrar antes de publicar. */}
-                    <Route path="/admin" element={<AdminLayout />}>
-                        <Route index element={<AdminDashboard />} />
+                    {/* `<PrivateRoute>` é outra rota de layout, igual a `PublicLayout`
+                        e `AdminLayout`: não tem caminho próprio, só decide se deixa
+                        a rota filha (`AdminLayout` e tudo dentro dele) renderizar,
+                        ou redireciona pra `/login`. */}
+                    <Route element={<PrivateRoute />}>
+                        <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<AdminDashboard />} />
 
-                        <Route path="processos-seletivos" element={<AdminRecruitmentList />} />
-                        <Route path="processos-seletivos/novo" element={<AdminRecruitmentForm />} />
-                        <Route path="processos-seletivos/:id" element={<AdminRecruitmentForm />} />
+                            <Route path="processos-seletivos" element={<AdminRecruitmentList />} />
+                            <Route path="processos-seletivos/novo" element={<AdminRecruitmentForm />} />
+                            <Route path="processos-seletivos/:id" element={<AdminRecruitmentForm />} />
 
-                        <Route path="noticias" element={<AdminNewsList />} />
-                        <Route path="noticias/nova" element={<AdminNewsForm />} />
-                        <Route path="noticias/:id" element={<AdminNewsForm />} />
+                            <Route path="noticias" element={<AdminNewsList />} />
+                            <Route path="noticias/nova" element={<AdminNewsForm />} />
+                            <Route path="noticias/:id" element={<AdminNewsForm />} />
 
-                        <Route path="arquivos" element={<AdminMediaLibrary />} />
+                            <Route path="arquivos" element={<AdminMediaLibrary />} />
 
-                        <Route path="candidatos" element={<AdminCandidates />} />
-                        <Route path="contatos" element={<AdminContacts />} />
+                            <Route path="candidatos" element={<AdminCandidates />} />
+                            <Route path="contatos" element={<AdminContacts />} />
 
-                        <Route path="*" element={<Navigate to="/admin" replace />} />
+                            <Route path="*" element={<Navigate to="/admin" replace />} />
+                        </Route>
                     </Route>
                 </Routes>
             </Suspense>

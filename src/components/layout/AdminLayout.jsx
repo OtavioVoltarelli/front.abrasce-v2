@@ -1,9 +1,10 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { cn } from '../../lib/cn';
 import { ADMIN_NAV } from '../../lib/adminNavigation';
 import TriangleMark from '../ui/TriangleMark';
 import { accentVars } from '../../lib/palette';
+import { useAuth } from '../../hooks/useAuth';
 
 /**
  * Moldura do painel administrativo.
@@ -35,10 +36,19 @@ import { accentVars } from '../../lib/palette';
  */
 export default function AdminLayout() {
     const { pathname } = useLocation();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, [pathname]);
+
+    // `replace`: sai do painel e o "voltar" do navegador não deveria devolver
+    // a uma tela que já exige login de novo — mesma lógica do PrivateRoute.
+    const handleLogout = () => {
+        logout();
+        navigate('/login', { replace: true });
+    };
 
     /* UMA função de classes serve às cinco seções, apesar de cada uma ter a sua
        cor. O truque é que a cor não está na classe: `bg-[var(--accent-tint)]` é
@@ -87,6 +97,12 @@ export default function AdminLayout() {
                 </nav>
 
                 <div className="border-t border-line p-3">
+                    {user && (
+                        <p className="truncate px-4 pb-1 pt-2 text-xs text-muted">
+                            Logado como <span className="font-semibold text-ink-800">{user.email}</span>
+                        </p>
+                    )}
+
                     {/* <Link>, não <a href>: dentro de um app de página única,
                         o <a> recarrega o site inteiro (baixa o HTML, o CSS e o
                         JavaScript de novo). O <Link> só troca a tela. */}
@@ -99,6 +115,17 @@ export default function AdminLayout() {
                         </svg>
                         Ver o site
                     </Link>
+
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-4 text-sm font-semibold text-muted transition-colors hover:bg-sand hover:text-ink-900"
+                    >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9M10 12h11m0 0-4-4m4 4-4 4" />
+                        </svg>
+                        Sair
+                    </button>
                 </div>
             </aside>
 
@@ -119,15 +146,32 @@ export default function AdminLayout() {
                                 Painel ABRASCE
                             </span>
                         </Link>
-                        <Link
-                            to="/"
-                            className="-mr-2 flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted"
-                        >
-                            Ver o site
-                            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
-                            </svg>
-                        </Link>
+                        <div className="-mr-2 flex items-center">
+                            <Link
+                                to="/"
+                                className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted"
+                            >
+                                Ver o site
+                                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
+                                </svg>
+                            </Link>
+
+                            {/* Ícone só, sem rótulo: com "Ver o site" ao lado, um
+                                segundo texto ("Sair") aqui apertaria demais a
+                                largura de 320px. O `aria-label` garante que quem
+                                usa leitor de tela ainda ouve o nome da ação. */}
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                aria-label="Sair"
+                                className="grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-sand hover:text-ink-900"
+                            >
+                                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9M10 12h11m0 0-4-4m4 4-4 4" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </header>
 
