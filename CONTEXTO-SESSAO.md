@@ -1,7 +1,7 @@
 # Contexto da sessão — Redesign V2 (site público + painel admin)
 
 > Documento de passagem de bastão. Leia junto com o `CLAUDE.md`.
-> Última atualização: 2026-08-20.
+> Última atualização: 2026-09-14.
 
 ---
 
@@ -9,7 +9,11 @@
 
 **Entrega 1** — redesenho completo do site público.
 **Entrega 2** — painel administrativo inteiro.
-As duas com dados mockados; nada foi ligado ao backend ainda.
+**Entrega 3** — autenticação real com o backend (ver seção própria mais abaixo).
+
+As entregas 1 e 2 começaram com dados mockados e já foram ligadas ao backend de
+verdade (commit `058fb77` e a entrega 3). O modo mock (`VITE_USE_MOCKS`) continua
+existindo para desenvolver sem precisar subir o backend, mas não é mais o padrão.
 
 Três decisões foram tomadas pelo usuário no início:
 
@@ -216,6 +220,64 @@ e não só quando ela volta positiva.
 
 ---
 
+## Autenticação
+
+O backend v2 já tinha o módulo de auth pronto (`AuthController`, JWT stateless,
+`SecurityConfig` protegendo tudo por padrão) quando esta parte foi feita. O front
+espelha o contrato real:
+
+```
+POST /api/auth/login   { email, password } → { token, email, role }
+```
+
+| Camada | Arquivo |
+|---|---|
+| Contrato HTTP (sem modo mock, ver abaixo) | `services/authService.js` |
+| Estado global de "quem está logado" | `context/authContext.js` + `AuthProvider.jsx` |
+| Atalho pra ler o context | `hooks/useAuth.js` |
+| Mutação de login (React Query) | `hooks/useLogin.js` |
+| Tela de login | `pages/Login/index.jsx` |
+| Portão das rotas `/admin` | `routes/PrivateRoute.jsx` |
+| Interceptors (token na requisição, 401 na resposta) | `services/api.js` |
+
+**Sem modo mock aqui**, diferente de todo outro service: dá pra fingir uma lista de
+notícias, não dá pra fingir "esta senha está certa" sem duplicar a lógica de
+autenticação do backend dentro do front. Consequência: com `VITE_USE_MOCKS=true`,
+o site público funciona igual, mas o painel fica inacessível (sem login de verdade,
+o `PrivateRoute` nunca tem token pra mostrar).
+
+**Onde o token mora:** `localStorage`, na chave `AUTH_STORAGE_KEY` (`services/api.js`,
+exportada de lá porque é o único arquivo dos dois lados — quem salva e quem lê —
+que o outro importa sem criar dependência circular). O `AuthProvider` lê essa chave
+uma vez, no primeiro render (`useState(readStoredAuth)`), o que faz um F5 não
+deslogar ninguém.
+
+**Os dois interceptors do `api.js` fazem o trabalho pesado:**
+1. **Requisição:** gruda `Authorization: Bearer <token>` em toda chamada
+   automaticamente. Sem isso, cada um dos 9 services precisaria lembrar de montar o
+   header na mão — e como o backend agora protege quase tudo por padrão
+   (`anyRequest().authenticated()`), um esquecimento quebraria a tela em 401 sem
+   aviso. A leitura do `localStorage` é protegida por `try/catch`: um JSON
+   corrompido não pode quebrar toda chamada de API (isso já aconteceu — ver a
+   correção na tabela abaixo).
+2. **Resposta:** traduz `error.response.data.detail` (o `ProblemDetail` do backend)
+   pra `error.message`, e em qualquer 401 que não seja o próprio `/auth/login`
+   (senha errada é erro diferente de sessão expirada) limpa o token e manda a
+   pessoa pra `/login` com `window.location.href` — recarga completa de propósito,
+   porque o interceptor roda fora de qualquer componente e não tem acesso ao
+   `navigate()` do React Router, e a recarga também zera o cache do React Query
+   (que pode ter dado de outra pessoa).
+
+**Verificado contra o backend local** (usuário seed do `AdminSeeder`,
+`admin@abrasce.com.br` / `admin123`): o formato de sucesso e de erro do
+`POST /api/auth/login` bate exatamente com o que o front espera, e o token gerado
+autentica normalmente numa rota protegida. Testado manualmente no navegador —
+funcionou.
+
+Único papel existe hoje no backend (`Role.ADMIN` — ver comentário no enum: "um
+papel só por enquanto"), então o front não faz nenhuma distinção de permissão por
+`role`; ele só guarda e exibe.
+
 ## Correções feitas no caminho
 
 | Onde | O quê |
@@ -234,6 +296,8 @@ e não só quando ela volta positiva.
 | `ImageUpload` | `URL.createObjectURL` sem `revokeObjectURL` vazava memória a cada troca de imagem. |
 | Barra inferior | "Candidatos" a 11px estoura a célula de 64px num aparelho de 320px → 10px até 359px. |
 | `Button` | `mailto:` e `tel:` abriam uma aba em branco órfã antes de acionar o aplicativo. |
+| `api.js` | Interceptor de requisição lia o token do `localStorage` sem `try/catch`, diferente do `AuthProvider`. Um JSON corrompido quebraria toda chamada de API com um erro genérico em vez de cair no login. |
+| `Candidates.jsx`, `AttachmentList.jsx`, `MultiFileUpload.jsx` | Três lugares ainda tratavam anexo/currículo como STRING (`candidate.cvUrl`, `filesPath`/`filesPaths` como array de nome de arquivo). O backend já manda objeto (`StoredFileOutput` — `storedName`, `originalName`, `contentType` — ou `CandidateOutput.cv`). Achado numa troca de contrato com a sessão do backend; conferido contra o `NewsController`/`CandidateOutput.java` e contra dados reais do backend local antes de corrigir. |
 
 ---
 
@@ -259,8 +323,11 @@ e não só quando ela volta positiva.
   data (o "até 15/08" que descartava o dia 15 inteiro).
 - Contraste WCAG AA (4.5:1): 17 combinações medidas, **todas passam**.
 - Nenhuma `<table>`, nenhuma largura fixa grande, nenhum alvo de toque < 44px.
-- **NÃO foi testado em navegador nem em celular real** — não havia ferramenta
-  de navegador na sessão. É o primeiro passo da revisão.
+- **O fluxo de autenticação foi testado manualmente no navegador** (login, erro de
+  senha errada, logout) e funcionou. **O resto do redesenho segue sem teste em
+  navegador nem em celular real** — ainda não havia ferramenta de navegador
+  disponível quando essas telas foram feitas. Continua sendo o próximo passo da
+  revisão.
 
 ---
 
@@ -268,47 +335,44 @@ e não só quando ela volta positiva.
 
 1. **`.env.production` continua sem a URL do backend.** Pergunta aberta: qual
    é a URL do backend v2 em produção? (a da v1 era
-   `https://www.abrascesocial.org.br/api`)
-2. **Autenticação foi removida** junto com o painel antigo: `AuthContext`,
-   `PrivateRoute` e a página `/login` não existem mais. Isso segue o combinado
-   (o backend v2 não tem segurança e o briefing dispensou proteção de rota
-   nesta etapa), mas precisa voltar antes de qualquer publicação.
-3. **Dependências agora sem uso:** `js-cookie` (era do AuthContext) e
-   `@tanstack/react-query-devtools` (nunca foi ligado). `xlsx` volta a ser
-   usada na Entrega 2 (exportar candidatos e contatos).
-4. **`transparencyAdminService.js` ficou órfão.** A tela de administração da
+   `https://www.abrascesocial.org.br/api`). Agora bloqueia também o login, não
+   só as chamadas comuns de API.
+2. **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado —
+   dependência sem uso. (`js-cookie`, que era do `AuthContext` antigo, já foi
+   removido junto com a Entrega 3. `xlsx` já está em uso — exportar candidatos
+   e contatos.)
+3. **`transparencyAdminService.js` ficou órfão.** A tela de administração da
    transparência não está no escopo do novo painel; o service foi mantido para
    a funcionalidade não se perder. Decidir o destino dela.
-5. As fotos das áreas são 300×300 e genéricas. Fotos reais dos projetos
+4. As fotos das áreas são 300×300 e genéricas. Fotos reais dos projetos
    melhorariam muito a página de Projetos e a Home.
+5. **Atualizar notícia exige duas chamadas ao backend** (`PUT {id}/data` +
+   `PUT {id}/attachment`) — se a segunda falhar, fica com texto novo e anexo
+   velho, sem aviso.
+6. **`GET /api/contacts` não tem filtro de data no backend** — o recorte por
+   período acontece no navegador.
 
 ---
 
 ## Mudanças que o BACKEND precisa antes da integração
 
 Levantadas lendo `NewsController`, `RecruitmentProcessController` e
-`NewsService` do projeto `abrasce-v2`:
+`NewsService` do projeto `abrasce-v2`. **Revisado em 2026-09-14 direto contra o
+código: os itens 1 e 2 originais já foram resolvidos** (a capa da notícia virou
+`coverImageId` via biblioteca de arquivos reutilizáveis, e a parte `"files"` já é
+`required = false` em `NewsController`). Ficam:
 
-1. **Não existe upload da imagem de capa da notícia.** `NewsInput.coverImagePath`
-   é uma String `@NotBlank`, e a parte `"files"` do POST vira a lista de
-   ANEXOS. Hoje o administrador teria que digitar o nome de um arquivo que já
-   esteja no servidor. O formulário do painel oferece o upload, que é o certo;
-   falta o backend aceitar a capa como uma parte do multipart.
-
-2. **A parte `"files"` é obrigatória** em `POST /news`,
-   `POST /recruitment-process` e `PUT /recruitment-process/{id}`. Sem
-   `required = false`, criar sem anexo devolve 400 — mas o briefing diz que
-   notícia e processo PODEM não ter anexo.
-
-3. **Atualizar notícia exige duas chamadas** (`PUT {id}/data` e
+1. **Atualizar notícia exige duas chamadas** (`PUT {id}/data` e
    `PUT {id}/attachment`). Se a segunda falhar, a notícia fica com o texto novo
    e os anexos velhos, sem nada avisando. O ideal é um endpoint só.
 
-4. **`GET /api/contacts` não tem filtro de data.** O recorte por período
-   acontece no navegador. Funciona para centenas de contatos; passando disso,
-   o endpoint precisa dos mesmos parâmetros que o de candidatos.
+2. **`GET /api/contacts` não tem filtro de data.** Confirmado: `ContactController`
+   não tem nenhum parâmetro de período — o recorte acontece no navegador.
+   Funciona para centenas de contatos; passando disso, o endpoint precisa dos
+   mesmos parâmetros que o de candidatos.
 
-5. **Inconsistências de nome** entre entidades: `filesPath` (notícia) x
+3. **Inconsistências de nome** entre entidades: `filesPath` (notícia) x
    `filesPaths` (processo); `phoneNumber` é `String` em candidato e `Long` em
    contato. O front está espelhando exatamente como está — não "arrumei" no
-   mock de propósito, senão a integração quebraria sem explicação.
+   mock de propósito, senão a integração quebraria sem explicação. (Não
+   reconferido nesta revisão — sinalizar se algo mudou.)

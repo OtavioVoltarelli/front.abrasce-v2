@@ -128,7 +128,8 @@ que eu escrevi quando estava começando a programar.
 | Rotas | React Router 7 |
 | Dados do servidor | TanStack Query (React Query) 5 |
 | HTTP | Axios (centralizado em `src/services/api.js`) |
-| Estilo | **CSS puro global — em migração, ver Dívida técnica** |
+| Estilo | Tailwind CSS v4 (tokens em `src/styles/theme.css`) |
+| Autenticação | JWT (login em `services/authService.js`, guardado em `context/AuthProvider.jsx`) |
 
 Backend: `../../abrasce-v2` (Java / Spring / Maven).
 
@@ -136,13 +137,24 @@ Backend: `../../abrasce-v2` (Java / Spring / Maven).
 
 ```
 src/
-├── components/     # componentes de UI reutilizáveis
-├── pages/          # uma pasta por rota
-│   └── Cities/     # páginas institucionais por município
+├── assets/         # imagens estáticas (áreas, projetos)
+├── components/
+│   ├── ui/           # componentes "burros": Button, Input, Select, Modal, FileUpload...
+│   ├── feedback/     # Skeleton, EmptyState, ErrorState, QueryBoundary
+│   ├── layout/       # PublicLayout, AdminLayout, Navbar, Footer, PageHeader, Logo
+│   ├── cards/        # NewsCard, JobCard, AreaCard, ProjectCard
+│   ├── forms/        # CandidateForm, ContactForm
+│   ├── media/        # MediaPicker, MediaField — biblioteca de arquivos reutilizável
+│   └── admin/        # FlashMessage, DateRangeFilter, ExportButton
+├── content/        # textos institucionais e taxonomia das 6 áreas de atuação
+├── context/        # AuthProvider + authContext (autenticação)
+├── hooks/          # hooks de React Query que consomem os services (inclui useAuth/useLogin)
+├── lib/            # cn, format, navigation, palette (cores), fileKind, autolink...
+├── mocks/          # dados falsos no formato dos DTOs do backend (modo VITE_USE_MOCKS)
+├── pages/          # uma pasta por rota — público + admin/ + Login/
 ├── routes/         # AppRoutes.jsx + PrivateRoute.jsx
-├── services/       # chamadas HTTP, uma por domínio
-├── hooks/          # hooks de React Query que consomem os services
-├── context/        # AuthContext
+├── services/       # chamadas HTTP, uma por domínio (+ config.js com USE_MOCKS)
+├── styles/         # theme.css — tokens Tailwind v4
 └── validations/    # validação de formulário, separada da UI
 ```
 
@@ -162,55 +174,44 @@ npm run preview   # servir o build localmente
 
 ## Dívida técnica conhecida
 
-Levantada comparando o v2 com o projeto original arquivo por arquivo. **44 dos 47
-arquivos CSS e 28 dos 54 arquivos JSX ainda são idênticos ao projeto antigo** — a
-refatoração até aqui melhorou a camada de dados e não encostou na camada visual.
+> Revisado em 2026-09-14 direto contra o código (não contra a memória da sessão
+> anterior). A versão antiga desta seção descrevia um projeto que não existe mais —
+> CSS espalhado em 47 arquivos, MUI + Emotion nas dependências, área restrita sem
+> login, `config.jsx` com URL fixa, páginas de cidade. Tudo isso já foi resolvido.
+> **Regra pra manter esta seção confiável: quando resolver um item, apague — não
+> deixe "pendência morta" acumulando.**
 
-### CSS — a prioridade atual
+### 🔴 Bloqueador de deploy — resolver ANTES de subir para produção
 
-1. **Seletores de elemento globais sem escopo.** Ex.: `ul li a { ... }` no
-   `Navbar/style.css` vale para *toda* `<ul>` do site. É por isso que mexer numa
-   página quebra outra. **Este é o problema principal.**
-2. **`style.css` + `media-query.css` separados** por componente. As regras de uma
-   mesma coisa vivem em dois arquivos e precisam ser mantidas em sincronia na mão.
-3. **38 dos 47 arquivos CSS não têm nenhuma media query**, e há **~398 valores fixos
-   em `px`**. É a raiz dos problemas no celular.
-4. **Tokens sem semântica:** `--color1` … `--color5` em `colors.css`. Precisam de
-   nomes que digam a função (`--brand`, `--surface`, `--text-muted`...).
-5. **Três sistemas de estilo convivendo:** CSS puro + `@mui/material` + `@emotion`
-   nas dependências. **Precisamos escolher um.** Rodar os três em paralelo é garantia
-   de bagunça.
+1. **`.env.production` está vazio**, então `VITE_API_URL` fica `undefined` no build
+   de produção. Com a autenticação em produção, isso agora quebra **duas** coisas:
+   toda chamada de API comum **e** o próprio `POST /auth/login` — ninguém consegue
+   nem entrar no painel publicado. Falta só preencher a URL do backend v2 de
+   produção (a da v1 era `https://www.abrascesocial.org.br/api`).
 
-### 🔴 Bloqueadores de deploy — resolver ANTES de subir para produção
+### CSS
 
-1. **A área restrita está sem proteção nenhuma.** As rotas com `PrivateRoute` estão
-   comentadas em `routes/AppRoutes.jsx` e o `AuthProvider` não envolve o `<App />`.
-   Isso é **intencional e temporário**: o backend v2 ainda não tem segurança
-   implementada, e autenticação de verdade se faz lá, não aqui. Enquanto for
-   desenvolvimento local, tudo bem. **Se este build for para o ar assim, qualquer
-   pessoa consegue criar, editar e excluir notícias, processos seletivos e
-   transparência.** Religar é rápido: descomentar as rotas e envolver o `<App />`
-   com `<AuthProvider>`.
-2. **`.env.production` está vazio**, então `VITE_API_URL` fica `undefined` no build
-   de produção. Verificado: o JS gerado contém literalmente `undefined/files/` em 3
-   lugares. Toda chamada de API e todo link de arquivo quebram em produção.
-3. **`/login` quebra** ao carregar — consome `AuthContext` sem provider, e
-   desestruturar `undefined` lança. Consequência conhecida do item 1; some quando a
-   autenticação voltar.
+Não há dívida pendente aqui no momento. O CSS antigo foi totalmente substituído por
+**Tailwind CSS v4**: um único `src/styles/theme.css` com os tokens (`@theme`), e
+`src/lib/palette.js` como fonte única das sete cores do sistema (a marca + as seis
+áreas de atuação — o `CONTEXTO-SESSAO.md` explica os cinco papéis de cada cor).
+MUI e Emotion já não estão nas dependências.
 
 ### Outros
 
-- **Duas fontes de configuração de API convivendo:** `config.jsx` tem URLs de produção
-  fixas no código, enquanto `services/api.js` usa `import.meta.env.VITE_API_URL`.
-  `pages/Login` ainda usa `fetch` + `CONFIG`, o resto usa axios + env. Unificar no env.
-- **`services/transparencyAdminService.js` monta `BASE = 'api/admin/transparency'`**,
-  mas o `baseURL` do axios já termina em `/api` — a URL final fica com `/api/api/...`.
-- Pasta `components/All-Projects/Cultural-Projects copy/` — nome com "copy" e espaço,
-  herdada do projeto antigo. Provável código morto, precisa ser investigada.
-- Páginas de cidade (`pages/Cities/*`) são muito repetitivas. Dá para extrair um
-  layout compartilhado e apagar centenas de linhas.
-- Histórico do git é raso (2 commits). Quero commits pequenos e frequentes daqui pra
-  frente — me lembre de commitar quando fecharmos uma etapa.
+- **`services/transparencyAdminService.js` está órfão.** O bug do `/api/api/...`
+  duplicado já foi corrigido, mas nenhuma tela do painel novo usa este service — a
+  administração de transparência ficou fora do escopo do redesenho. Decidir: dar
+  uma tela pra ele ou apagar.
+- **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado.
+  Dependência sem uso.
+- **Atualizar notícia ainda exige duas chamadas ao backend**
+  (`PUT /news/{id}/data` + `PUT /news/{id}/attachment`). Se a segunda falhar, a
+  notícia fica com o texto novo e os anexos velhos, sem nada avisando quem editou.
+- **`GET /api/contacts` não tem filtro de data no backend.** O recorte por período
+  acontece no navegador — funciona para centenas de contatos, não escala além disso.
+- **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
+  melhorariam a página de Projetos e a Home.
 
 ---
 
