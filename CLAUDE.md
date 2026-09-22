@@ -205,8 +205,11 @@ MUI e Emotion já não estão nas dependências.
   uma tela pra ele ou apagar.
 - **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado.
   Dependência sem uso.
-- **`GET /api/contacts` não tem filtro de data no backend.** O recorte por período
-  acontece no navegador — funciona para centenas de contatos, não escala além disso.
+- **`GET /api/contacts` e `GET /api/candidates/recruitment-process` ainda usam
+  `size=100` como paginação de faz-de-conta.** O filtro de data dos dois já
+  roda no backend (`startDate`/`finalDate`), mas a tela sempre pede "os 100
+  primeiros" em vez de paginar de verdade — para de trazer tudo no dia em que
+  um dos dois passar de 100 registros no período buscado.
 - **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
   melhorariam a página de Projetos e a Home. Ao trocar, mirar ~1200px no lado maior,
   proporção entre 4:3 e 16:9 (a imagem é cortada nas duas — `AreaCard` na Home usa

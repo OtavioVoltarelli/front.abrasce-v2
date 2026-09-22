@@ -22,11 +22,15 @@ export function useSendContact(options) {
  * `enabled: false` por padrão: a tela só busca quando a pessoa clica em
  * "Buscar". Sem isso, a lista carregaria sozinha ao abrir a página, ignorando
  * os filtros — que é justamente o que a tela quer evitar.
+ *
+ * `filters` (startDate/finalDate) entra na `queryKey` — igual a
+ * `useCandidateSearch` — para que mudar o período dispare uma busca nova em
+ * vez de reaproveitar o cache de outro intervalo.
  */
-export function useContactSearch({ enabled = false } = {}) {
+export function useContactSearch(filters, { enabled = false } = {}) {
     return useQuery({
-        queryKey: ['contacts', 'all'],
-        queryFn: () => contactService.getAll(),
+        queryKey: ['contacts', filters],
+        queryFn: () => contactService.getAll(filters),
         enabled,
     });
 }

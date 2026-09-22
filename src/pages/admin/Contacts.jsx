@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import AdminPage from '../../components/admin/AdminPage';
 import DateRangeFilter from '../../components/admin/DateRangeFilter';
 import ExportButton from '../../components/admin/ExportButton';
@@ -29,13 +29,19 @@ import { formatDateTime, formatPhone, formatShortDate } from '../../lib/format';
  * mensagens ficariam invisíveis.
  *
  * ---------------------------------------------------------------------------
- * FILTRO NO NAVEGADOR, E POR QUÊ
+ * A ARMADILHA DAS DATAS — mesma regra de `admin/Candidates.jsx`
  * ---------------------------------------------------------------------------
- * O backend expõe apenas `GET /api/contacts`, sem filtro de data. Então a
- * busca traz tudo e o recorte por período acontece aqui. Funciona bem para
- * centenas de contatos; quando passar de alguns milhares, o certo é o backend
- * ganhar os parâmetros de data — igual ao endpoint de candidatos.
+ * O `<input type="date">` devolve "2026-08-15"; o backend espera um
+ * LocalDateTime ("2026-08-15T00:00:00"). Se a data final virasse T00:00:00,
+ * o filtro "até 15/08" descartaria todo o dia 15 — por isso o fim do período
+ * vira 23:59:59.
  */
+
+/** "2026-08-15" -> "2026-08-15T00:00:00" (ou o fim do dia). */
+const toDateTime = (date, edge) => {
+    if (!date) return undefined;
+    return edge === 'end' ? `${date}T23:59:59` : `${date}T00:00:00`;
+};
 
 const EXPORT_COLUMNS = [
     { header: 'Nome', value: (row) => row.name, width: 30 },
@@ -51,34 +57,21 @@ export default function AdminContacts() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [error, setError] = useState(null);
-    const [hasSearched, setHasSearched] = useState(false);
-    const [appliedRange, setAppliedRange] = useState({ start: '', end: '' });
     const [openContact, setOpenContact] = useState(null);
 
-    const query = useContactSearch({ enabled: hasSearched });
+    // `appliedFilters` guarda o que foi realmente BUSCADO, separado do que
+    // está digitado nos campos — mesma separação de `admin/Candidates.jsx`.
+    const [appliedFilters, setAppliedFilters] = useState(null);
 
-    /**
-     * `useMemo` evita refiltrar a lista inteira a cada renderização — e a tela
-     * renderiza toda vez que um modal abre ou fecha. Com os filtros e os dados
-     * inalterados, o resultado anterior é reaproveitado.
-     */
-    const results = useMemo(() => {
-        if (!query.data) return [];
+    const query = useContactSearch(appliedFilters ?? {}, {
+        enabled: Boolean(appliedFilters),
+    });
 
-        const from = appliedRange.start ? new Date(`${appliedRange.start}T00:00:00`) : null;
-        // Fim do dia: com T00:00:00 o filtro "até 15/08" descartaria tudo que
-        // chegou no dia 15 depois da meia-noite — ou seja, o dia 15 inteiro.
-        const to = appliedRange.end ? new Date(`${appliedRange.end}T23:59:59`) : null;
-
-        return query.data
-            .filter((contact) => {
-                const when = new Date(contact.creationDate);
-                if (from && when < from) return false;
-                if (to && when > to) return false;
-                return true;
-            })
-            .toSorted((a, b) => new Date(b.creationDate) - new Date(a.creationDate));
-    }, [query.data, appliedRange]);
+    // Backend não garante ordem; mais recente primeiro é a leitura mais útil
+    // para quem está respondendo mensagens.
+    const results = (query.data ?? []).toSorted(
+        (a, b) => new Date(b.creationDate) - new Date(a.creationDate)
+    );
 
     const handleSearch = () => {
         if (startDate && endDate && startDate > endDate) {
@@ -86,9 +79,10 @@ export default function AdminContacts() {
             return;
         }
         setError(null);
-        setAppliedRange({ start: startDate, end: endDate });
-        setHasSearched(true);
-        if (query.isStale) query.refetch();
+        setAppliedFilters({
+            startDate: toDateTime(startDate, 'start'),
+            finalDate: toDateTime(endDate, 'end'),
+        });
     };
 
     return (
@@ -109,7 +103,7 @@ export default function AdminContacts() {
             />
 
             <div className="mt-6">
-                {!hasSearched && (
+                {!appliedFilters && (
                     <EmptyState
                         icon={
                             <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -122,7 +116,7 @@ export default function AdminContacts() {
                     />
                 )}
 
-                {hasSearched && query.isPending && (
+                {appliedFilters && query.isPending && (
                     <ul className="space-y-3">
                         {[0, 1, 2].map((index) => (
                             <li key={index} className="rounded-2xl bg-white p-4 shadow-card ring-1 ring-line">
@@ -134,7 +128,7 @@ export default function AdminContacts() {
                     </ul>
                 )}
 
-                {hasSearched && query.isError && (
+                {appliedFilters && query.isError && (
                     <ErrorState
                         title="Não foi possível buscar os contatos"
                         error={query.error}
@@ -142,14 +136,14 @@ export default function AdminContacts() {
                     />
                 )}
 
-                {hasSearched && query.isSuccess && results.length === 0 && (
+                {appliedFilters && query.isSuccess && results.length === 0 && (
                     <EmptyState
                         title="Nenhuma mensagem neste período"
                         description="Tente ampliar o período ou deixar as datas em branco."
                     />
                 )}
 
-                {hasSearched && query.isSuccess && results.length > 0 && (
+                {appliedFilters && query.isSuccess && results.length > 0 && (
                     <>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-muted">

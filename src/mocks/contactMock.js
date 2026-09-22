@@ -98,11 +98,22 @@ const CONTACTS = [
 const clone = (value) => structuredClone(value);
 
 export const contactMockService = {
-    /** O backend expõe apenas `GET /api/contacts` (lista completa). O filtro
-     *  por data acontece na tela; espelhado aqui do mesmo jeito. */
-    getAll: async () => {
+    /** Espelha o filtro por `startDate`/`finalDate` que o backend real aplica
+     *  em `GET /api/contacts` — mesma lógica de `candidateMock.findByFilter`. */
+    getAll: async ({ startDate, finalDate } = {}) => {
         await delay(800);
-        return clone(CONTACTS);
+
+        const from = startDate ? new Date(startDate) : null;
+        const to = finalDate ? new Date(finalDate) : null;
+
+        return clone(
+            CONTACTS.filter((contact) => {
+                const when = new Date(contact.creationDate);
+                if (from && when < from) return false;
+                if (to && when > to) return false;
+                return true;
+            })
+        );
     },
 
     send: async (payload) => {
