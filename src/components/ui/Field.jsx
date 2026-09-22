@@ -17,10 +17,13 @@ import { cn } from '../../lib/cn';
  *     entenda — a borda vermelha sozinha não comunica nada para quem não vê.
  *
  * O `useId` gera um identificador único e estável por instância, então dois
- * campos "Nome" na mesma página não colidem.
+ * campos "Nome" na mesma página não colidem — a não ser que o formulário
+ * precise de um id PREVISÍVEL (ver `idProp`), para apontar para este campo
+ * de fora (ex.: rolar até o primeiro erro na hora de validar).
  */
-export default function Field({ label, hint, error, required, className, children }) {
-    const id = useId();
+export default function Field({ id: idProp, label, hint, error, required, className, children }) {
+    const generatedId = useId();
+    const id = idProp ?? generatedId;
     const hintId = `${id}-hint`;
     const errorId = `${id}-error`;
 

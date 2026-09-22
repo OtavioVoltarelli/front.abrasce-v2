@@ -15,6 +15,7 @@ import {
     useNewsById,
     useUpdateNews,
 } from '../../hooks/useNews';
+import { scrollToFirstError } from '../../lib/scrollToError';
 
 /**
  * Criar e editar uma notícia.
@@ -51,6 +52,11 @@ import {
 
 const EMPTY_FORM = { title: '', shortDescription: '', longDescription: '' };
 const MAX_SHORT = 255;
+
+/* Ordem VISUAL dos campos, de cima para baixo — é ela que decide qual erro
+   é "o primeiro" para o scroll-to-error, não a ordem em que `handleSubmit`
+   valida cada um. */
+const FIELD_ORDER = ['coverImage', 'title', 'shortDescription', 'longDescription'];
 
 export default function AdminNewsForm() {
     const { id } = useParams();
@@ -150,7 +156,10 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
         if (!coverImage) validation.coverImage = 'Escolha a imagem de capa na biblioteca.';
 
         setErrors(validation);
-        if (Object.keys(validation).length > 0) return;
+        if (Object.keys(validation).length > 0) {
+            scrollToFirstError(FIELD_ORDER, validation);
+            return;
+        }
 
         const payload = {
             ...form,
@@ -212,6 +221,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
 
                 <div className="space-y-5 rounded-2xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6">
                     <MediaField
+                        id="coverImage"
                         label="Imagem de capa"
                         required
                         kind="image"
@@ -230,6 +240,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                     />
 
                     <Input
+                        id="title"
                         label="Título"
                         required
                         name="title"
@@ -240,6 +251,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                     />
 
                     <Textarea
+                        id="shortDescription"
                         label="Chamada"
                         required
                         name="shortDescription"
@@ -263,6 +275,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                     </p>
 
                     <Textarea
+                        id="longDescription"
                         label="Texto da notícia"
                         required
                         name="longDescription"

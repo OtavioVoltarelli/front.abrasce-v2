@@ -14,9 +14,9 @@ import { cn } from '../../lib/cn';
  * A seta é desenhada em CSS (background-image) porque `appearance-none`
  * remove a seta nativa junto com o estilo do sistema.
  */
-export default function Select({ label, hint, error, required, options = [], placeholder, className, ...props }) {
+export default function Select({ id, label, hint, error, required, options = [], placeholder, className, ...props }) {
     return (
-        <Field label={label} hint={hint} error={error} required={required} className={className}>
+        <Field id={id} label={label} hint={hint} error={error} required={required} className={className}>
             {({ id, describedBy, invalid }) => (
                 <div className="relative">
                     <select

@@ -14,6 +14,7 @@ import {
     useRecruitmentProcessById,
     useUpdateRecruitmentProcess,
 } from '../../hooks/useRecruitmentProcess';
+import { scrollToFirstError } from '../../lib/scrollToError';
 
 /**
  * Criar e editar um processo seletivo.
@@ -32,6 +33,8 @@ import {
  */
 
 const EMPTY_FORM = { title: '', description: '', active: true };
+
+const FIELD_ORDER = ['title', 'description'];
 
 export default function AdminRecruitmentForm() {
     const { id } = useParams();
@@ -118,7 +121,10 @@ function RecruitmentFormFields({
         if (!form.description.trim()) validation.description = 'Descreva a vaga, os requisitos e como se inscrever.';
 
         setErrors(validation);
-        if (Object.keys(validation).length > 0) return;
+        if (Object.keys(validation).length > 0) {
+            scrollToFirstError(FIELD_ORDER, validation);
+            return;
+        }
 
         const payload = { ...form, files: files ?? undefined };
 
@@ -178,6 +184,7 @@ function RecruitmentFormFields({
 
                 <div className="space-y-5 rounded-2xl bg-white p-4 shadow-card ring-1 ring-line sm:p-6">
                     <Input
+                        id="title"
                         label="Título"
                         required
                         name="title"
@@ -189,6 +196,7 @@ function RecruitmentFormFields({
                     />
 
                     <Textarea
+                        id="description"
                         label="Descrição"
                         required
                         name="description"

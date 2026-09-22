@@ -19,6 +19,7 @@ import { formatFileSize } from '../../lib/format';
  * não existe arrastar arquivo, então o toque precisa resolver tudo sozinho.
  */
 export default function FileUpload({
+    id: idProp,
     label,
     hint,
     error,
@@ -29,7 +30,8 @@ export default function FileUpload({
     onChange,
     className,
 }) {
-    const id = useId();
+    const generatedId = useId();
+    const id = idProp ?? generatedId;
     const inputRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
 

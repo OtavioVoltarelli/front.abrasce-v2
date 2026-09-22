@@ -2,9 +2,9 @@ import Field from './Field';
 import { controlClasses } from './controlClasses';
 import { cn } from '../../lib/cn';
 
-export default function Textarea({ label, hint, error, required, rows = 6, className, ...props }) {
+export default function Textarea({ id, label, hint, error, required, rows = 6, className, ...props }) {
     return (
-        <Field label={label} hint={hint} error={error} required={required} className={className}>
+        <Field id={id} label={label} hint={hint} error={error} required={required} className={className}>
             {({ id, describedBy, invalid }) => (
                 <textarea
                     id={id}

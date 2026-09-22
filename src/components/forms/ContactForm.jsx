@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Textarea from '../ui/Textarea';
@@ -7,6 +7,7 @@ import { BRAZILIAN_STATES } from '../../lib/brazilianStates';
 import { maskPhone } from '../../lib/format';
 import { validateContact } from '../../validations/contactValidation';
 import { useSendContact } from '../../hooks/useContact';
+import { scrollToFirstError } from '../../lib/scrollToError';
 
 const EMPTY_FORM = {
     name: '',
@@ -16,6 +17,8 @@ const EMPTY_FORM = {
     city: '',
     message: '',
 };
+
+const FIELD_ORDER = ['name', 'email', 'phoneNumber', 'message'];
 
 /**
  * Formulário de contato.
@@ -30,7 +33,6 @@ export default function ContactForm() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [hasTriedSubmit, setHasTriedSubmit] = useState(false);
-    const errorSummaryRef = useRef(null);
 
     const mutation = useSendContact();
 
@@ -55,7 +57,7 @@ export default function ContactForm() {
         setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length > 0) {
-            errorSummaryRef.current?.focus();
+            scrollToFirstError(FIELD_ORDER, validationErrors);
             return;
         }
 
@@ -96,7 +98,7 @@ export default function ContactForm() {
     return (
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {hasTriedSubmit && errorCount > 0 && (
-                <div ref={errorSummaryRef} tabIndex={-1} role="alert" className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200">
+                <div role="alert" className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200">
                     <p className="text-sm font-bold text-red-800">
                         {errorCount === 1
                             ? 'Falta corrigir 1 campo antes de enviar.'
@@ -115,6 +117,7 @@ export default function ContactForm() {
             )}
 
             <Input
+                id="name"
                 label="Nome completo"
                 required
                 name="name"
@@ -127,6 +130,7 @@ export default function ContactForm() {
 
             <div className="grid gap-5 sm:grid-cols-2">
                 <Input
+                    id="email"
                     label="E-mail"
                     required
                     type="email"
@@ -139,6 +143,7 @@ export default function ContactForm() {
                     placeholder="voce@email.com"
                 />
                 <Input
+                    id="phoneNumber"
                     label="Telefone"
                     required
                     name="phoneNumber"
@@ -172,6 +177,7 @@ export default function ContactForm() {
             </div>
 
             <Textarea
+                id="message"
                 label="Mensagem"
                 required
                 name="message"

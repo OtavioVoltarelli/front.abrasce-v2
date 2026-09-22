@@ -10,9 +10,9 @@ import { controlClasses } from './controlClasses';
  * e-mail inteiro numa tela de vidro é chato — cada um desses atributos
  * economiza segundos reais de quem está preenchendo.
  */
-export default function Input({ label, hint, error, required, className, ...props }) {
+export default function Input({ id, label, hint, error, required, className, ...props }) {
     return (
-        <Field label={label} hint={hint} error={error} required={required} className={className}>
+        <Field id={id} label={label} hint={hint} error={error} required={required} className={className}>
             {({ id, describedBy, invalid }) => (
                 <input
                     id={id}

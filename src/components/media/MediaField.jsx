@@ -25,6 +25,7 @@ import { fileUrl } from '../../services/config';
  * confirmação.
  */
 export default function MediaField({
+    id,
     label,
     hint,
     required = false,
@@ -41,7 +42,7 @@ export default function MediaField({
     const noun = kind === 'image' ? 'imagem' : 'arquivo';
 
     return (
-        <div role="group" aria-labelledby={labelId} aria-describedby={hint ? hintId : undefined}>
+        <div id={id} role="group" aria-labelledby={labelId} aria-describedby={hint ? hintId : undefined}>
             <p id={labelId} className="text-sm font-semibold text-ink-900">
                 {label}
                 {required && (

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
@@ -7,6 +7,7 @@ import { BRAZILIAN_STATES } from '../../lib/brazilianStates';
 import { formatCnpj, formatCpf, maskPhone } from '../../lib/format';
 import { validateCandidate } from '../../validations/candidateValidation';
 import { useCreateCandidate } from '../../hooks/useCandidate';
+import { scrollToFirstError } from '../../lib/scrollToError';
 
 const EMPTY_FORM = {
     name: '',
@@ -19,6 +20,8 @@ const EMPTY_FORM = {
     city: '',
     cv: null,
 };
+
+const FIELD_ORDER = ['name', 'email', 'phoneNumber', 'cpf', 'cnpj', 'state', 'city', 'cv'];
 
 /**
  * Formulário de inscrição em um processo seletivo.
@@ -46,7 +49,6 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
     const [form, setForm] = useState(EMPTY_FORM);
     const [errors, setErrors] = useState({});
     const [hasTriedSubmit, setHasTriedSubmit] = useState(false);
-    const errorSummaryRef = useRef(null);
 
     const mutation = useCreateCandidate();
 
@@ -73,10 +75,11 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
         setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length > 0) {
-            // Leva o foco para o resumo dos erros. Sem isso, quem está no fim
-            // de um formulário longo aperta "Enviar", nada visível acontece, e
-            // a mensagem fica lá em cima fora da tela.
-            errorSummaryRef.current?.focus();
+            // Leva a pessoa até o PRIMEIRO campo inválido. Sem isso, quem está
+            // no fim de um formulário de 9 campos aperta "Enviar", nada visível
+            // muda perto do botão, e o campo que falhou pode estar lá em cima,
+            // fora da tela.
+            scrollToFirstError(FIELD_ORDER, validationErrors);
             return;
         }
 
@@ -121,15 +124,10 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
 
     return (
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
-            {/* Resumo de erros. `tabIndex={-1}` permite mandar o foco para cá
-                por código, sem incluir a caixa na navegação normal por Tab. */}
+            {/* Resumo de erros — a contagem dá o panorama geral; o scroll (no
+                `handleSubmit`) já leva a pessoa até o campo específico. */}
             {hasTriedSubmit && errorCount > 0 && (
-                <div
-                    ref={errorSummaryRef}
-                    tabIndex={-1}
-                    role="alert"
-                    className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200"
-                >
+                <div role="alert" className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200">
                     <p className="text-sm font-bold text-red-800">
                         {errorCount === 1
                             ? 'Falta corrigir 1 campo antes de enviar.'
@@ -156,6 +154,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 <legend className="sr-only">Seus dados</legend>
 
                 <Input
+                    id="name"
                     label="Nome completo"
                     required
                     name="name"
@@ -170,6 +169,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                     lado ficam estreitos demais para o texto que recebem. */}
                 <div className="grid gap-5 sm:grid-cols-2">
                     <Input
+                        id="email"
                         label="E-mail"
                         required
                         type="email"
@@ -182,6 +182,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                         placeholder="voce@email.com"
                     />
                     <Input
+                        id="phoneNumber"
                         label="Telefone"
                         required
                         name="phoneNumber"
@@ -196,6 +197,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 </div>
 
                 <Input
+                    id="cpf"
                     label="CPF"
                     required
                     name="cpf"
@@ -226,6 +228,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                         maxLength={255}
                     />
                     <Input
+                        id="cnpj"
                         label="CNPJ"
                         name="cnpj"
                         value={form.cnpj}
@@ -242,6 +245,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 <legend className="sr-only">Onde você mora</legend>
                 <div className="grid gap-5 sm:grid-cols-[minmax(0,10rem)_1fr]">
                     <Select
+                        id="state"
                         label="Estado"
                         required
                         name="state"
@@ -252,6 +256,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                         autoComplete="address-level1"
                     />
                     <Input
+                        id="city"
                         label="Cidade"
                         required
                         name="city"
@@ -265,6 +270,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
             </fieldset>
 
             <FileUpload
+                id="cv"
                 label="Currículo"
                 required
                 hint="Arquivo em PDF ou Word, de até 1 MB."
