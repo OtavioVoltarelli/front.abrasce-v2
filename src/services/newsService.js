@@ -5,14 +5,12 @@ import { newsMockService } from '../mocks/newsMock';
 /**
  * Notícias — endpoints reais do backend v2 (`NewsController`):
  *
- *   GET    /api/news                    ÚNICA rota de listagem — sempre paginada
- *                                        (PagedModel), mesmo sem parâmetro nenhum.
- *                                        Não existe `/api/news/top`: "últimas N" é
- *                                        só `?size=N` nesta mesma rota.
+ *   GET    /api/news       ÚNICA rota de listagem — sempre paginada (PagedModel),
+ *                          mesmo sem parâmetro nenhum. Não existe `/api/news/top`:
+ *                          "últimas N" é só `?size=N` nesta mesma rota.
  *   GET    /api/news/{id}
- *   POST   /api/news                    multipart: "data" (JSON) + "files"
- *   PUT    /api/news/{id}/data          JSON puro (a capa é um id, não arquivo)
- *   PUT    /api/news/{id}/attachment    multipart: "files"
+ *   POST   /api/news       multipart: "data" (JSON) + "files"
+ *   PUT    /api/news/{id}  multipart: "data" (JSON) + "files" (opcional)
  *   DELETE /api/news/{id}
  *
  * ---------------------------------------------------------------------------
@@ -31,9 +29,6 @@ import { newsMockService } from '../mocks/newsMock';
  * Consequência prática: o formulário de notícia não sobe imagem nenhuma. Ele
  * ESCOLHE um arquivo da biblioteca (ver `components/media/MediaField`).
  *
- * Consequência 2: `PUT {id}/data` deixou de ser multipart e virou JSON puro —
- * não há mais arquivo nenhum naquela requisição.
- *
  * ---------------------------------------------------------------------------
  * "files" JÁ FOI OPCIONAL — HISTÓRICO
  * ---------------------------------------------------------------------------
@@ -46,11 +41,19 @@ import { newsMockService } from '../mocks/newsMock';
  * verdade) — não precisou mudar nada aqui, só esperar o backend.
  *
  * ---------------------------------------------------------------------------
- * O QUE AINDA FALTA NO BACKEND
+ * ATUALIZAR VIROU UMA CHAMADA SÓ — E "REMOVER TODOS OS ANEXOS" PRECISA DE SINAL EXPLÍCITO
  * ---------------------------------------------------------------------------
- * ATUALIZAR AINDA EXIGE DUAS CHAMADAS (`/data` e `/attachment`), sem transação
- * entre elas. Se a segunda falhar, a notícia fica com o texto novo e os
- * anexos velhos, sem nada avisando.
+ * Até pouco tempo, editar notícia exigia DUAS chamadas (`PUT {id}/data` +
+ * `PUT {id}/attachment`), sem transação entre elas: se a segunda falhasse, a
+ * notícia ficava com o texto novo e os anexos velhos, sem nada avisando quem
+ * editou. O backend unificou em `PUT /news/{id}`, no mesmo formato do `create`.
+ *
+ * Isso trouxe uma pegadinha: a parte "files" vazia agora significa "não mexi
+ * nos anexos" (mantém os atuais), não "esvazie a lista" — diferente do
+ * endpoint antigo. Sem um sinal aparte, não haveria como esvaziar. Por isso
+ * o `NewsInput` ganhou `removeAllFiles` (boolean): `true` apaga os anexos
+ * atuais mesmo que "files" venha vazia; ausente/false + "files" com itens
+ * substitui a lista; ausente/false + "files" vazia mantém os anexos atuais.
  */
 
 /** A parte "data" tem que ir como Blob com type application/json, senão o
@@ -98,21 +101,27 @@ const newsHttpService = {
     },
 
     update: async (id, { coverImageId, files, ...input }) => {
-        /* JSON puro: a capa é um id e não há mais arquivo nesta requisição. */
-        const { data } = await api.put(`/news/${id}/data`, {
-            ...input,
-            coverImageId: Number(coverImageId),
-        });
+        const form = new FormData();
+        form.append(
+            'data',
+            jsonPart({
+                ...input,
+                coverImageId: Number(coverImageId),
+                // `files` array VAZIO é o sinal de "Substituir todos os anexos"
+                // sem escolher nenhum novo (ver MultiFileUpload) — a pessoa quer
+                // a notícia sem anexo nenhum. Sem `removeAllFiles`, o backend
+                // entenderia "não mexi nos anexos" e manteria os antigos.
+                removeAllFiles: Array.isArray(files) && files.length === 0,
+            })
+        );
 
-        // `files` só vem definido quando a pessoa mexeu nos anexos. Sem esta
-        // checagem, editar apenas o título apagaria todos os anexos.
-        if (files) {
-            const attachmentForm = new FormData();
-            files.forEach((file) => attachmentForm.append('files', file));
-            const { data: withFiles } = await api.put(`/news/${id}/attachment`, attachmentForm);
-            return withFiles;
+        // `files` só vem definido (array) quando a pessoa mexeu nos anexos.
+        // `null` significa "não mexi nisso" — nem manda a parte, nem pede remoção.
+        if (Array.isArray(files)) {
+            files.forEach((file) => form.append('files', file));
         }
 
+        const { data } = await api.put(`/news/${id}`, form);
         return data;
     },
 

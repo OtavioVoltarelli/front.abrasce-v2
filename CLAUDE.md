@@ -205,9 +205,6 @@ MUI e Emotion já não estão nas dependências.
   uma tela pra ele ou apagar.
 - **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado.
   Dependência sem uso.
-- **Atualizar notícia ainda exige duas chamadas ao backend**
-  (`PUT /news/{id}/data` + `PUT /news/{id}/attachment`). Se a segunda falhar, a
-  notícia fica com o texto novo e os anexos velhos, sem nada avisando quem editou.
 - **`GET /api/contacts` não tem filtro de data no backend.** O recorte por período
   acontece no navegador — funciona para centenas de contatos, não escala além disso.
 - **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
