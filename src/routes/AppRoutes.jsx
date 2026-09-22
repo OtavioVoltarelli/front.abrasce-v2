@@ -56,6 +56,7 @@ const AdminRecruitmentForm = lazy(() => import('../pages/admin/RecruitmentForm')
 const AdminNewsList = lazy(() => import('../pages/admin/NewsList'));
 const AdminNewsForm = lazy(() => import('../pages/admin/NewsForm'));
 const AdminMediaLibrary = lazy(() => import('../pages/admin/MediaLibrary'));
+const AdminTransparency = lazy(() => import('../pages/admin/Transparency'));
 const AdminCandidates = lazy(() => import('../pages/admin/Candidates'));
 const AdminContacts = lazy(() => import('../pages/admin/Contacts'));
 
@@ -137,6 +138,7 @@ export default function AppRoutes() {
                             <Route path="noticias/:id" element={<AdminNewsForm />} />
 
                             <Route path="arquivos" element={<AdminMediaLibrary />} />
+                            <Route path="transparencia" element={<AdminTransparency />} />
 
                             <Route path="candidatos" element={<AdminCandidates />} />
                             <Route path="contatos" element={<AdminContacts />} />

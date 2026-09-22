@@ -124,4 +124,30 @@ export const ADMIN_NAV = [
             </svg>
         ),
     },
+    /**
+     * Fora da barra inferior, pelo mesmo motivo do "Início": não é algo que
+     * se mexe todo dia (diferente de Notícias/Processos), e um 6º item ali
+     * reabriria o problema de largura que tirou o "Início" de lá. Fica na
+     * coluna do desktop e num atalho na tela inicial do painel.
+     *
+     * O acento reaproveita `lagoon` — a MESMA cor da página de Transparência
+     * pública, mesmo já usada por "Contatos" aqui na coluna. As duas nunca
+     * aparecem lado a lado na barra inferior (Transparência não está nela),
+     * então a repetição não confunde "onde estou" — e a associação com a
+     * página pública vale mais que uma cor exclusiva só pra esta seção.
+     */
+    {
+        to: '/admin/transparencia',
+        accent: 'lagoon',
+        inBottomBar: false,
+        label: 'Transparência',
+        fullLabel: 'Transparência',
+        description: 'Balanços, certidões e relatórios',
+        icon: (
+            <svg {...iconProps}>
+                <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" />
+                <path d="m9 12 2 2 4-4" />
+            </svg>
+        ),
+    },
 ];

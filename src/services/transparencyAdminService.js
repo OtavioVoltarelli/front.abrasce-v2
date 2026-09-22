@@ -1,33 +1,42 @@
 import api from './api';
+import { USE_MOCKS } from './config';
+import { transparencyAdminMockService } from '../mocks/transparencyMock';
 
 /**
  * Administração dos arquivos de transparência (`TransparencyAdminController`).
  *
- * CORREÇÃO em relação ao código anterior: a base era `'api/admin/transparency'`,
- * mas o `baseURL` do axios já termina em `/api`. A URL final ficava
- * `/api/api/admin/transparency` e toda chamada respondia 404. O sinal que
- * denunciava: repetição do prefixo entre a base do cliente HTTP e a base do
- * service. Quando os dois definem "/api", um dos dois está errado.
+ * Todo `path`/`from`/`to` aqui é um caminho de verdade no disco do servidor —
+ * ver `FileService.java`. Duas consequências que moldam quem chama isto:
  *
- * Esta tela não faz parte do redesenho pedido (o novo painel cobre processos
- * seletivos, notícias, candidatos e contatos). O service foi mantido para a
- * funcionalidade não se perder.
+ *   1. `to`, em `move`, é o caminho de destino COMPLETO, nome do arquivo/pasta
+ *      incluído — não só a pasta destino. Quem chama monta
+ *      `pastaDestino + '/' + nomeAtual`.
+ *   2. Upload e mover SOBRESCREVEM em silêncio um item de mesmo nome no
+ *      destino (`REPLACE_EXISTING` no backend). A tela avisa antes de deixar
+ *      escolher um destino com colisão.
+ *
+ * Todos os endpoints devolvem 200 sem corpo — nenhum método aqui devolve nada
+ * além da confirmação; quem chama invalida a árvore (`useTransparencyTree`) e
+ * busca de novo.
  */
 const BASE = '/admin/transparency';
 
-export const uploadTransparencyFile = (file, path) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return api.post(`${BASE}/upload`, formData, { params: { path } });
+const transparencyAdminHttpService = {
+    upload: (file, path) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post(`${BASE}/upload`, formData, { params: { path } });
+    },
+
+    createFolder: (path) => api.post(`${BASE}/folder`, null, { params: { path } }),
+
+    rename: (path, name) => api.put(`${BASE}/rename`, null, { params: { path, name } }),
+
+    move: (from, to) => api.put(`${BASE}/move`, null, { params: { from, to } }),
+
+    remove: (path) => api.delete(BASE, { params: { path } }),
 };
 
-export const deleteTransparencyPath = (path) => api.delete(BASE, { params: { path } });
-
-export const moveTransparencyPath = (from, to) =>
-    api.put(`${BASE}/move`, null, { params: { from, to } });
-
-export const renameTransparencyPath = (path, name) =>
-    api.put(`${BASE}/rename`, null, { params: { path, name } });
-
-export const createTransparencyFolder = (path) =>
-    api.post(`${BASE}/folder`, null, { params: { path } });
+export const transparencyAdminService = USE_MOCKS
+    ? transparencyAdminMockService
+    : transparencyAdminHttpService;
