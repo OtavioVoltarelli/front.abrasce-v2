@@ -199,12 +199,6 @@ MUI e Emotion já não estão nas dependências.
 
 ### Outros
 
-- **`services/transparencyAdminService.js` está órfão.** O bug do `/api/api/...`
-  duplicado já foi corrigido, mas nenhuma tela do painel novo usa este service — a
-  administração de transparência ficou fora do escopo do redesenho. Decidir: dar
-  uma tela pra ele ou apagar.
-- **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado.
-  Dependência sem uso.
 - **`GET /api/contacts` e `GET /api/candidates/recruitment-process` ainda usam
   `size=100` como paginação de faz-de-conta.** O filtro de data dos dois já
   roda no backend (`startDate`/`finalDate`), mas a tela sempre pede "os 100
