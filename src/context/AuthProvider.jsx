@@ -1,15 +1,32 @@
 import { useState } from 'react';
 import { AuthContext } from './authContext';
 import { AUTH_STORAGE_KEY } from '../services/api';
+import { isTokenExpired } from '../lib/jwt';
 
-/** Lê o que já estava salvo de uma visita anterior. `try/catch` porque um
- *  JSON corrompido no localStorage (alguém editou na mão, versão antiga do
- *  formato) não pode derrubar a aplicação inteira — melhor tratar como "não
- *  tem ninguém logado" e deixar a pessoa entrar de novo. */
+/**
+ * Lê o que já estava salvo de uma visita anterior. `try/catch` porque um
+ * JSON corrompido no localStorage (alguém editou na mão, versão antiga do
+ * formato) não pode derrubar a aplicação inteira — melhor tratar como "não
+ * tem ninguém logado" e deixar a pessoa entrar de novo.
+ *
+ * A checagem de `isTokenExpired` é o que evita a tela do admin desenhar por
+ * um instante com um token vencido antes do redirecionamento pro login: sem
+ * ela, "existe algo salvo" contava como "logado" até a primeira chamada de
+ * API voltar 401 — o que é assíncrono, e por isso visível. Aqui a decisão é
+ * síncrona, no mesmo render que o `PrivateRoute` usa pra deixar passar ou não.
+ */
 function readStoredAuth() {
     try {
         const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
+        if (!raw) return null;
+
+        const stored = JSON.parse(raw);
+        if (isTokenExpired(stored.token)) {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            return null;
+        }
+
+        return stored;
     } catch {
         return null;
     }
