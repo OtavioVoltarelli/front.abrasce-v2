@@ -211,7 +211,15 @@ MUI e Emotion já não estão nas dependências.
 - **`GET /api/contacts` não tem filtro de data no backend.** O recorte por período
   acontece no navegador — funciona para centenas de contatos, não escala além disso.
 - **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
-  melhorariam a página de Projetos e a Home.
+  melhorariam a página de Projetos e a Home. Ao trocar, mirar ~1200px no lado maior,
+  proporção entre 4:3 e 16:9 (a imagem é cortada nas duas — `AreaCard` na Home usa
+  16:10, o bloco da página Projetos usa 4:3), até ~150 KB depois de comprimida.
+- **Build sem nenhuma otimização de imagem.** Não há `vite-plugin-image-optimizer`,
+  `imagemin` nem nada parecido nas dependências — qualquer arquivo colocado em
+  `src/assets/` vai pro site exatamente do tamanho e peso que foi salvo, sem
+  compressão nem geração de `srcset` para telas de alta densidade. Hoje quem
+  compensa isso é comprimir a imagem antes de adicionar; um dia vale considerar
+  um plugin de build pra isso não depender de lembrar toda vez.
 
 ---
 

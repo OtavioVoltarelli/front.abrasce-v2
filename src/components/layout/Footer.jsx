@@ -110,10 +110,13 @@ export default function Footer() {
                     <div>
                         <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-lagoon-bright">
                             <TriangleMark className="h-2 w-2" />
-                            Endereços
+                            Endereço
                         </h3>
                         <div className="mt-4 space-y-4">
-                            {CONTACT.addresses.map((address) => (
+                            {/* Rodapé mostra só a sede — as demais unidades ficam
+                                na página de Contato, que é onde faz sentido listar
+                                todos os endereços. */}
+                            {CONTACT.addresses.filter((address) => address.showInFooter).map((address) => (
                                 <address key={address.id} className="text-sm not-italic leading-relaxed text-brand-200">
                                     <span className="block font-semibold text-white">{address.label}</span>
                                     {address.lines.map((line) => (

@@ -23,7 +23,7 @@ export const ORGANIZATION = {
 
 export const ABOUT = {
     heading: 'Quem somos?',
-    text: 'A Associação Brasileira de Apoio a Saúde, a Cultura e a Educação - ABRASCE - foi fundada em 15 de janeiro de 2008, no município de São Paulo (Capital), sob a forma de entidade de interesse social e utilidade pública, sendo atualmente uma entidade da sociedade civil sem fins lucrativos, com sede na Rua Paulo De Faria, 146, Andar 10 Conjunto 1006, Vila Gustavo - CEP 04004-906 - São Paulo/SP, inscrita no CNPJ sob nº 09.428.862/0001-94.',
+    text: 'A Associação Brasileira de Apoio a Saúde, a Cultura e a Educação - ABRASCE - foi fundada em 15 de janeiro de 2008, no município de São Paulo (Capital), sob a forma de entidade de interesse social e utilidade pública, sendo atualmente uma entidade da sociedade civil sem fins lucrativos, com sede na Rua Paulo De Faria, 146, Andar 10 Conjunto 1006, Vila Gustavo - CEP 02.267-000 - São Paulo/SP, inscrita no CNPJ sob nº 09.428.862/0001-94.',
 };
 
 export const MISSION = {
@@ -61,13 +61,15 @@ export const TRANSPARENCY_TEXT = [
 export const CONTACT = {
     email: 'contato@abrascesocial.org.br',
     phone: {
-        label: '(11) 3288-1566',
-        href: 'tel:+551132881566',
+        label: '(11) 3262-3043',
+        href: 'tel:+551132623043',
     },
     addresses: [
         {
             id: 'sede',
             label: 'Sede — São Paulo',
+            /** Único endereço exibido no rodapé — ver `showInFooter` abaixo. */
+            showInFooter: true,
             lines: [
                 'Rua Paulo de Faria - 146 - Vila Gustavo',
                 'Andar 10 Conj 1006',
@@ -81,13 +83,25 @@ export const CONTACT = {
             id: 'casa-branca',
             label: 'Unidade — Casa Branca',
             lines: [
-                'Praça 14 de Janeiro - 06 - Centro',
+                'Rua Justino de Castro nº 240 - Centro',
                 'Casa Branca - SP',
-                'CEP: 13700-000',
+                'CEP: 13.700-109',
             ],
             mapSrc:
-                'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3705.0765644865437!2d-47.07853508828376!3d-21.777297579982775!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94b7dedd1786dadf%3A0x6b5689c1535f0a97!2sPra%C3%A7a%20Quatorze%20de%20Janeiro%2C%206%20-%20Jardim%20Eldorado%2C%20Casa%20Branca%20-%20SP%2C%2013700-000!5e0!3m2!1spt-BR!2sbr!4v1730751796359!5m2!1spt-BR!2sbr',
-            mapLink: 'https://www.google.com/maps/search/?api=1&query=Praça+Quatorze+de+Janeiro+6+Casa+Branca+SP',
+                'https://www.google.com/maps?q=Rua+Justino+de+Castro+240+Centro+Casa+Branca+SP&output=embed',
+            mapLink: 'https://www.google.com/maps/search/?api=1&query=Rua+Justino+de+Castro+240+Centro+Casa+Branca+SP',
+        },
+        {
+            id: 'francisco-morato',
+            label: 'Unidade — Francisco Morato',
+            lines: [
+                'Rua Progresso, 657 - Centro',
+                'Francisco Morato - SP',
+                'CEP: 07901-170',
+            ],
+            mapSrc:
+                'https://www.google.com/maps?q=Rua+Progresso+657+Centro+Francisco+Morato+SP&output=embed',
+            mapLink: 'https://www.google.com/maps/search/?api=1&query=Rua+Progresso+657+Centro+Francisco+Morato+SP',
         },
     ],
 };
