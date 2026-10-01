@@ -165,6 +165,7 @@ Componente não chama axios direto. Mantenha assim.
 
 ```bash
 npm run dev       # servidor de desenvolvimento
+npm run dev:mobile # idem, aberto na rede Wi-Fi para testar no celular
 npm run build     # build de produção
 npm run lint      # eslint
 npm run preview   # servir o build localmente
@@ -199,21 +200,15 @@ MUI e Emotion já não estão nas dependências.
 
 ### Outros
 
-- **`GET /api/contacts` e `GET /api/candidates/recruitment-process` ainda usam
-  `size=100` como paginação de faz-de-conta.** O filtro de data dos dois já
-  roda no backend (`startDate`/`finalDate`), mas a tela sempre pede "os 100
-  primeiros" em vez de paginar de verdade — para de trazer tudo no dia em que
-  um dos dois passar de 100 registros no período buscado.
 - **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
   melhorariam a página de Projetos e a Home. Ao trocar, mirar ~1200px no lado maior,
   proporção entre 4:3 e 16:9 (a imagem é cortada nas duas — `AreaCard` na Home usa
   16:10, o bloco da página Projetos usa 4:3), até ~150 KB depois de comprimida.
-- **Build sem nenhuma otimização de imagem.** Não há `vite-plugin-image-optimizer`,
-  `imagemin` nem nada parecido nas dependências — qualquer arquivo colocado em
-  `src/assets/` vai pro site exatamente do tamanho e peso que foi salvo, sem
-  compressão nem geração de `srcset` para telas de alta densidade. Hoje quem
-  compensa isso é comprimir a imagem antes de adicionar; um dia vale considerar
-  um plugin de build pra isso não depender de lembrar toda vez.
+- **Dependências com vulnerabilidade conhecida** (`npm audit`, levantado em
+  2026-09-28): `axios`, `react-router`, `vite` e transitivas têm correção
+  disponível por atualização; `xlsx` não tem correção no npm (o pacote
+  oficial saiu do registro — a alternativa é instalar pela CDN do SheetJS ou
+  trocar de biblioteca). Nenhuma foi atualizada ainda.
 
 ---
 

@@ -1,7 +1,7 @@
 # Contexto da sessão — Redesign V2 (site público + painel admin)
 
 > Documento de passagem de bastão. Leia junto com o `CLAUDE.md`.
-> Última atualização: 2026-09-14.
+> Última atualização: 2026-09-28.
 
 ---
 
@@ -148,7 +148,11 @@ O backend **já tinha** o módulo `reusablefile` pronto quando esta tela foi
 feita — entidade, controller, service e três DTOs. O front espelha o contrato
 real, não uma invenção.
 
-`ReusableFileOutput` = `{ id, name, storedName, originalName, contentType, creationDate }`
+`ReusableFileOutput` = `{ id, name, storedName, originalName, contentType, kind, usageCount, creationDate }`
+
+`kind` é classificado pelo backend no upload (mesma regra de `lib/fileKind`,
+com CSV/TSV contando como planilha). `usageCount` só vem preenchido nas rotas
+da biblioteca; dentro de `NewsOutput.coverImage` ele é `null`.
 
 Os três nomes são diferentes de propósito: `name` é o rótulo da biblioteca,
 `originalName` é o que a pessoa enviou (e o que ela recebe ao baixar) e
@@ -183,7 +187,7 @@ que é uma notícia. Para usar a biblioteca em outro formulário amanhã:
 - `PUT /news/{id}/data` virou **JSON puro** (não é mais multipart).
 - Criar **e** editar usam o mesmo `MediaField`; ao editar, ele já vem
   preenchido com a capa atual.
-- `ImageUpload.jsx` ficou **órfão** — nada mais o importa.
+- `ImageUpload.jsx` ficou órfão e foi apagado.
 
 ### Endereços no texto viram links
 
@@ -196,9 +200,9 @@ Vale para notícia **e** processo seletivo, que usam o mesmo `RichText`.
 Regras que não podem ser afrouxadas:
 
 - **Lista de permissão de esquemas**: só `http`, `https`, `mailto`. Qualquer
-  outro (`javascript:`, `data:`, `file:`) volta a ser texto comum. Isso importa
-  porque a área administrativa ainda está sem autenticação — o texto da notícia
-  é conteúdo **não confiável**.
+  outro (`javascript:`, `data:`, `file:`) volta a ser texto comum. Mesmo com o
+  painel atrás de login, o texto da notícia é digitado por uma pessoa e segue
+  sendo conteúdo **não confiável**.
 - **Pontuação final não entra na URL** (`…/edital.` → o ponto é da frase), mas
   parêntese que faz parte do endereço é preservado (Wikipédia).
 - **Rótulo encurtado** preservando domínio e fim do caminho, mais
@@ -212,13 +216,41 @@ tentativas de injeção.
 
 ### Exclusão com integridade
 
-O backend recusa apagar um arquivo em uso (`existsByCoverImageId`). Não existe
-endpoint que responda "quem usa o arquivo 7?", então `useFileUsage` cruza a
-biblioteca com a lista de notícias que já está no cache — **zero requisição
-extra**. O botão de excluir fica desabilitado enquanto a checagem não volta,
-e não só quando ela volta positiva.
+O backend recusa apagar um arquivo em uso. O card e a gaveta leem
+`file.usageCount`, que já vem com o arquivo, e por isso o botão de excluir nasce
+travado ou liberado sem esperar nada. A gaveta busca **quais** conteúdos usam o
+arquivo em `GET /reusable-files/{id}/usages` (paginado: uma capa padrão pode
+estar em centenas de notícias).
 
----
+(Antes da paginação, `useFileUsage` cruzava a biblioteca com a lista inteira de
+notícias em cache. Isso deixou de funcionar quando "a lista inteira" deixou de
+existir no navegador.)
+
+### Paginação — "Carregar mais" em toda listagem
+
+Nenhuma listagem pede mais `size=100` fingindo que é "tudo". O caminho é:
+
+| Camada | Arquivo | Papel |
+|---|---|---|
+| Service | `services/pagination.js` | `toPage` achata o `PagedModel` do Spring em `{ items, page, totalPages, totalElements }`; `fetchAllItems` percorre as páginas quando "tudo" é mesmo o requisito |
+| Mock | `mocks/paginate.js` | recorta a lista em memória no mesmo formato |
+| Hook | `hooks/usePagedQuery.js` | `useInfiniteQuery` devolvendo `data` como array só, e com `QueryBoundary` funcionando igual |
+| UI | `components/feedback/LoadMore.jsx` | "Mostrando X de Y" + botão de 44px |
+
+Decisões:
+- **Botão, não rolagem infinita**: a rolagem infinita deixa o rodapé
+  inalcançável e gasta dados do 4G com itens que ninguém pediu.
+- **Totais vêm do servidor** (`totalElements`). O Dashboard pede páginas de
+  1 item só para ler o total, em vez de baixar tudo para contar.
+- **Exportar para Excel busca o período inteiro no clique** (`loadRows`), não
+  as páginas que estão na tela.
+- **O `<select>` de processos em Candidatos usa `fetchAllItems`**: ali "todos"
+  é o requisito, e o cadastro é pequeno.
+- **A busca da biblioteca roda no servidor** (`?search=&kind=`), com
+  `useDebouncedValue` (300 ms), para uma palavra digitada virar uma requisição,
+  e não uma por letra.
+- Tamanhos: notícias públicas 12, biblioteca 24, seletor de mídia 12, vagas
+  públicas 10, listas do painel 20.
 
 ## Autenticação
 
@@ -297,6 +329,9 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
 | Barra inferior | "Candidatos" a 11px estoura a célula de 64px num aparelho de 320px → 10px até 359px. |
 | `Button` | `mailto:` e `tel:` abriam uma aba em branco órfã antes de acionar o aplicativo. |
 | `api.js` | Interceptor de requisição lia o token do `localStorage` sem `try/catch`, diferente do `AuthProvider`. Um JSON corrompido quebraria toda chamada de API com um erro genérico em vez de cair no login. |
+| `ExportButton` | Recebia `rows` prontas; com paginação exportaria só as 20 primeiras linhas sem aviso. Agora recebe `loadRows()`. |
+| `Dashboard` | Esqueleto girando para sempre se a contagem falhasse; e o aviso "dados de demonstração" aparecia mesmo ligado ao backend real (agora só em modo mock). |
+| Biblioteca de arquivos | O seletor aceitava qualquer tipo e o backend recusava `.svg`/`.odt` só DEPOIS do upload. `lib/uploadRules.js` espelha a lista do backend no `accept`. |
 | `Candidates.jsx`, `AttachmentList.jsx`, `MultiFileUpload.jsx` | Três lugares ainda tratavam anexo/currículo como STRING (`candidate.cvUrl`, `filesPath`/`filesPaths` como array de nome de arquivo). O backend já manda objeto (`StoredFileOutput` — `storedName`, `originalName`, `contentType` — ou `CandidateOutput.cv`). Achado numa troca de contrato com a sessão do backend; conferido contra o `NewsController`/`CandidateOutput.java` e contra dados reais do backend local antes de corrigir. |
 
 ---
@@ -311,6 +346,7 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
 | Carrossel da Home | 3 imagens, **2 MB** | removido |
 | Mapas do Contato | 2 iframes de imediato | 1 por vez, com `loading="lazy"` |
 | `xlsx` | no pacote de todo mundo | só ao clicar em Exportar |
+| Imagens do build | 709 kB, do jeito que foram salvas | 293 kB (`vite-plugin-image-optimizer`, qualidade 75) |
 
 ---
 
@@ -325,54 +361,35 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
 - Nenhuma `<table>`, nenhuma largura fixa grande, nenhum alvo de toque < 44px.
 - **O fluxo de autenticação foi testado manualmente no navegador** (login, erro de
   senha errada, logout) e funcionou. **O resto do redesenho segue sem teste em
-  navegador nem em celular real** — ainda não havia ferramenta de navegador
-  disponível quando essas telas foram feitas. Continua sendo o próximo passo da
-  revisão.
+  navegador nem em celular real.** Em 2026-09-28 a extensão do Chrome não estava
+  conectada e a máquina não tem navegador headless.
+- Paginação (2026-09-28), testada contra o backend local em `:8080`: páginas sem
+  item repetido, ordem, `attachments`, total de abertos, `kind` do servidor igual
+  ao `fileKind` do front nos 5 tipos, busca sem diferenciar maiúsculas e sem `%`
+  virar coringa, `usageCount` == `/usages` == notícias com aquela capa, telefone
+  do contato como texto. A mesma bateria em modo mock. Renderização no servidor
+  das 9 telas alteradas e do `LoadMore` nos quatro estados.
 
 ---
 
 ## Pendências
 
-1. **`.env.production` continua sem a URL do backend.** Pergunta aberta: qual
-   é a URL do backend v2 em produção? (a da v1 era
-   `https://www.abrascesocial.org.br/api`). Agora bloqueia também o login, não
-   só as chamadas comuns de API.
-2. **`@tanstack/react-query-devtools`** está instalado e nunca foi ligado —
-   dependência sem uso. (`js-cookie`, que era do `AuthContext` antigo, já foi
-   removido junto com a Entrega 3. `xlsx` já está em uso — exportar candidatos
-   e contatos.)
-3. **`transparencyAdminService.js` ficou órfão.** A tela de administração da
-   transparência não está no escopo do novo painel; o service foi mantido para
-   a funcionalidade não se perder. Decidir o destino dela.
-4. As fotos das áreas são 300×300 e genéricas. Fotos reais dos projetos
-   melhorariam muito a página de Projetos e a Home.
-5. **Atualizar notícia exige duas chamadas ao backend** (`PUT {id}/data` +
-   `PUT {id}/attachment`) — se a segunda falhar, fica com texto novo e anexo
-   velho, sem aviso.
-6. **`GET /api/contacts` não tem filtro de data no backend** — o recorte por
-   período acontece no navegador.
+1. **`.env.production` continua sem a URL do backend.** Qual é a URL do
+   backend v2 em produção? (a da v1 era `https://www.abrascesocial.org.br/api`).
+   Bloqueia o login e todas as chamadas no site publicado.
+2. **Testar no celular de verdade**, começando pelo site público. Nenhuma tela
+   além do login foi aberta num navegador.
+3. **Fotos das áreas** são 300×300 e genéricas. Depende de a ABRASCE fornecer
+   fotos reais dos projetos.
+4. **`npm audit`**: `axios`, `react-router` e `vite` têm correção por
+   atualização; `xlsx` não tem correção no npm. Ver `CLAUDE.md`.
 
 ---
 
-## Mudanças que o BACKEND precisa antes da integração
+## Contrato com o backend
 
-Levantadas lendo `NewsController`, `RecruitmentProcessController` e
-`NewsService` do projeto `abrasce-v2`. **Revisado em 2026-09-14 direto contra o
-código: os itens 1 e 2 originais já foram resolvidos** (a capa da notícia virou
-`coverImageId` via biblioteca de arquivos reutilizáveis, e a parte `"files"` já é
-`required = false` em `NewsController`). Ficam:
-
-1. **Atualizar notícia exige duas chamadas** (`PUT {id}/data` e
-   `PUT {id}/attachment`). Se a segunda falhar, a notícia fica com o texto novo
-   e os anexos velhos, sem nada avisando. O ideal é um endpoint só.
-
-2. **`GET /api/contacts` não tem filtro de data.** Confirmado: `ContactController`
-   não tem nenhum parâmetro de período — o recorte acontece no navegador.
-   Funciona para centenas de contatos; passando disso, o endpoint precisa dos
-   mesmos parâmetros que o de candidatos.
-
-3. **Inconsistências de nome** entre entidades: `filesPath` (notícia) x
-   `filesPaths` (processo); `phoneNumber` é `String` em candidato e `Long` em
-   contato. O front está espelhando exatamente como está — não "arrumei" no
-   mock de propósito, senão a integração quebraria sem explicação. (Não
-   reconferido nesta revisão — sinalizar se algo mudou.)
+Tudo o que o front pedia ao backend foi entregue (sessão `back-agent`,
+2026-09-28): atualizar notícia numa chamada só, filtro de data em contatos,
+busca e `kind` na biblioteca, `usageCount` + `/usages`, `attachments` no lugar
+de `filesPath`/`filesPaths`, e `Contact.phoneNumber` como String (migration
+V3; o zero à esquerda que já tinha se perdido nos dados antigos não volta).
