@@ -4,7 +4,12 @@ import tailwindcss from '@tailwindcss/vite'
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // A demo no GitHub Pages não fica na raiz do domínio, e sim em
+  // `usuario.github.io/front.abrasce-v2/`. Sem o `base`, o HTML pediria
+  // `/assets/...` na raiz do domínio, onde não existe nada, e a página ficaria
+  // branca. O mesmo valor chega ao router como `import.meta.env.BASE_URL`.
+  base: mode === 'demo' ? '/front.abrasce-v2/' : '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -34,4 +39,4 @@ export default defineConfig({
       '/api': 'http://localhost:8080',
     },
   },
-})
+}))

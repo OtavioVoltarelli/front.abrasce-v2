@@ -86,7 +86,7 @@ function RedirectToJobDetail() {
 
 export default function AppRoutes() {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
             <Suspense fallback={<RouteFallback />}>
                 <Routes>
                     {/* ============================================ PÚBLICO === */}

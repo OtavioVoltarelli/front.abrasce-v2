@@ -1,0 +1,47 @@
+# Publica a demonstração (site público + dados mockados) no GitHub Pages a cada
+# push na main. O build sai em modo `demo` (ver .env.demo e vite.config.js).
+name: Demo no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Dois pushes seguidos: o deploy mais novo vence, o antigo é cancelado.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # O build:demo também copia index.html para 404.html. O Pages não sabe
+      # que isto é uma SPA: ao abrir `/noticias` direto ou recarregar a página,
+      # ele procura esse arquivo, não acha e serve o 404.html, que carrega o
+      # React, e o router mostra a página certa.
+      - run: npm run build:demo
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
