@@ -28,10 +28,11 @@
  * Aqui só três esquemas passam: http, https e mailto. Qualquer outra coisa é
  * devolvida como TEXTO comum, visível e inofensiva.
  *
- * Isso importa mais do que parece neste projeto: a área administrativa ainda
- * está sem autenticação. Enquanto estiver, qualquer pessoa que conheça o
- * endereço pode escrever uma notícia — então o texto dela é conteúdo NÃO
- * CONFIÁVEL, e é assim que ele é tratado aqui.
+ * O painel exige login, mas isso não torna o texto confiável: ele continua
+ * sendo digitado (ou colado de um e-mail, de um PDF) por uma pessoa, e basta
+ * uma senha vazada para alguém mal-intencionado escrever uma notícia. Todo
+ * texto que não foi escrito no código-fonte é conteúdo NÃO CONFIÁVEL, e é
+ * assim que ele é tratado aqui.
  */
 
 /**
