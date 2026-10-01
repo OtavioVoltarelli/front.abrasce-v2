@@ -1,23 +1,55 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { recruitmentProcessService } from '../services/recruitmentProcessService';
+import { fetchAllItems } from '../services/pagination';
+import { usePagedQuery } from './usePagedQuery';
 
 const RP_KEY = ['recruitmentProcesses'];
 
 /* -------------------------------------------------------------------- leitura */
 
 /** Só os processos abertos — é o que o site público mostra. */
-export function useActiveRecruitmentProcesses() {
-    return useQuery({
+export function useActiveRecruitmentProcessPages({ pageSize }) {
+    return usePagedQuery({
         queryKey: [...RP_KEY, 'actives'],
-        queryFn: () => recruitmentProcessService.getActives(),
+        fetchPage: recruitmentProcessService.getActivesPage,
+        pageSize,
     });
 }
 
-/** Ativos e encerrados — usado no painel administrativo. */
-export function useAllRecruitmentProcesses() {
+/** Ativos e encerrados — listagem do painel. */
+export function useRecruitmentProcessPages({ pageSize }) {
+    return usePagedQuery({
+        queryKey: [...RP_KEY, 'list'],
+        fetchPage: recruitmentProcessService.getPage,
+        pageSize,
+    });
+}
+
+/**
+ * Quantos processos estão abertos (contador do Dashboard e da listagem).
+ * Página de um item só, lendo `totalElements` — o banco conta.
+ */
+export function useActiveRecruitmentProcessTotal() {
     return useQuery({
-        queryKey: [...RP_KEY, 'all'],
-        queryFn: () => recruitmentProcessService.getAll(),
+        queryKey: [...RP_KEY, 'actives', 'total'],
+        queryFn: () =>
+            recruitmentProcessService
+                .getActivesPage({ page: 0, size: 1 })
+                .then((page) => page.totalElements),
+    });
+}
+
+/**
+ * TODOS os processos, para o <select> da tela de candidatos.
+ *
+ * Aqui "todos" é o requisito de verdade: um select paginado esconderia o
+ * processo que a pessoa procura. Processo seletivo é um cadastro pequeno
+ * (dezenas por ano), então percorrer as páginas é barato.
+ */
+export function useRecruitmentProcessOptions() {
+    return useQuery({
+        queryKey: [...RP_KEY, 'options'],
+        queryFn: () => fetchAllItems(recruitmentProcessService.getPage),
     });
 }
 

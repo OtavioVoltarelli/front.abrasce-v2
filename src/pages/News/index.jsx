@@ -3,7 +3,8 @@ import PageHeader from '../../components/layout/PageHeader';
 import NewsCard from '../../components/cards/NewsCard';
 import QueryBoundary from '../../components/feedback/QueryBoundary';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useAllNews } from '../../hooks/useNews';
+import LoadMore from '../../components/feedback/LoadMore';
+import { useNewsPages } from '../../hooks/useNews';
 
 /**
  * Listagem de notícias.
@@ -17,8 +18,12 @@ import { useAllNews } from '../../hooks/useNews';
  * idênticos, e forçar um card gigante no topo custaria uma tela inteira de
  * rolagem para mostrar uma notícia só.
  */
+
+/** 12 = múltiplo de 2 e de 3, as colunas da grade no tablet e no desktop. */
+const PAGE_SIZE = 12;
+
 export default function News() {
-    const query = useAllNews();
+    const query = useNewsPages({ pageSize: PAGE_SIZE });
 
     return (
         <>
@@ -87,6 +92,8 @@ export default function News() {
                                         ))}
                                     </ul>
                                 )}
+
+                                <LoadMore query={query} noun="notícias" />
                             </div>
                         );
                     }}

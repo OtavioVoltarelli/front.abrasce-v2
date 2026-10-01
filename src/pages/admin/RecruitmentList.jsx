@@ -5,7 +5,11 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import QueryBoundary from '../../components/feedback/QueryBoundary';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useAllRecruitmentProcesses } from '../../hooks/useRecruitmentProcess';
+import LoadMore from '../../components/feedback/LoadMore';
+import {
+    useActiveRecruitmentProcessTotal,
+    useRecruitmentProcessPages,
+} from '../../hooks/useRecruitmentProcess';
 import { formatShortDate, toIsoDate } from '../../lib/format';
 
 /**
@@ -19,8 +23,13 @@ import { formatShortDate, toIsoDate } from '../../lib/format';
  * 60px no canto. Alvo de toque de 100% da largura contra um de 60px não é
  * comparação; e como a única ação daqui é editar, o card pode ser o botão.
  */
+const PAGE_SIZE = 20;
+
 export default function AdminRecruitmentList() {
-    const query = useAllRecruitmentProcesses();
+    const query = useRecruitmentProcessPages({ pageSize: PAGE_SIZE });
+    // Contado no servidor: filtrar `active` só nas páginas carregadas
+    // subcontaria os abertos que ainda estão na página 2.
+    const activeTotal = useActiveRecruitmentProcessTotal();
 
     return (
         <AdminPage
@@ -66,9 +75,8 @@ export default function AdminRecruitmentList() {
                 {(processes) => (
                     <>
                         <p className="mb-4 text-sm text-muted">
-                            {processes.length === 1 ? '1 processo' : `${processes.length} processos`}
-                            {' · '}
-                            {processes.filter((process) => process.active).length} com inscrições abertas
+                            {query.totalElements === 1 ? '1 processo' : `${query.totalElements} processos`}
+                            {activeTotal.data !== undefined && ` · ${activeTotal.data} com inscrições abertas`}
                         </p>
 
                         <ul className="space-y-3">
@@ -98,8 +106,8 @@ export default function AdminRecruitmentList() {
                                             </h2>
 
                                             <p className="mt-1 text-xs text-muted">
-                                                {process.filesPaths?.length
-                                                    ? `${process.filesPaths.length} anexo(s)`
+                                                {process.attachments?.length
+                                                    ? `${process.attachments.length} anexo(s)`
                                                     : 'Sem anexos'}
                                             </p>
                                         </div>
@@ -117,6 +125,8 @@ export default function AdminRecruitmentList() {
                                 </li>
                             ))}
                         </ul>
+
+                        <LoadMore query={query} noun="processos" />
                     </>
                 )}
             </QueryBoundary>

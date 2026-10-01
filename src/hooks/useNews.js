@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { newsService } from '../services/newsService';
+import { usePagedQuery } from './usePagedQuery';
 
 /**
  * O fluxo de dados do projeto é: service (HTTP/mock) -> hook (React Query) ->
@@ -19,10 +20,27 @@ export function useLatestNews(quantity = 6) {
     });
 }
 
-export function useAllNews() {
+/**
+ * Listagem paginada. `pageSize` varia por tela: a página pública usa 12
+ * (múltiplo de 2 e 3, as colunas da grade), o painel usa 20.
+ */
+export function useNewsPages({ pageSize }) {
+    return usePagedQuery({
+        queryKey: [...NEWS_KEY, 'list'],
+        fetchPage: newsService.getPage,
+        pageSize,
+    });
+}
+
+/**
+ * Só o total de notícias, para o contador do Dashboard. Pede uma página de
+ * UM item e lê `totalElements`: o banco conta, e a rede só carrega uma
+ * notícia em vez de todas.
+ */
+export function useNewsTotal() {
     return useQuery({
-        queryKey: [...NEWS_KEY, 'all'],
-        queryFn: () => newsService.getAll(),
+        queryKey: [...NEWS_KEY, 'total'],
+        queryFn: () => newsService.getPage({ page: 0, size: 1 }).then((page) => page.totalElements),
     });
 }
 

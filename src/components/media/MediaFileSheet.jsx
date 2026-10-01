@@ -4,11 +4,13 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import FileThumbnail from './FileThumbnail';
 import Skeleton from '../feedback/Skeleton';
+import LoadMore from '../feedback/LoadMore';
 import { fileKind, isImage } from '../../lib/fileKind';
 import { formatDateTime } from '../../lib/format';
 import { fileUrl } from '../../services/config';
 import { reusableFileDownloadUrl } from '../../services/reusableFileService';
 import { accentVars } from '../../lib/palette';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * Gaveta de um arquivo da biblioteca: ver, renomear, substituir, baixar, excluir.
@@ -35,11 +37,23 @@ import { accentVars } from '../../lib/palette';
  * Substituir MANTÉM o id — quem já aponta para o arquivo passa a ver o
  * conteúdo novo. Isso é poderoso e perigoso na mesma medida, então quando o
  * arquivo está em uso a gaveta avisa quantos conteúdos vão mudar junto.
+ *
+ * ---------------------------------------------------------------------------
+ * QUANTOS E QUAIS VÊM DE LUGARES DIFERENTES
+ * ---------------------------------------------------------------------------
+ * `file.usageCount` (QUANTOS) chega junto com o arquivo, então a decisão de
+ * travar ou liberar a exclusão sai na hora, sem esperar nada. `usages`
+ * (QUAIS) é a lista paginada de `/usages`, buscada só quando a gaveta abre:
+ * serve para a pessoa saber o que precisa trocar antes de excluir.
  */
+
+/* O backend devolve o tipo de conteúdo como constante ("NEWS"). A tradução
+   fica aqui, e um tipo novo sem tradução aparece cru em vez de sumir. */
+const USAGE_TYPE_LABELS = { NEWS: 'Notícia' };
+
 export default function MediaFileSheet({
     file,
-    usage = [],
-    usageIsPending = false,
+    usages,
     onClose,
     renameMutation,
     replaceMutation,
@@ -54,7 +68,8 @@ export default function MediaFileSheet({
     if (!file) return null;
 
     const kind = fileKind(file);
-    const isInUse = usage.length > 0;
+    const usageCount = file.usageCount ?? 0;
+    const isInUse = usageCount > 0;
     const nameChanged = name.trim() !== file.name && name.trim().length > 0;
 
     const handleRename = (event) => {
@@ -123,20 +138,32 @@ export default function MediaFileSheet({
                 {/* --------------------------------------------------- EM USO */}
                 <div className="rounded-xl bg-sand p-4 ring-1 ring-line">
                     <h3 className="text-sm font-bold text-ink-900">Onde está sendo usado</h3>
-                    {usageIsPending ? (
-                        <Skeleton className="mt-2 h-4 w-40" />
-                    ) : isInUse ? (
-                        <ul className="mt-2 space-y-1">
-                            {usage.map((item) => (
-                                <li key={`${item.section}-${item.id}`} className="text-sm text-ink-800">
-                                    <span className="text-muted">{item.section}:</span> {item.title}
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
+                    {!isInUse ? (
                         <p className="mt-1 text-sm text-muted">
                             Nenhum conteúdo usa este arquivo. Pode excluir com segurança.
                         </p>
+                    ) : usages.isPending ? (
+                        <Skeleton className="mt-2 h-4 w-40" />
+                    ) : usages.isError ? (
+                        <p role="alert" className="mt-1 text-sm text-berry-ink">
+                            Em {usageCount === 1 ? '1 conteúdo' : `${usageCount} conteúdos`}, mas não foi
+                            possível carregar quais.{' '}
+                            <button type="button" onClick={() => usages.refetch()} className="min-h-11 font-semibold underline">
+                                Tentar de novo
+                            </button>
+                        </p>
+                    ) : (
+                        <>
+                            <ul className="mt-2 space-y-1">
+                                {usages.data.map((item) => (
+                                    <li key={`${item.type}-${item.id}`} className="text-sm text-ink-800">
+                                        <span className="text-muted">{USAGE_TYPE_LABELS[item.type] ?? item.type}:</span>{' '}
+                                        {item.title}
+                                    </li>
+                                ))}
+                            </ul>
+                            <LoadMore query={usages} noun="conteúdos" />
+                        </>
                     )}
                 </div>
 
@@ -169,7 +196,7 @@ export default function MediaFileSheet({
                     <p className="text-sm text-ink-800/85">
                         O arquivo novo assume o lugar do atual mantendo o mesmo endereço.
                         {isInUse
-                            ? ` Os ${usage.length} conteúdos listados acima passam a mostrar o arquivo novo.`
+                            ? ` ${usageCount === 1 ? 'O conteúdo listado acima passa' : `Os ${usageCount} conteúdos listados acima passam`} a mostrar o arquivo novo.`
                             : ' Nenhum conteúdo usa este arquivo hoje.'}
                     </p>
 
@@ -177,7 +204,7 @@ export default function MediaFileSheet({
                         ref={replaceInputRef}
                         id={replaceInputId}
                         type="file"
-                        accept={kind.id === 'image' ? 'image/*' : undefined}
+                        accept={acceptFor(kind.id)}
                         onChange={(event) => setReplacement(event.target.files?.[0] ?? null)}
                         className="sr-only"
                     />
@@ -214,21 +241,19 @@ export default function MediaFileSheet({
                 <section className="rounded-xl bg-berry-tint p-4 ring-1 ring-berry/25">
                     <h3 className="text-sm font-bold text-berry-ink">Excluir da biblioteca</h3>
                     <p className="mt-1 text-sm text-ink-800/85">
-                        {usageIsPending
-                            ? 'Verificando se algum conteúdo usa este arquivo…'
-                            : isInUse
-                                ? `Não é possível excluir: ${usage.length === 1 ? 'um conteúdo usa' : `${usage.length} conteúdos usam`} este arquivo. Troque a imagem deles antes.`
-                                : 'O arquivo sai da biblioteca e do servidor. Não dá para desfazer.'}
+                        {isInUse
+                            ? `Não é possível excluir: ${usageCount === 1 ? 'um conteúdo usa' : `${usageCount} conteúdos usam`} este arquivo. Troque a imagem deles antes.`
+                            : 'O arquivo sai da biblioteca e do servidor. Não dá para desfazer.'}
                     </p>
-                    {/* Desabilitado ENQUANTO NÃO SE SABE, e não só quando se sabe
-                        que está em uso. Enquanto a checagem não volta, liberar o
-                        botão seria apostar que ninguém usa — e a aposta é perdida
-                        no servidor, com um erro que a pessoa não esperava. */}
+                    {/* A contagem vem com o arquivo, então o botão já nasce no
+                        estado certo. Se outra pessoa usar o arquivo neste meio
+                        tempo, o servidor ainda recusa a exclusão: a checagem
+                        daqui evita o erro comum, a do servidor garante a regra. */}
                     <Button
                         variant="danger"
                         fullWidth
                         className="mt-3"
-                        disabled={usageIsPending || isInUse}
+                        disabled={isInUse}
                         onClick={() => onRequestDelete(file)}
                     >
                         Excluir arquivo

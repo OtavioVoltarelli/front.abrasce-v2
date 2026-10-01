@@ -5,7 +5,8 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import QueryBoundary from '../../components/feedback/QueryBoundary';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useAllNews } from '../../hooks/useNews';
+import LoadMore from '../../components/feedback/LoadMore';
+import { useNewsPages } from '../../hooks/useNews';
 import { formatShortDate, toIsoDate } from '../../lib/format';
 import { fileUrl } from '../../services/config';
 
@@ -16,8 +17,10 @@ import { fileUrl } from '../../services/config';
  * o jeito mais rápido de reconhecer qual é qual — mais rápido do que ler o
  * título. Ela é pequena (64px) de propósito: a lista tem que caber na tela.
  */
+const PAGE_SIZE = 20;
+
 export default function AdminNewsList() {
-    const query = useAllNews();
+    const query = useNewsPages({ pageSize: PAGE_SIZE });
 
     return (
         <AdminPage
@@ -66,7 +69,9 @@ export default function AdminNewsList() {
                 {(news) => (
                     <>
                         <p className="mb-4 text-sm text-muted">
-                            {news.length === 1 ? '1 notícia publicada' : `${news.length} notícias publicadas`}
+                            {query.totalElements === 1
+                                ? '1 notícia publicada'
+                                : `${query.totalElements} notícias publicadas`}
                         </p>
 
                         <ul className="space-y-3">
@@ -92,10 +97,10 @@ export default function AdminNewsList() {
                                                 >
                                                     {formatShortDate(item.creationDate)}
                                                 </time>
-                                                {item.filesPath?.length > 0 && (
+                                                {item.attachments?.length > 0 && (
                                                     <Badge tone="brand">
-                                                        {item.filesPath.length} anexo
-                                                        {item.filesPath.length > 1 ? 's' : ''}
+                                                        {item.attachments.length} anexo
+                                                        {item.attachments.length > 1 ? 's' : ''}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -118,6 +123,8 @@ export default function AdminNewsList() {
                                 </li>
                             ))}
                         </ul>
+
+                        <LoadMore query={query} noun="notícias" />
                     </>
                 )}
             </QueryBoundary>

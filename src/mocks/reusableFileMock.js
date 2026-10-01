@@ -2,7 +2,10 @@
  * Biblioteca de arquivos reutilizáveis — dados de mentira, formato de verdade.
  * ---------------------------------------------------------------------------
  * Cada objeto tem EXATAMENTE os campos de `ReusableFileOutput` do backend v2:
- *   id, name, storedName, originalName, contentType, creationDate
+ *   id, name, storedName, originalName, contentType, creationDate,
+ *   kind, usageCount
+ * Os dois últimos NÃO ficam guardados aqui: são calculados na leitura
+ * (`toOutput`), do mesmo jeito que o backend calcula na hora de responder.
  *
  * Os três nomes são diferentes de propósito, e a distinção é do backend:
  *   name         rótulo escolhido na biblioteca ("Capa padrão — Educação")
@@ -29,6 +32,8 @@ import logo from '../assets/logo.png';
 import marcaPaie from '../assets/projects/paie.jpeg';
 import marcaEscolaDeArtes from '../assets/projects/escola-de-artes.jpeg';
 import { delay } from './delay';
+import { paginate } from './paginate';
+import { fileKind } from '../lib/fileKind';
 
 let FILES = [
     {
@@ -183,17 +188,52 @@ const clone = (value) => structuredClone(value);
 export const findReusableFileById = (id) =>
     FILES.find((file) => file.id === Number(id)) ?? null;
 
+/* `newsMock` importa DESTE arquivo (para montar as capas), então importar
+   `newsMock` de volta no topo seria um ciclo — funciona por acidente em ESM e
+   quebra no dia em que a ordem de carregamento mudar. O `import()` dinâmico
+   só resolve quando a função roda, muito depois de os dois módulos já
+   estarem carregados. */
+const loadNewsUsage = async () => (await import('./newsMock')).newsUsingCover;
+
+/* Acrescenta o que o backend calcula na resposta: o tipo (lá é uma coluna
+   preenchida no upload; aqui, a mesma regra de `fileKind`) e quantos
+   conteúdos usam o arquivo. */
+const toOutput = (file, newsUsingCover) => ({
+    ...clone(file),
+    kind: fileKind(file).id,
+    usageCount: newsUsingCover(file.id).length,
+});
+
+const matchesSearch = (file, term) =>
+    file.name.toLowerCase().includes(term) || file.originalName.toLowerCase().includes(term);
+
 export const reusableFileMockService = {
-    getAll: async () => {
+    /** Mesmos filtros do `GET /reusable-files?search=&kind=` real. */
+    getPage: async ({ search, kind, page, size }) => {
         await delay();
-        return clone(sorted());
+        const newsUsingCover = await loadNewsUsage();
+        const term = search?.trim().toLowerCase() ?? '';
+
+        const matching = sorted()
+            .filter((file) => !kind || kind === 'all' || fileKind(file).id === kind)
+            .filter((file) => !term || matchesSearch(file, term))
+            .map((file) => toOutput(file, newsUsingCover));
+
+        return paginate(matching, { page, size });
+    },
+
+    getUsagesPage: async (id, { page, size }) => {
+        await delay(300);
+        const newsUsingCover = await loadNewsUsage();
+        const usages = newsUsingCover(id).map((news) => ({ type: 'NEWS', id: news.id, title: news.title }));
+        return paginate(usages, { page, size });
     },
 
     getById: async (id) => {
         await delay(250);
         const found = FILES.find((file) => file.id === Number(id));
         if (!found) throw new Error('Arquivo reutilizável não encontrado.');
-        return clone(found);
+        return toOutput(found, await loadNewsUsage());
     },
 
     create: async ({ file, name }) => {
@@ -211,7 +251,7 @@ export const reusableFileMockService = {
         };
         nextId += 1;
         FILES = [created, ...FILES];
-        return clone(created);
+        return toOutput(created, await loadNewsUsage());
     },
 
     /* Renomear NÃO toca no arquivo — é `PUT /{id}` com JSON no backend.
@@ -222,7 +262,7 @@ export const reusableFileMockService = {
         const index = FILES.findIndex((file) => file.id === Number(id));
         if (index === -1) throw new Error('Arquivo reutilizável não encontrado.');
         FILES = FILES.with(index, { ...FILES[index], name: name.trim() });
-        return clone(FILES[index]);
+        return toOutput(FILES[index], await loadNewsUsage());
     },
 
     /* Trocar o arquivo MANTÉM o id — e portanto todas as notícias que já
@@ -238,7 +278,7 @@ export const reusableFileMockService = {
             originalName: file.name,
             contentType: file.type || null,
         });
-        return clone(FILES[index]);
+        return toOutput(FILES[index], await loadNewsUsage());
     },
 
     remove: async (id) => {
@@ -246,21 +286,12 @@ export const reusableFileMockService = {
         const index = FILES.findIndex((file) => file.id === Number(id));
         if (index === -1) throw new Error('Arquivo reutilizável não encontrado.');
 
-        /* Reproduz a regra do `ReusableFileService.delete`: o backend consulta
-           `newsRepository.existsByCoverImageId(id)` e devolve BusinessException
-           com esta mensagem. A tela impede o clique antes disso, mas esta
-           verificação é a rede de segurança para quando duas pessoas mexem no
-           painel ao mesmo tempo.
-
-           O `import()` é dinâmico porque `newsMock` importa daqui (para montar
-           as capas) e daqui importaríamos `newsMock` de volta. Import estático
-           nos dois sentidos é um ciclo — funciona por acidente em ESM, e quebra
-           no dia em que a ordem de carregamento mudar. Import dinâmico corta o
-           ciclo: só resolve quando a função roda, muito depois de os dois
-           módulos já estarem carregados. */
-        const { newsMockService } = await import('./newsMock');
-        const usedBy = await newsMockService.findByCoverImageId(Number(id));
-        if (usedBy.length > 0) {
+        /* Reproduz a regra do `ReusableFileService.delete`: o backend recusa
+           apagar um arquivo em uso. A tela impede o clique antes disso, mas
+           esta verificação é a rede de segurança para quando duas pessoas
+           mexem no painel ao mesmo tempo. */
+        const newsUsingCover = await loadNewsUsage();
+        if (newsUsingCover(id).length > 0) {
             throw new Error(
                 'Este arquivo está sendo usado como capa de uma ou mais notícias. ' +
                 'Troque a capa dessas notícias antes de excluí-lo.'

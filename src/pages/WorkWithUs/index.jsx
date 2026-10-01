@@ -3,7 +3,8 @@ import PageHeader from '../../components/layout/PageHeader';
 import JobCard from '../../components/cards/JobCard';
 import QueryBoundary from '../../components/feedback/QueryBoundary';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useActiveRecruitmentProcesses } from '../../hooks/useRecruitmentProcess';
+import LoadMore from '../../components/feedback/LoadMore';
+import { useActiveRecruitmentProcessPages } from '../../hooks/useRecruitmentProcess';
 
 /**
  * Trabalhe conosco — listagem dos processos seletivos abertos.
@@ -12,8 +13,10 @@ import { useActiveRecruitmentProcesses } from '../../hooks/useRecruitmentProcess
  * Uma lista misturando vagas abertas e encerradas obriga a pessoa a filtrar na
  * cabeça, e a frustração de clicar numa vaga encerrada é evitável.
  */
+const PAGE_SIZE = 10;
+
 export default function WorkWithUs() {
-    const query = useActiveRecruitmentProcesses();
+    const query = useActiveRecruitmentProcessPages({ pageSize: PAGE_SIZE });
 
     return (
         <>
@@ -55,9 +58,9 @@ export default function WorkWithUs() {
                     {(processes) => (
                         <>
                             <p className="mb-6 text-sm text-muted">
-                                {processes.length === 1
+                                {query.totalElements === 1
                                     ? '1 processo seletivo com inscrições abertas'
-                                    : `${processes.length} processos seletivos com inscrições abertas`}
+                                    : `${query.totalElements} processos seletivos com inscrições abertas`}
                             </p>
 
                             {/* <ul> em vez de uma sequência de <div>: um leitor de
@@ -70,6 +73,8 @@ export default function WorkWithUs() {
                                     </li>
                                 ))}
                             </ul>
+
+                            <LoadMore query={query} noun="processos" />
                         </>
                     )}
                 </QueryBoundary>

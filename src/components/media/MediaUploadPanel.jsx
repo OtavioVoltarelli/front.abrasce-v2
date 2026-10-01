@@ -4,6 +4,7 @@ import Input from '../ui/Input';
 import FileThumbnail from './FileThumbnail';
 import { fileKind, isImage } from '../../lib/fileKind';
 import { formatFileSize } from '../../lib/format';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * Enviar um arquivo para a biblioteca: escolher → conferir → nomear → salvar.
@@ -22,13 +23,14 @@ import { formatFileSize } from '../../lib/format';
  *   ~100x24px que não se estiliza e é um alvo ruim para o dedo. O <label>
  *   funciona porque clicar num rótulo aciona o campo associado — sem
  *   JavaScript, e continuando acessível pelo teclado.
- * · No celular, esse mesmo controle abre a câmera e a galeria. É por isso que
- *   NÃO restringimos `accept` na biblioteca: ela guarda qualquer tipo.
+ * · No celular, esse mesmo controle abre a câmera e a galeria. O `accept`
+ *   padrão é a lista de extensões que o backend aceita (`lib/uploadRules`):
+ *   o seletor não oferece o que o servidor recusaria depois do upload.
  * · Depois de escolher, o arquivo aparece com nome e tamanho. "Nenhum arquivo
  *   selecionado" é o estado que mais gera dúvida em formulário de upload.
  */
 export default function MediaUploadPanel({
-    accept,
+    accept = acceptFor('any'),
     submitLabel = 'Adicionar à biblioteca',
     isPending = false,
     error,

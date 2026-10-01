@@ -2,16 +2,15 @@ import { useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Skeleton from '../feedback/Skeleton';
+import LoadMore from '../feedback/LoadMore';
 import FileThumbnail from './FileThumbnail';
 import MediaUploadPanel from './MediaUploadPanel';
 import MediaSearchBar from './MediaSearchBar';
 import { formatShortDate } from '../../lib/format';
 import { fileKind } from '../../lib/fileKind';
-import {
-    useCreateReusableFile,
-    useFilteredFiles,
-    useReusableFiles,
-} from '../../hooks/useReusableFiles';
+import { useCreateReusableFile, useReusableFilePages } from '../../hooks/useReusableFiles';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * Seletor de mídia — escolher um arquivo já existente na biblioteca.
@@ -38,6 +37,9 @@ import {
  *    primeiro: modal sobre modal empilha duas armadilhas de foco e, no
  *    celular, some com o contexto todo.
  */
+/** 12: preenche 2 e 3 colunas por igual. */
+const PAGE_SIZE = 12;
+
 export default function MediaPicker({
     isOpen,
     onClose,
@@ -51,16 +53,17 @@ export default function MediaPicker({
     const [search, setSearch] = useState('');
     const [kindFilter, setKindFilter] = useState('all');
 
-    const query = useReusableFiles();
-    const createMutation = useCreateReusableFile();
-
     /* Quando o seletor é aberto para um campo de imagem, arquivos que não são
        imagem sequer aparecem — oferecer um PDF para ser capa de notícia é
-       oferecer um erro. */
-    const available = (query.data ?? []).filter(
-        (file) => kind === 'all' || fileKind(file).id === kind
-    );
-    const files = useFilteredFiles(available, { search, kind: kindFilter });
+       oferecer um erro. O `kind` do campo vence o filtro da barra, que nem
+       aparece nesse caso. */
+    const effectiveKind = kind === 'all' ? kindFilter : kind;
+    const debouncedSearch = useDebouncedValue(search);
+
+    const query = useReusableFilePages({ search: debouncedSearch, kind: effectiveKind, pageSize: PAGE_SIZE });
+    const createMutation = useCreateReusableFile();
+    const files = query.data ?? [];
+    const isFiltering = Boolean(debouncedSearch.trim()) || effectiveKind !== kind;
 
     const close = () => {
         setPanel('browse');
@@ -71,7 +74,14 @@ export default function MediaPicker({
     };
 
     const confirm = () => {
-        const chosen = available.find((file) => file.id === pendingId);
+        // Confirmar sem trocar de arquivo não muda nada. E o arquivo atual
+        // pode nem estar entre as páginas carregadas, então não dá para
+        // procurá-lo na lista.
+        if (pendingId === selectedId) {
+            close();
+            return;
+        }
+        const chosen = files.find((file) => file.id === pendingId);
         if (!chosen) return;
         onSelect(chosen);
         close();
@@ -103,7 +113,7 @@ export default function MediaPicker({
                 size="lg"
             >
                 <MediaUploadPanel
-                    accept={kind === 'image' ? 'image/*' : undefined}
+                    accept={acceptFor(kind)}
                     submitLabel="Enviar e usar"
                     isPending={createMutation.isPending}
                     error={createMutation.isError ? createMutation.error?.message : null}
@@ -144,7 +154,8 @@ export default function MediaPicker({
                     kindFilter={kindFilter}
                     onKindFilterChange={setKindFilter}
                     showKindFilter={kind === 'all'}
-                    resultCount={files.length}
+                    resultCount={query.totalElements}
+                    isUpdating={search !== debouncedSearch || query.isPlaceholderData}
                 />
 
                 <Button variant="secondary" fullWidth onClick={() => setPanel('upload')}>
@@ -176,9 +187,9 @@ export default function MediaPicker({
                     frase para os dois casos manda a pessoa para o lado errado. */}
                 {!query.isPending && !query.isError && files.length === 0 && (
                     <p className="rounded-xl bg-sand p-6 text-center text-sm text-muted">
-                        {available.length === 0
-                            ? 'A biblioteca ainda não tem nenhum arquivo deste tipo. Envie o primeiro pelo botão acima.'
-                            : 'Nenhum arquivo encontrado com esse termo. Tente outra palavra ou limpe a busca.'}
+                        {isFiltering
+                            ? 'Nenhum arquivo encontrado com esse termo. Tente outra palavra ou limpe a busca.'
+                            : 'A biblioteca ainda não tem nenhum arquivo deste tipo. Envie o primeiro pelo botão acima.'}
                     </p>
                 )}
 
@@ -225,6 +236,8 @@ export default function MediaPicker({
                         })}
                     </ul>
                 )}
+
+                <LoadMore query={query} noun="arquivos" />
             </div>
         </Modal>
     );

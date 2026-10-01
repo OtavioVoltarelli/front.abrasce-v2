@@ -71,7 +71,10 @@ export const FILE_KINDS = [
         label: 'Documentos',
         singular: 'Documento',
         accent: 'brand',
-        mime: /^(application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml|text\/)/,
+        // `text/` menos CSV e TSV: os dois são texto puro por dentro, mas quem
+        // abre um CSV espera uma planilha. Sem a exceção, `text/csv` seria
+        // capturado aqui antes de chegar à regra de planilhas logo abaixo.
+        mime: /^(application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml|text\/(?!csv|tab-separated-values))/,
         extensions: ['doc', 'docx', 'odt', 'txt', 'rtf'],
         icon: sheet(<path d="M8.5 12.5h7M8.5 15.5h7M8.5 18.5h4" />),
     },
@@ -80,8 +83,8 @@ export const FILE_KINDS = [
         label: 'Planilhas',
         singular: 'Planilha',
         accent: 'leaf',
-        mime: /^(application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml)/,
-        extensions: ['xls', 'xlsx', 'ods', 'csv'],
+        mime: /^(application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml|text\/(csv|tab-separated-values))/,
+        extensions: ['xls', 'xlsx', 'ods', 'csv', 'tsv'],
         icon: sheet(<path d="M8 12.5h8M8 16h8M12 12.5V19" />),
     },
 ];
@@ -114,9 +117,18 @@ function extensionOf(fileName = '') {
  * navegador (o que a pessoa acabou de escolher, antes de subir) — os dois
  * têm `type`/`contentType` e um nome, e a tela de upload precisa classificar
  * o arquivo para mostrar a pré-visualização certa ANTES de salvar.
+ *
+ * Quando o arquivo já vem do backend com `kind`, é ele que vale: o servidor
+ * classifica com esta mesma regra e FILTRA por ela (`?kind=`). Se o front
+ * reclassificasse por conta própria, um arquivo poderia aparecer no filtro
+ * "PDFs" com o ícone de "Outros".
  */
 export function fileKind(file) {
     if (!file) return UNKNOWN;
+
+    if (file.kind) {
+        return FILE_KINDS.find((kind) => kind.id === file.kind) ?? UNKNOWN;
+    }
 
     const mime = file.contentType ?? file.type ?? '';
     const name = file.originalName ?? file.name ?? '';

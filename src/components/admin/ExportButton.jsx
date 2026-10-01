@@ -18,8 +18,16 @@ import Button from '../ui/Button';
  *
  * O mesmo truque vale para qualquer biblioteca pesada usada em uma ação
  * pontual: editor de texto rico, leitor de PDF, gerador de gráfico.
+ *
+ * ---------------------------------------------------------------------------
+ * AS LINHAS TAMBÉM SÓ SÃO BUSCADAS NO CLIQUE
+ * ---------------------------------------------------------------------------
+ * `loadRows` é uma FUNÇÃO que devolve as linhas, não as linhas prontas. A tela
+ * mostra a lista paginada (só as páginas que a pessoa abriu), e a planilha
+ * precisa do período INTEIRO. Passar `query.data` exportaria só as 20
+ * primeiras linhas, sem nenhum aviso de que faltou gente.
  */
-export default function ExportButton({ rows, columns, fileName, sheetName = 'Dados', disabled }) {
+export default function ExportButton({ loadRows, columns, fileName, sheetName = 'Dados', disabled }) {
     const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState(null);
 
@@ -28,7 +36,9 @@ export default function ExportButton({ rows, columns, fileName, sheetName = 'Dad
         setError(null);
 
         try {
-            const XLSX = await import('xlsx');
+            // As duas esperas correm juntas: a biblioteca baixa enquanto o
+            // servidor responde, em vez de uma depois da outra.
+            const [XLSX, rows] = await Promise.all([import('xlsx'), loadRows()]);
 
             // Monta as linhas com os CABEÇALHOS EM PORTUGUÊS e só as colunas
             // que interessam. Exportar o objeto cru levaria `cvUrl`,
@@ -63,7 +73,7 @@ export default function ExportButton({ rows, columns, fileName, sheetName = 'Dad
             <Button
                 variant="secondary"
                 onClick={handleExport}
-                disabled={disabled || isExporting || rows.length === 0}
+                disabled={disabled || isExporting}
                 fullWidth
                 className="sm:w-auto"
             >

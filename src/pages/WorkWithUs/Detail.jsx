@@ -132,7 +132,7 @@ export default function WorkWithUsDetail() {
 
                 <div className="mt-10">
                     <AttachmentList
-                        files={process.filesPaths}
+                        files={process.attachments}
                         category="rps"
                         title="Edital e documentos"
                     />

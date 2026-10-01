@@ -1,5 +1,6 @@
 import api from './api';
 import { USE_MOCKS } from './config';
+import { toPage } from './pagination';
 import { newsMockService } from '../mocks/newsMock';
 
 /**
@@ -62,25 +63,15 @@ const jsonPart = (payload) =>
     new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
 const newsHttpService = {
-    /**
-     * `/news` responde um PagedModel do Spring: os itens vêm dentro de
-     * `content`, não no corpo direto. Desembrulhamos AQUI para que nenhuma
-     * tela precise saber que o endpoint é paginado.
-     *
-     * PENDÊNCIA: `size=100` é gambiarra, não paginação de verdade — funciona
-     * enquanto o site tiver poucas dezenas de notícias e para de trazer tudo
-     * no dia em que passar de 100. `News/index.jsx` e `admin/NewsList.jsx`
-     * foram escritas para uma lista completa (sem "carregar mais"); paginação
-     * real exige mudar as duas telas, não só este service.
-     */
-    getAll: async () => {
-        const { data } = await api.get('/news', { params: { size: 100 } });
-        return data.content ?? [];
+    /** Uma página da listagem, mais recente primeiro (ordem padrão do backend). */
+    getPage: async ({ page, size }) => {
+        const { data } = await api.get('/news', { params: { page, size } });
+        return toPage(data);
     },
 
     getLatest: async (quantity = 6) => {
         const { data } = await api.get('/news', { params: { size: quantity } });
-        return data.content ?? [];
+        return toPage(data).items;
     },
 
     getById: async (id) => {

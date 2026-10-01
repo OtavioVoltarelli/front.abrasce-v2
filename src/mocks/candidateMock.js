@@ -10,6 +10,7 @@
  */
 
 import { delay } from './delay';
+import { paginate } from './paginate';
 
 /** Todo candidato deste mock tem currículo; o formato imita exatamente
  *  `StoredFileOutput.from` no backend — sem `id`, só os três campos. */
@@ -39,21 +40,21 @@ export const candidateMockService = {
      * A filtragem por data acontece aqui só porque não há servidor; na versão
      * real quem filtra é o banco.
      */
-    findByFilter: async ({ recruitmentProcessId, startDate, finalDate }) => {
+    getPage: async ({ recruitmentProcessId, startDate, finalDate, page, size }) => {
         await delay(800);
 
         const from = startDate ? new Date(startDate) : null;
         const to = finalDate ? new Date(finalDate) : null;
 
-        return clone(
-            CANDIDATES.filter((candidate) => {
-                if (String(candidate.recruitmentProcessId) !== String(recruitmentProcessId)) return false;
-                const when = new Date(candidate.candidateDate);
-                if (from && when < from) return false;
-                if (to && when > to) return false;
-                return true;
-            })
-        );
+        const matching = CANDIDATES.filter((candidate) => {
+            if (String(candidate.recruitmentProcessId) !== String(recruitmentProcessId)) return false;
+            const when = new Date(candidate.candidateDate);
+            if (from && when < from) return false;
+            if (to && when > to) return false;
+            return true;
+        }).toSorted((a, b) => new Date(b.candidateDate) - new Date(a.candidateDate));
+
+        return clone(paginate(matching, { page, size }));
     },
 
     create: async (payload) => {

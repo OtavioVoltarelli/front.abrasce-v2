@@ -4,7 +4,7 @@
  * Cada objeto tem EXATAMENTE os campos de `NewsOutput` do backend v2:
  * id, title, shortDescription, longDescription, creationDate,
  * coverImage (objeto ReusableFileOutput ou null),
- * filesPath (lista de `StoredFileOutput` — `{ storedName, originalName,
+ * attachments (lista de `StoredFileOutput` — `{ storedName, originalName,
  * contentType }` — nunca null, lista vazia quando não há anexo).
  *
  * ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@
 
 import { findReusableFileById } from './reusableFileMock';
 import { delay } from './delay';
+import { paginate } from './paginate';
 
 /** Imita `StoredFileOutput.from` do backend a partir de um nome de arquivo
  *  fixo — sem servidor de verdade, `storedName` e `originalName` coincidem. */
@@ -45,7 +46,7 @@ let NEWS = [
             'A Escola de Artes de Jaboticabal, mantida pela ABRASCE em parceria com a prefeitura municipal, abriu 120 novas vagas para as oficinas de música e dança do segundo semestre.\n\nAs turmas atendem crianças e adolescentes de 7 a 17 anos e acontecem no contraturno escolar, de segunda a sexta-feira. Serão oferecidas oficinas de violão, percussão, canto coral, dança contemporânea e dança de salão.\n\nAs inscrições podem ser feitas presencialmente na sede do projeto ou pelo formulário em https://www.abrascesocial.org.br/oficinas/inscricao, mediante apresentação de documento com foto do responsável, comprovante de residência e declaração de matrícula escolar do aluno. Não há cobrança de mensalidade ou taxa de inscrição.\n\nO edital completo está em https://www.prefeitura.jaboticabal.sp.gov.br/cultura/editais/2026/edital-oficinas-musica-danca-versao-final.pdf e as dúvidas podem ser enviadas para oficinas@abrascesocial.org.br.\n\nAs aulas começam na primeira semana do mês seguinte. Em caso de dúvidas, a coordenação atende pelo telefone da associação.',
         creationDate: '2026-07-28T09:15:00',
         coverImageId: 2,
-        filesPath: ['edital-oficinas-2026.pdf', 'ficha-de-inscricao.pdf'].map(toStoredFile),
+        attachments: ['edital-oficinas-2026.pdf', 'ficha-de-inscricao.pdf'].map(toStoredFile),
     },
     {
         id: 2,
@@ -56,7 +57,7 @@ let NEWS = [
             'O mutirão de saúde realizado no último fim de semana na Praça 14 de Janeiro, em Casa Branca, atendeu 340 pessoas ao longo de dois dias.\n\nA ação ofereceu aferição de pressão arterial, testes rápidos, orientação nutricional e encaminhamento para a rede pública nos casos que exigiam acompanhamento. Participaram enfermeiros, nutricionistas e agentes comunitários de saúde do município.\n\nA ABRASCE agradece a todos os voluntários e à comunidade pela participação.',
         creationDate: '2026-07-12T14:40:00',
         coverImageId: 3,
-        filesPath: [],
+        attachments: [],
     },
     {
         id: 3,
@@ -67,7 +68,7 @@ let NEWS = [
             'O projeto Esporte Moratense, de Francisco Morato, encerrou a temporada com um torneio comunitário que reuniu mais de 200 atletas de 8 a 16 anos no ginásio municipal.\n\nA competição contou com modalidades de futsal, vôlei e handebol, divididas por faixa etária. Além das partidas, o evento teve apresentação da fanfarra da escola municipal e distribuição de lanches às famílias presentes.\n\nAo longo do ano, o projeto atendeu 380 crianças e adolescentes em treinos regulares de segunda a sábado.',
         creationDate: '2026-06-30T17:00:00',
         coverImageId: 4,
-        filesPath: ['relatorio-temporada.pdf'].map(toStoredFile),
+        attachments: ['relatorio-temporada.pdf'].map(toStoredFile),
     },
     {
         id: 4,
@@ -77,7 +78,7 @@ let NEWS = [
             'O balanço financeiro referente ao exercício anterior, auditado por empresa independente, já está disponível na área de transparência do site.\n\nO documento detalha a origem de todos os recursos recebidos, sua destinação por projeto e município, e os custos administrativos da associação no período.\n\nO documento pode ser consultado na área de transparência do site (www.abrascesocial.org.br/transparencia). A ABRASCE reforça seu compromisso com a prestação de contas clara e acessível a doadores, parceiros e à comunidade atendida.',
         creationDate: '2026-06-05T08:00:00',
         coverImageId: 1,
-        filesPath: ['balanco-financeiro.pdf', 'parecer-auditoria.pdf', 'notas-explicativas.pdf'].map(toStoredFile),
+        attachments: ['balanco-financeiro.pdf', 'parecer-auditoria.pdf', 'notas-explicativas.pdf'].map(toStoredFile),
     },
     {
         id: 5,
@@ -88,7 +89,7 @@ let NEWS = [
             'O programa Apoio Escolar, mantido pela ABRASCE em Jaboticabal, ampliou seu atendimento e passa a receber também alunos do ensino médio.\n\nAté agora, o reforço escolar era restrito ao ensino fundamental. Com a ampliação, foram abertas turmas de matemática e redação voltadas à preparação para o ENEM e para os vestibulares.\n\nAs aulas acontecem três vezes por semana, no período da noite, e são conduzidas por professores voluntários da rede pública municipal. O material didático é fornecido gratuitamente pelo projeto.\n\nA procura na primeira semana superou o número de vagas disponíveis, e uma lista de espera foi aberta para uma segunda turma.',
         creationDate: '2026-05-19T11:25:00',
         coverImageId: 1,
-        filesPath: [],
+        attachments: [],
     },
     {
         id: 6,
@@ -99,7 +100,7 @@ let NEWS = [
             'A Residência Inclusiva de Casa Branca, gerida pela ABRASCE, completou cinco anos de funcionamento.\n\nO serviço acolhe adultos com deficiência em situação de vulnerabilidade e dependência de cuidados, oferecendo moradia, alimentação, acompanhamento de saúde e atividades de convivência em um ambiente residencial.\n\nA equipe é formada por cuidadores, técnicos de enfermagem, assistente social e psicóloga, com atendimento 24 horas por dia.',
         creationDate: '2026-04-22T16:10:00',
         coverImageId: 6,
-        filesPath: [],
+        attachments: [],
     },
     {
         id: 7,
@@ -110,7 +111,7 @@ let NEWS = [
             'A colônia de férias organizada pela ABRASCE reuniu 90 crianças de 6 a 12 anos durante uma semana de atividades ao ar livre.\n\nA programação incluiu jogos cooperativos, oficinas de arte com material reciclado, contação de histórias e piqueniques na área verde do município. Todas as atividades foram gratuitas, com transporte e lanche fornecidos pelo projeto.',
         creationDate: '2026-01-30T10:00:00',
         coverImageId: 5,
-        filesPath: [],
+        attachments: [],
     },
 ];
 
@@ -147,15 +148,27 @@ const fileToStoredFile = (file) =>
         ? { storedName: URL.createObjectURL(file), originalName: file.name, contentType: file.type }
         : file;
 
+/**
+ * Quais notícias usam este arquivo como capa — faz o papel da consulta que o
+ * backend roda para `usageCount`, para `GET /reusable-files/{id}/usages` e
+ * para recusar a exclusão de um arquivo em uso. Síncrona e sem atraso porque
+ * é chamada DE DENTRO do mock da biblioteca, que já tem o próprio atraso.
+ */
+export const newsUsingCover = (fileId) =>
+    NEWS.filter((item) => item.coverImageId === Number(fileId)).toSorted(
+        (a, b) => new Date(b.creationDate) - new Date(a.creationDate)
+    );
+
 export const newsMockService = {
-    getAll: async () => {
+    getPage: async ({ page, size }) => {
         await delay();
         // Mais recente primeiro. `toSorted` devolve um array NOVO — `sort()`
         // ordenaria o array deste módulo no lugar, e a ordem "original"
         // deixaria de existir.
-        return NEWS.map(withCover).toSorted(
+        const sorted = NEWS.map(withCover).toSorted(
             (a, b) => new Date(b.creationDate) - new Date(a.creationDate)
         );
+        return paginate(sorted, { page, size });
     },
 
     getLatest: async (quantity = 6) => {
@@ -180,7 +193,7 @@ export const newsMockService = {
             id: nextId,
             creationDate: new Date().toISOString(),
             coverImageId: Number(coverImageId),
-            filesPath: files.map(fileToStoredFile),
+            attachments: files.map(fileToStoredFile),
         };
 
         nextId += 1;
@@ -201,25 +214,11 @@ export const newsMockService = {
             // Campo em branco = "não mexi nisso", e não "apague". Sem esta
             // checagem, editar só o título limparia a capa e os anexos.
             coverImageId: coverImageId ? Number(coverImageId) : current.coverImageId,
-            filesPath: files ? files.map(fileToStoredFile) : current.filesPath,
+            attachments: files ? files.map(fileToStoredFile) : current.attachments,
         };
 
         NEWS = NEWS.with(index, updated);
         return withCover(updated);
-    },
-
-    /**
-     * Quais notícias usam este arquivo como capa. Espelha o
-     * `newsRepository.existsByCoverImageId(id)` que o backend consulta antes
-     * de deixar excluir um arquivo da biblioteca — mas devolve a LISTA, e não
-     * um booleano, porque a tela precisa dizer QUAIS notícias travam a
-     * exclusão. Saber que "está em uso" sem saber onde não ajuda ninguém.
-     */
-    findByCoverImageId: async (coverImageId) => {
-        await delay(200);
-        return NEWS.filter((item) => item.coverImageId === Number(coverImageId)).map(
-            (item) => ({ id: item.id, title: item.title })
-        );
     },
 
     remove: async (id) => {

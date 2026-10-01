@@ -1,12 +1,14 @@
 import api from './api';
 import { USE_MOCKS, fileUrl } from './config';
+import { toPage } from './pagination';
 import { reusableFileMockService } from '../mocks/reusableFileMock';
 
 /**
  * Biblioteca de arquivos reutilizáveis — `ReusableFileController` do backend v2.
  *
- *   GET    /api/reusable-files              sempre paginado (PagedModel), igual
- *                                           a todo outro GET de lista do backend
+ *   GET    /api/reusable-files?search&kind  paginado (PagedModel); busca e
+ *                                           filtro por tipo rodam no servidor
+ *   GET    /api/reusable-files/{id}/usages  quem usa o arquivo (paginado)
  *   GET    /api/reusable-files/{id}
  *   GET    /api/reusable-files/{id}/download   baixa com o nome original
  *   POST   /api/reusable-files              multipart: "file" + "data" (JSON)
@@ -27,19 +29,21 @@ import { reusableFileMockService } from '../mocks/reusableFileMock';
  * uma vez, em vez de editar as dez.
  *
  * ---------------------------------------------------------------------------
- * O QUE FALTA NO BACKEND
+ * BUSCA E USO SAÍRAM DO NAVEGADOR
  * ---------------------------------------------------------------------------
- * · `GET /api/reusable-files` não tem busca nem filtro por tipo no servidor —
- *   e É paginado (`size=100` abaixo é a mesma gambiarra de "trazer tudo" que
- *   os outros services HTTP usam, até existir paginação de verdade na tela).
- *   Com algumas dezenas de arquivos está ótimo; passando de cem por vez, a
- *   busca precisa ir para o servidor. Hoje ela é feita no navegador
- *   (`useFilteredFiles`), e é por isso que a filtragem está isolada num hook:
- *   no dia em que virar `?search=&type=`, muda um arquivo só.
- * · Não existe endpoint que diga QUANTAS notícias usam um arquivo. O backend
- *   sabe (`existsByCoverImageId`), mas só usa isso para recusar o DELETE. A
- *   tela calcula a contagem cruzando com a lista de notícias que já está em
- *   cache — ver `useFileUsage`.
+ * A busca por nome, o filtro por tipo e a contagem de uso eram calculados no
+ * navegador, em cima da lista INTEIRA de arquivos e de notícias. Isso só
+ * funciona enquanto "a lista inteira" cabe numa resposta. Com paginação, a
+ * tela só conhece a página que carregou, e filtrar ali mostraria "nenhum
+ * resultado" para um arquivo que está na página 3.
+ *
+ * Por isso o backend passou a fazer as três coisas:
+ * · `search` procura no rótulo e no nome original; `kind` filtra pelo tipo,
+ *   que o backend classifica no upload com a mesma regra de `lib/fileKind`.
+ * · `usageCount` vem em cada arquivo (é o que o card mostra), e `/usages`
+ *   lista QUEM usa, para a gaveta explicar por que a exclusão está travada.
+ *   O `usageCount` só vem preenchido nas rotas da biblioteca: dentro de
+ *   `NewsOutput.coverImage` ele é null.
  */
 
 /** A parte "data" tem que ir como Blob com type application/json, senão o
@@ -48,9 +52,17 @@ const jsonPart = (payload) =>
     new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
 const reusableFileHttpService = {
-    getAll: async () => {
-        const { data } = await api.get('/reusable-files', { params: { size: 100 } });
-        return data.content ?? [];
+    /** `kind` "all" e busca vazia viram "sem filtro": o parâmetro nem vai. */
+    getPage: async ({ search, kind, page, size }) => {
+        const { data } = await api.get('/reusable-files', {
+            params: { search: search?.trim() || undefined, kind: kind === 'all' ? undefined : kind, page, size },
+        });
+        return toPage(data);
+    },
+
+    getUsagesPage: async (id, { page, size }) => {
+        const { data } = await api.get(`/reusable-files/${id}/usages`, { params: { page, size } });
+        return toPage(data);
     },
 
     getById: async (id) => {

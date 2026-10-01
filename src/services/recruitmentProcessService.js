@@ -1,5 +1,6 @@
 import api from './api';
 import { USE_MOCKS } from './config';
+import { toPage } from './pagination';
 import { recruitmentProcessMockService } from '../mocks/recruitmentProcessMock';
 
 /**
@@ -28,16 +29,16 @@ const jsonPart = (payload) =>
     new Blob([JSON.stringify(payload)], { type: 'application/json' });
 
 const recruitmentProcessHttpService = {
-    // size=100: mesma gambiarra de "trazer tudo" do newsService/contactService.
-    // Ver o comentário lá — vale a mesma pendência de paginação real aqui.
-    getAll: async () => {
-        const { data } = await api.get('/recruitment-process', { params: { size: 100 } });
-        return data.content ?? [];
+    /** Ativos e encerrados, mais recente primeiro — usado no painel. */
+    getPage: async ({ page, size }) => {
+        const { data } = await api.get('/recruitment-process', { params: { page, size } });
+        return toPage(data);
     },
 
-    getActives: async () => {
-        const { data } = await api.get('/recruitment-process/actives', { params: { size: 100 } });
-        return data.content ?? [];
+    /** Só os abertos — é o que o site público mostra. */
+    getActivesPage: async ({ page, size }) => {
+        const { data } = await api.get('/recruitment-process/actives', { params: { page, size } });
+        return toPage(data);
     },
 
     getById: async (id) => {

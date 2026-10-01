@@ -3,9 +3,10 @@ import AdminPage from '../../components/admin/AdminPage';
 import Skeleton from '../../components/feedback/Skeleton';
 import { ADMIN_NAV } from '../../lib/adminNavigation';
 import { accentVars } from '../../lib/palette';
-import { useAllRecruitmentProcesses } from '../../hooks/useRecruitmentProcess';
-import { useAllNews } from '../../hooks/useNews';
-import { useReusableFiles } from '../../hooks/useReusableFiles';
+import { USE_MOCKS } from '../../services/config';
+import { useActiveRecruitmentProcessTotal } from '../../hooks/useRecruitmentProcess';
+import { useNewsTotal } from '../../hooks/useNews';
+import { useReusableFileTotal } from '../../hooks/useReusableFiles';
 
 /**
  * Tela inicial do painel.
@@ -18,26 +19,30 @@ import { useReusableFiles } from '../../hooks/useReusableFiles';
  * útil: abrindo o painel, a pessoa já vê que há 4 processos abertos e 7
  * notícias publicadas, sem precisar entrar em nada.
  */
-export default function AdminDashboard() {
-    const processes = useAllRecruitmentProcesses();
-    const news = useAllNews();
-    const files = useReusableFiles();
+/**
+ * Três estados possíveis para o número de um cartão:
+ *   undefined → carregando: esqueleto no lugar, em vez de piscar "0"
+ *   null      → falhou: o cartão volta a mostrar a descrição da seção. O
+ *               número é um extra; sem ele o cartão continua levando à seção.
+ *   objeto    → o número
+ */
+function toCount(query, labelFor) {
+    if (query.isError) return null;
+    if (query.data === undefined) return undefined;
+    return { value: query.data, label: labelFor(query.data) };
+}
 
-    // Contagem por seção. `undefined` = ainda carregando; o cartão mostra um
-    // esqueleto no lugar do número em vez de piscar "0" e depois corrigir.
+export default function AdminDashboard() {
+    // Só os TOTAIS, contados pelo banco. Antes o painel baixava todas as
+    // notícias e todos os arquivos para exibir três números.
+    const activeProcesses = useActiveRecruitmentProcessTotal();
+    const news = useNewsTotal();
+    const files = useReusableFileTotal();
+
     const counts = {
-        '/admin/processos-seletivos': processes.data
-            ? {
-                value: processes.data.filter((process) => process.active).length,
-                label: 'com inscrições abertas',
-            }
-            : undefined,
-        '/admin/noticias': news.data
-            ? { value: news.data.length, label: news.data.length === 1 ? 'publicada' : 'publicadas' }
-            : undefined,
-        '/admin/arquivos': files.data
-            ? { value: files.data.length, label: files.data.length === 1 ? 'na biblioteca' : 'na biblioteca' }
-            : undefined,
+        '/admin/processos-seletivos': toCount(activeProcesses, () => 'com inscrições abertas'),
+        '/admin/noticias': toCount(news, (value) => (value === 1 ? 'publicada' : 'publicadas')),
+        '/admin/arquivos': toCount(files, () => 'na biblioteca'),
     };
 
     const sections = ADMIN_NAV.filter((item) => item.to !== '/admin');
@@ -50,8 +55,7 @@ export default function AdminDashboard() {
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
                 {sections.map((section) => {
                     const count = counts[section.to];
-                    const hasCount = section.to in counts;
-                    const isLoadingCount = hasCount && count === undefined;
+                    const isLoadingCount = section.to in counts && count === undefined;
 
                     return (
                         <li key={section.to}>
@@ -75,7 +79,7 @@ export default function AdminDashboard() {
 
                                 {isLoadingCount ? (
                                     <Skeleton className="mt-2 h-4 w-24" />
-                                ) : hasCount ? (
+                                ) : count ? (
                                     <span className="mt-2 text-xs text-muted">
                                         <strong className="text-sm text-[var(--accent-ink)]">{count.value}</strong>{' '}
                                         {count.label}
@@ -90,15 +94,19 @@ export default function AdminDashboard() {
             </ul>
 
             {/* Aviso, não conteúdo: fundo âmbar, a cor que o site usa para
-                "preste atenção nisto" (é a mesma da página de erro 404). */}
-            <div className="mt-8 rounded-2xl bg-sun-tint p-5 ring-1 ring-sun/25">
-                <h2 className="text-base font-bold text-sun-ink">Sobre este painel</h2>
-                <p className="mt-2 text-sm leading-relaxed text-ink-800/85">
-                    Nesta etapa o painel trabalha com <strong>dados de demonstração</strong>: as
-                    alterações valem enquanto a página estiver aberta e somem ao recarregar. É de
-                    propósito — serve para testar as telas antes de ligar no servidor.
-                </p>
-            </div>
+                "preste atenção nisto" (é a mesma da página de erro 404).
+                Só existe em modo mock — ligado ao backend, os dados são reais
+                e o aviso diria o contrário da verdade. */}
+            {USE_MOCKS && (
+                <div className="mt-8 rounded-2xl bg-sun-tint p-5 ring-1 ring-sun/25">
+                    <h2 className="text-base font-bold text-sun-ink">Sobre este painel</h2>
+                    <p className="mt-2 text-sm leading-relaxed text-ink-800/85">
+                        Nesta etapa o painel trabalha com <strong>dados de demonstração</strong>: as
+                        alterações valem enquanto a página estiver aberta e somem ao recarregar. É de
+                        propósito — serve para testar as telas antes de ligar no servidor.
+                    </p>
+                </div>
+            )}
         </AdminPage>
     );
 }

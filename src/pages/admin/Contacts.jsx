@@ -7,7 +7,8 @@ import Button from '../../components/ui/Button';
 import EmptyState from '../../components/feedback/EmptyState';
 import ErrorState from '../../components/feedback/ErrorState';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useContactSearch } from '../../hooks/useContact';
+import LoadMore from '../../components/feedback/LoadMore';
+import { fetchAllContacts, useContactSearch } from '../../hooks/useContact';
 import { formatDateTime, formatPhone, formatShortDate } from '../../lib/format';
 
 /**
@@ -67,11 +68,10 @@ export default function AdminContacts() {
         enabled: Boolean(appliedFilters),
     });
 
-    // Backend não garante ordem; mais recente primeiro é a leitura mais útil
-    // para quem está respondendo mensagens.
-    const results = (query.data ?? []).toSorted(
-        (a, b) => new Date(b.creationDate) - new Date(a.creationDate)
-    );
+    // Mais recente primeiro já vem do backend (ordem padrão do
+    // `ContactController`). Reordenar aqui só valeria para as páginas já
+    // carregadas e embaralharia a lista a cada "Carregar mais".
+    const results = query.data ?? [];
 
     const handleSearch = () => {
         if (startDate && endDate && startDate > endDate) {
@@ -148,13 +148,13 @@ export default function AdminContacts() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-muted">
                                 <strong className="text-ink-900">
-                                    {results.length}
-                                    {results.length === 1 ? ' mensagem' : ' mensagens'}
+                                    {query.totalElements}
+                                    {query.totalElements === 1 ? ' mensagem' : ' mensagens'}
                                 </strong>
                             </p>
 
                             <ExportButton
-                                rows={results}
+                                loadRows={() => fetchAllContacts(appliedFilters)}
                                 columns={EXPORT_COLUMNS}
                                 fileName="contatos"
                                 sheetName="Contatos"
@@ -205,6 +205,8 @@ export default function AdminContacts() {
                                 </li>
                             ))}
                         </ul>
+
+                        <LoadMore query={query} noun="mensagens" />
                     </>
                 )}
             </div>

@@ -19,7 +19,7 @@ import Badge from '../ui/Badge';
  * está se candidatando quer saber se existe edital para ler ANTES de abrir.
  */
 export default function JobCard({ process }) {
-    const attachments = process.filesPaths?.length ?? 0;
+    const attachments = process.attachments?.length ?? 0;
 
     return (
         <article className="group relative flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line transition-shadow hover:shadow-lift sm:flex-row sm:items-center sm:gap-6 sm:p-6">

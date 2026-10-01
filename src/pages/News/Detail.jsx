@@ -107,7 +107,7 @@ export default function NewsDetail() {
                 <RichText text={news.longDescription} />
 
                 <div className="mt-10">
-                    <AttachmentList files={news.filesPath} category="news" title="Anexos" />
+                    <AttachmentList files={news.attachments} category="news" title="Anexos" />
                 </div>
 
                 <div className="mt-10 border-t border-line pt-8">

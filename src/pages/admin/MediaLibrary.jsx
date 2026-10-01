@@ -6,6 +6,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import Skeleton from '../../components/feedback/Skeleton';
 import ErrorState from '../../components/feedback/ErrorState';
 import EmptyState from '../../components/feedback/EmptyState';
+import LoadMore from '../../components/feedback/LoadMore';
 import FileThumbnail from '../../components/media/FileThumbnail';
 import MediaSearchBar from '../../components/media/MediaSearchBar';
 import MediaUploadPanel from '../../components/media/MediaUploadPanel';
@@ -16,12 +17,12 @@ import { accentVars } from '../../lib/palette';
 import {
     useCreateReusableFile,
     useDeleteReusableFile,
-    useFileUsage,
-    useFilteredFiles,
+    useFileUsages,
     useRenameReusableFile,
     useReplaceReusableFile,
-    useReusableFiles,
+    useReusableFilePages,
 } from '../../hooks/useReusableFiles';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 /**
  * Biblioteca de arquivos reutilizáveis.
@@ -33,8 +34,12 @@ import {
  *
  * A diferença entre isto e "uma tela com uploads" está na exclusão: aqui um
  * arquivo sabe quem o usa, e a tela impede a exclusão em vez de deixar o banco
- * recusar depois. Ver `useFileUsage`.
+ * recusar depois. O número vem em `usageCount`, calculado pelo backend.
  */
+
+/** 24: preenche por igual as grades de 2, 3 e 4 colunas. */
+const PAGE_SIZE = 24;
+
 export default function AdminMediaLibrary() {
     const [search, setSearch] = useState('');
     const [kindFilter, setKindFilter] = useState('all');
@@ -43,14 +48,16 @@ export default function AdminMediaLibrary() {
     const [fileToDelete, setFileToDelete] = useState(null);
     const [flash, setFlash] = useState(null);
 
-    const query = useReusableFiles();
-    const usage = useFileUsage();
+    const debouncedSearch = useDebouncedValue(search);
+    const query = useReusableFilePages({ search: debouncedSearch, kind: kindFilter, pageSize: PAGE_SIZE });
+    const usages = useFileUsages(openFile?.id);
     const createMutation = useCreateReusableFile();
     const renameMutation = useRenameReusableFile();
     const replaceMutation = useReplaceReusableFile();
     const deleteMutation = useDeleteReusableFile();
 
-    const files = useFilteredFiles(query.data, { search, kind: kindFilter });
+    const files = query.data ?? [];
+    const isFiltering = Boolean(debouncedSearch.trim()) || kindFilter !== 'all';
 
     const handleUpload = ({ file, name }) => {
         createMutation.mutate(
@@ -110,7 +117,8 @@ export default function AdminMediaLibrary() {
                 onSearchChange={setSearch}
                 kindFilter={kindFilter}
                 onKindFilterChange={setKindFilter}
-                resultCount={files.length}
+                resultCount={query.totalElements}
+                isUpdating={search !== debouncedSearch || query.isPlaceholderData}
             />
 
             <div className="mt-5">
@@ -137,15 +145,11 @@ export default function AdminMediaLibrary() {
 
                 {!query.isPending && !query.isError && files.length === 0 && (
                     <EmptyState
-                        title={
-                            (query.data ?? []).length === 0
-                                ? 'A biblioteca ainda está vazia'
-                                : 'Nenhum arquivo encontrado'
-                        }
+                        title={isFiltering ? 'Nenhum arquivo encontrado' : 'A biblioteca ainda está vazia'}
                         description={
-                            (query.data ?? []).length === 0
-                                ? 'Envie a primeira imagem ou documento. Depois de aqui, ele pode ser usado em quantos conteúdos você quiser.'
-                                : 'Tente outra palavra, ou volte o filtro de tipo para "Todos".'
+                            isFiltering
+                                ? 'Tente outra palavra, ou volte o filtro de tipo para "Todos".'
+                                : 'Envie a primeira imagem ou documento. Depois disso, ele pode ser usado em quantos conteúdos você quiser.'
                         }
                     />
                 )}
@@ -154,7 +158,6 @@ export default function AdminMediaLibrary() {
                     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
                         {files.map((file) => {
                             const kind = fileKind(file);
-                            const usedBy = usage.usageOf(file.id);
 
                             return (
                                 <li key={file.id}>
@@ -186,9 +189,9 @@ export default function AdminMediaLibrary() {
                                             gaveta: é a informação que decide se dá para
                                             excluir, e ela precisa aparecer ANTES de a
                                             pessoa tentar. */}
-                                        {usedBy.length > 0 && (
+                                        {file.usageCount > 0 && (
                                             <p className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-lagoon-tint px-2 py-0.5 text-[0.6875rem] font-bold text-lagoon-ink">
-                                                {usedBy.length === 1 ? 'em 1 conteúdo' : `em ${usedBy.length} conteúdos`}
+                                                {file.usageCount === 1 ? 'em 1 conteúdo' : `em ${file.usageCount} conteúdos`}
                                             </p>
                                         )}
 
@@ -207,6 +210,8 @@ export default function AdminMediaLibrary() {
                         })}
                     </ul>
                 )}
+
+                <LoadMore query={query} noun="arquivos" />
             </div>
 
             <Modal
@@ -230,8 +235,7 @@ export default function AdminMediaLibrary() {
                 <MediaFileSheet
                     key={openFile.id}
                     file={query.data?.find((item) => item.id === openFile.id) ?? openFile}
-                    usage={usage.usageOf(openFile.id)}
-                    usageIsPending={usage.isPending}
+                    usages={usages}
                     onClose={() => setOpenFile(null)}
                     renameMutation={renameMutation}
                     replaceMutation={replaceMutation}

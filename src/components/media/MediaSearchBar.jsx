@@ -13,9 +13,9 @@ import { accentVars } from '../../lib/palette';
  *   "Enter", e o Android desenha uma lupa. É informação de graça.
  * · O X de limpar é um <button> de 44px, e não o X nativo do `type="search"`,
  *   que só existe no Chrome de desktop e tem uns 12px.
- * · A busca filtra a cada tecla, sem botão "Buscar". Aqui isso é certo porque
- *   a lista já está no navegador — nenhuma requisição sai a cada letra. Se a
- *   busca fosse no servidor, precisaria de atraso (debounce) ou de um botão.
+ * · A busca roda sozinha, sem botão "Buscar", mas no SERVIDOR: quem usa este
+ *   componente passa o termo por `useDebouncedValue` antes de buscar, para
+ *   uma palavra digitada virar uma requisição, e não uma por letra.
  * · Os tipos rolam na horizontal DENTRO da própria barra. É o único lugar do
  *   projeto onde rolagem horizontal é aceitável: ela está contida, e o
  *   primeiro e o último item encostam na margem, sinalizando que continua.
@@ -27,6 +27,7 @@ export default function MediaSearchBar({
     onKindFilterChange,
     showKindFilter = true,
     resultCount,
+    isUpdating = false,
 }) {
     const inputId = useId();
     const options = [{ id: 'all', label: 'Todos', accent: 'brand' }, ...FILE_KINDS];
@@ -96,8 +97,9 @@ export default function MediaSearchBar({
             {/* `aria-live`: quem usa leitor de tela precisa ouvir que a lista
                 mudou depois de digitar. Sem isso, a busca funciona em silêncio. */}
             <p aria-live="polite" className="text-xs text-muted">
-                {resultCount === 1 ? '1 arquivo' : `${resultCount} arquivos`}
-                {search ? ` para "${search}"` : ''}
+                {isUpdating
+                    ? 'Buscando…'
+                    : `${resultCount === 1 ? '1 arquivo' : `${resultCount} arquivos`}${search ? ` para "${search}"` : ''}`}
             </p>
         </div>
     );

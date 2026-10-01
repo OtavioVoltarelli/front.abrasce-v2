@@ -1,18 +1,54 @@
-import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reusableFileService } from '../services/reusableFileService';
-import { fileKind } from '../lib/fileKind';
-import { useAllNews } from './useNews';
+import { usePagedQuery } from './usePagedQuery';
 
 const FILES_KEY = ['reusable-files'];
 const NEWS_KEY = ['news'];
 
 /* -------------------------------------------------------------------- leitura */
 
-export function useReusableFiles() {
+/**
+ * Página da biblioteca, já filtrada NO SERVIDOR por nome e tipo.
+ *
+ * `search` e `kind` entram na `queryKey`: cada combinação é um cache próprio.
+ * Voltar para "Todos" depois de filtrar por "PDFs" mostra na hora o que já
+ * tinha sido carregado, sem nova requisição.
+ *
+ * Quem chama deve passar o termo de busca já "adiado" (`useDebouncedValue`);
+ * do contrário, cada tecla vira uma requisição.
+ */
+export function useReusableFilePages({ search = '', kind = 'all', pageSize }) {
+    const filters = { search: search.trim(), kind };
+    return usePagedQuery({
+        queryKey: [...FILES_KEY, 'list', filters],
+        fetchPage: (paging) => reusableFileService.getPage({ ...filters, ...paging }),
+        pageSize,
+        keepPrevious: true,
+    });
+}
+
+/** Total da biblioteca, para o Dashboard — mesma técnica de `useNewsTotal`. */
+export function useReusableFileTotal() {
     return useQuery({
-        queryKey: [...FILES_KEY, 'all'],
-        queryFn: () => reusableFileService.getAll(),
+        queryKey: [...FILES_KEY, 'total'],
+        queryFn: () =>
+            reusableFileService.getPage({ page: 0, size: 1 }).then((page) => page.totalElements),
+    });
+}
+
+/**
+ * QUEM usa um arquivo — a gaveta mostra a lista para explicar por que a
+ * exclusão está travada. O card não precisa disto: o número já vem em
+ * `usageCount`, junto com o arquivo.
+ *
+ * Paginado porque uma capa padrão pode estar em centenas de notícias.
+ */
+export function useFileUsages(fileId, { pageSize = 10 } = {}) {
+    return usePagedQuery({
+        queryKey: [...FILES_KEY, 'usages', fileId],
+        fetchPage: (paging) => reusableFileService.getUsagesPage(fileId, paging),
+        pageSize,
+        enabled: Boolean(fileId),
     });
 }
 
@@ -50,71 +86,3 @@ export const useReplaceReusableFile = () =>
 
 export const useDeleteReusableFile = () =>
     useFileMutation((id) => reusableFileService.remove(id));
-
-/* ------------------------------------------------------------------ derivados */
-
-/**
- * Onde cada arquivo está sendo usado.
- *
- * O backend sabe disso (`existsByCoverImageId`), mas só usa a informação para
- * RECUSAR o DELETE — não existe endpoint que responda "quem usa o arquivo 7?".
- * Como a lista completa de notícias já está no cache do React Query (a tela de
- * Notícias a carrega), dá para cruzar as duas aqui sem nenhuma requisição
- * extra.
- *
- * Isso é o que permite avisar ANTES do clique, em vez de deixar a pessoa
- * tentar excluir e levar um erro. Quando o backend expuser a contagem, este
- * hook troca o `useMemo` por um `useQuery` e nada mais muda.
- */
-export function useFileUsage() {
-    const news = useAllNews();
-
-    const usageByFileId = useMemo(() => {
-        const map = new Map();
-        for (const item of news.data ?? []) {
-            const fileId = item.coverImage?.id;
-            if (!fileId) continue;
-            const list = map.get(fileId) ?? [];
-            list.push({ id: item.id, title: item.title, section: 'Notícia' });
-            map.set(fileId, list);
-        }
-        return map;
-    }, [news.data]);
-
-    return {
-        usageByFileId,
-        /* Enquanto as notícias não chegaram, NÃO sabemos se o arquivo está em
-           uso. Devolver "não está" seria mentir e liberaria uma exclusão que o
-           servidor recusaria. A tela usa isto para desabilitar o botão. */
-        isPending: news.isPending,
-        isError: news.isError,
-        usageOf: (fileId) => usageByFileId.get(fileId) ?? [],
-    };
-}
-
-/**
- * Busca por nome e filtro por tipo, no navegador.
- *
- * Fica isolado num hook de propósito: hoje `GET /api/reusable-files` devolve a
- * lista inteira e filtrar aqui é o certo (zero requisição, resposta instantânea
- * a cada tecla). Quando a biblioteca crescer e o backend ganhar
- * `?search=&type=`, este é o único arquivo que muda — a tela continua
- * chamando `useFilteredFiles` e não sabe de onde vem o filtro.
- *
- * A busca olha os TRÊS nomes: o rótulo da biblioteca, o nome original do
- * arquivo e — por tabela — a extensão. Quem subiu o arquivo lembra de um dos
- * dois, e não necessariamente do que digitou no rótulo.
- */
-export function useFilteredFiles(files, { search = '', kind = 'all' } = {}) {
-    return useMemo(() => {
-        const term = search.trim().toLowerCase();
-        return (files ?? []).filter((file) => {
-            if (kind !== 'all' && fileKind(file).id !== kind) return false;
-            if (!term) return true;
-            return (
-                file.name?.toLowerCase().includes(term) ||
-                file.originalName?.toLowerCase().includes(term)
-            );
-        });
-    }, [files, search, kind]);
-}

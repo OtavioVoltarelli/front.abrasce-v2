@@ -6,8 +6,9 @@ import Select from '../../components/ui/Select';
 import EmptyState from '../../components/feedback/EmptyState';
 import ErrorState from '../../components/feedback/ErrorState';
 import Skeleton from '../../components/feedback/Skeleton';
-import { useAllRecruitmentProcesses } from '../../hooks/useRecruitmentProcess';
-import { useCandidateSearch } from '../../hooks/useCandidate';
+import LoadMore from '../../components/feedback/LoadMore';
+import { useRecruitmentProcessOptions } from '../../hooks/useRecruitmentProcess';
+import { fetchAllCandidates, useCandidateSearch } from '../../hooks/useCandidate';
 import { formatCnpj, formatCpf, formatDateTime, formatPhone, formatShortDate } from '../../lib/format';
 import { API_URL, USE_MOCKS } from '../../services/config';
 
@@ -57,7 +58,7 @@ const EXPORT_COLUMNS = [
 ];
 
 export default function AdminCandidates() {
-    const processesQuery = useAllRecruitmentProcesses();
+    const processesQuery = useRecruitmentProcessOptions();
 
     const [selectedProcessId, setSelectedProcessId] = useState('');
     const [startDate, setStartDate] = useState('');
@@ -184,14 +185,14 @@ export default function AdminCandidates() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-muted">
                                 <strong className="text-ink-900">
-                                    {searchQuery.data.length}
-                                    {searchQuery.data.length === 1 ? ' candidato' : ' candidatos'}
+                                    {searchQuery.totalElements}
+                                    {searchQuery.totalElements === 1 ? ' candidato' : ' candidatos'}
                                 </strong>
                                 {selectedProcess && ` em "${selectedProcess.title}"`}
                             </p>
 
                             <ExportButton
-                                rows={searchQuery.data}
+                                loadRows={() => fetchAllCandidates(appliedFilters)}
                                 columns={EXPORT_COLUMNS}
                                 fileName="candidatos"
                                 sheetName="Candidatos"
@@ -255,6 +256,8 @@ export default function AdminCandidates() {
                                 </li>
                             ))}
                         </ul>
+
+                        <LoadMore query={searchQuery} noun="candidatos" />
                     </>
                 )}
             </div>

@@ -248,7 +248,7 @@ function RecruitmentFormFields({
                     <MultiFileUpload
                         label="Edital e anexos"
                         hint="PDF ou Word. Um processo pode não ter anexo nenhum."
-                        existingFiles={process?.filesPaths ?? []}
+                        existingFiles={process?.attachments ?? []}
                         files={files}
                         onChange={setFiles}
                     />

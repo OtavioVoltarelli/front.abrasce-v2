@@ -289,7 +289,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                     <MultiFileUpload
                         label="Anexos"
                         hint="PDF ou Word. Uma notícia pode não ter anexo nenhum."
-                        existingFiles={news?.filesPath ?? []}
+                        existingFiles={news?.attachments ?? []}
                         files={files}
                         onChange={setFiles}
                     />
