@@ -31,8 +31,12 @@ export default function NewsCard({ news, featured = false }) {
             /* `h-full`: dentro de uma grade, o <li> já estica para a altura
                da linha, mas o card precisa ser mandado a preencher esse <li>.
                Sem isso, cards com títulos de tamanhos diferentes ficam com
-               alturas diferentes e a linha desalinha. */
-            className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line transition-shadow hover:shadow-lift ${
+               alturas diferentes e a linha desalinha.
+               Hover igual ao do AreaCard (sobe + brilho colorido), em coral
+               porque coral é a cor de "notícia". O foco cai no <Link> do
+               título, não no <article>, por isso `has-focus-visible:` — "se
+               algo DENTRO de mim está com foco de teclado, acenda". */
+            className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line [--glow:var(--color-coral)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-glow hover:ring-coral/40 has-focus-visible:shadow-glow motion-reduce:hover:translate-y-0 ${
                 featured ? 'sm:flex-row' : ''
             }`}
         >

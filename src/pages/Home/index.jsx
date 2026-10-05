@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from '../../assets/logo.png';
 import Container from '../../components/ui/Container';
 import Button from '../../components/ui/Button';
 import TriangleMark from '../../components/ui/TriangleMark';
@@ -94,8 +95,19 @@ export default function Home() {
                                     <Link
                                         to={`/projetos#${area.slug}`}
                                         style={areaVars(area)}
-                                        className="flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-colors hover:bg-white/20"
+                                        className="relative flex min-h-11 items-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-[color,background-color,box-shadow,transform] duration-200 ease-out hover:bg-white/15 hover:text-[var(--area-bright)] hover:ring-[var(--area-bright)]/40 focus-visible:text-[var(--area-bright)] hover:z-10 motion-safe:hover:scale-110"
                                     >
+                                        {/* Na cor: `--area-bright`, não `--area`.
+                                            A cor cheia (ex.: o roxo #8B5CF6) não
+                                            tem contraste suficiente como TEXTO
+                                            sobre o azul-marinho; a versão
+                                            `bright` é a aprovada para isso.
+                                            No tamanho: `scale` em vez de
+                                            `font-size` — transform não empurra
+                                            as etiquetas vizinhas. Em 110% ela
+                                            invade um pouco o vão entre elas;
+                                            `hover:z-10` a põe por cima em vez
+                                            de por baixo da vizinha. */}
                                         <span aria-hidden="true" className="size-2 rounded-full bg-[var(--area)]" />
                                         {area.label}
                                     </Link>
@@ -112,11 +124,29 @@ export default function Home() {
 
             {/* ============================================ QUEM SOMOS ===== */}
             <section className="bg-white py-14 sm:py-20">
-                <Container size="narrow">
-                    <SectionHeading eyebrow="Quem somos" title={ABOUT.heading} level={2} />
-                    <p className="mt-6 text-[1.0625rem] leading-[1.8] text-ink-800">
-                        {ABOUT.text}
-                    </p>
+                {/* Duas colunas só no desktop: texto à esquerda, logo à direita.
+                    No celular o logo vem antes do título — `lg:order-last` o
+                    manda para a direita sem duplicar marcação. O texto mantém
+                    `max-w-2xl` para a linha não ficar longa demais de ler. */}
+                <Container className="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center lg:gap-16">
+                    {/* alt vazio: o parágrafo ao lado já começa com o nome
+                        completo da ABRASCE; descrever o logo faria o leitor de
+                        tela repetir a mesma informação. */}
+                    <img
+                        src={logo}
+                        alt=""
+                        width={452}
+                        height={320}
+                        loading="lazy"
+                        className="mb-8 h-auto w-40 sm:w-48 lg:order-last lg:mb-0 lg:w-full"
+                    />
+
+                    <div className="max-w-2xl">
+                        <SectionHeading eyebrow="Quem somos" title={ABOUT.heading} level={2} />
+                        <p className="mt-6 text-[1.0625rem] leading-[1.8] text-ink-800">
+                            {ABOUT.text}
+                        </p>
+                    </div>
                 </Container>
             </section>
 

@@ -108,6 +108,18 @@ const AREA_DEFINITIONS = [
     },
 ];
 
+/**
+ * Cada área recebe os cinco tons do seu acento (color, ink, tint, deep,
+ * bright) espalhados por cima da definição. Assim os hexadecimais existem em
+ * UM lugar só — `lib/palette.js` — e mudar o verde da assistência social muda
+ * junto o card da área, a etiqueta, a serra do topo e a página de Processos do
+ * painel.
+ */
+export const AREAS = AREA_DEFINITIONS.map((area) => ({
+    ...area,
+    ...PALETTE[area.accent],
+}));
+
 /** Busca uma área pelo slug. Devolve `undefined` se não existir. */
 export const findArea = (slug) => AREAS.find((area) => area.slug === slug);
 
@@ -115,20 +127,10 @@ export const findArea = (slug) => AREAS.find((area) => area.slug === slug);
  * Variáveis CSS de uma área, para injetar via `style` no elemento.
  * Uso: <div style={areaVars(area)} className="border-l-4 border-[var(--area)]">
  */
-/**
- * Cada área recebe os quatro tons do seu acento (color, ink, tint, deep)
- * espalhados por cima da definição. Assim os hexadecimais existem em UM lugar
- * só — `lib/palette.js` — e mudar o verde da assistência social muda junto o
- * card da área, a etiqueta, a serra do topo e a página de Processos do painel.
- */
-export const AREAS = AREA_DEFINITIONS.map((area) => ({
-    ...area,
-    ...PALETTE[area.accent],
-}));
-
 export const areaVars = (area) => ({
     '--area': area.color,
     '--area-ink': area.ink,
     '--area-tint': area.tint,
     '--area-deep': area.deep,
+    '--area-bright': area.bright,
 });

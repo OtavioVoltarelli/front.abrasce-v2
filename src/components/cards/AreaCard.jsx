@@ -17,8 +17,12 @@ export default function AreaCard({ area, to }) {
         <Link
             to={to}
             style={areaVars(area)}
-            className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line transition-all duration-200 hover:-translate-y-1 hover:shadow-lift motion-reduce:hover:translate-y-0"
+            className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line [--glow:var(--area)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-glow hover:ring-[var(--area)]/40 focus-visible:shadow-glow motion-reduce:hover:translate-y-0"
         >
+            {/* No hover a sombra e a borda assumem a cor da área: o card
+                "acende" na mesma cor da faixa do topo. `focus-visible` dá o
+                mesmo brilho a quem navega por Tab — hover sozinho deixaria
+                o teclado com menos feedback que o mouse. */}
             {/* A faixa de cor no topo é o que identifica a área de relance,
                 antes mesmo de ler o título. */}
             <span aria-hidden="true" className="h-1.5 w-full bg-[var(--area)]" />

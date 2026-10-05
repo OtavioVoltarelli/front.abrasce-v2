@@ -22,7 +22,13 @@ export default function JobCard({ process }) {
     const attachments = process.attachments?.length ?? 0;
 
     return (
-        <article className="group relative flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line transition-shadow hover:shadow-lift sm:flex-row sm:items-center sm:gap-6 sm:p-6">
+        <article
+            /* Mesmo hover dos cards de área e de notícia (sobe + brilho
+               colorido), em verde porque verde é a cor de Trabalhe conosco.
+               O foco de teclado cai no <Link> do título, não no <article> —
+               por isso `has-focus-visible:` em vez de `focus-visible:`. */
+            className="group relative flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-card ring-1 ring-line [--glow:var(--color-leaf)] transition-[translate,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-glow hover:ring-leaf/40 has-focus-visible:shadow-glow motion-reduce:hover:translate-y-0 sm:flex-row sm:items-center sm:gap-6 sm:p-6"
+        >
             {/* Barra de cor na lateral: âncora visual da lista, e o único
                 lugar do card onde a marca aparece. */}
             <span aria-hidden="true" className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-leaf sm:inset-y-6" />
@@ -61,9 +67,9 @@ export default function JobCard({ process }) {
                 )}
             </div>
 
-            <span className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-xl bg-leaf-tint px-4 py-2.5 text-sm font-bold text-leaf-ink transition-colors group-hover:bg-leaf-ink group-hover:text-white sm:self-auto">
+            <span className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-xl bg-leaf-tint px-4 py-2.5 text-sm font-bold text-leaf-ink transition-colors group-hover:bg-leaf-ink group-hover:text-white group-has-focus-visible:bg-leaf-ink group-has-focus-visible:text-white sm:self-auto">
                 Ver detalhes
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg aria-hidden="true" viewBox="0 0 20 20" className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 10h11M11 5l5 5-5 5" />
                 </svg>
             </span>

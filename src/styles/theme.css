@@ -121,6 +121,15 @@
      parece fumaça; sombra na cor da marca parece luz. */
   --shadow-card: 0 1px 2px 0 rgb(20 28 75 / 0.06), 0 4px 16px -4px rgb(20 28 75 / 0.10);
   --shadow-lift: 0 2px 4px 0 rgb(20 28 75 / 0.08), 0 12px 32px -8px rgb(20 28 75 / 0.18);
+  /* A mesma elevação do `lift`, mas o brilho difuso sai numa cor escolhida
+     pelo componente via `--glow` (ex.: `[--glow:var(--area)]` no card de área,
+     `[--glow:var(--color-coral)]` no de notícia). A camada de baixo continua
+     azul-marinho: é ela que dá o "peso" de objeto levantado; só a colorida
+     faria o card parecer flutuar num halo, sem chão. Sem `--glow`, cai no
+     azul da marca. A cor entra a 25%: é um tingimento, não um holofote —
+     mais forte que isso, o brilho de um card invade o vizinho nas listas. */
+  --shadow-glow: 0 2px 4px 0 rgb(20 28 75 / 0.08),
+    0 16px 36px -10px color-mix(in oklab, var(--glow, var(--color-brand-600)) 25%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
