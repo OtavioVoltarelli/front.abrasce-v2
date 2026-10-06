@@ -218,7 +218,7 @@ export default function AdminMediaLibrary() {
                 isOpen={isUploadOpen}
                 onClose={() => setIsUploadOpen(false)}
                 title="Adicionar arquivo"
-                description="Imagem, PDF, documento ou planilha."
+                description="Imagem ou PDF."
                 size="lg"
             >
                 <MediaUploadPanel

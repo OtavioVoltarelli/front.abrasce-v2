@@ -24,13 +24,13 @@ import { acceptFor } from '../../lib/uploadRules';
  *   funciona porque clicar num rótulo aciona o campo associado — sem
  *   JavaScript, e continuando acessível pelo teclado.
  * · No celular, esse mesmo controle abre a câmera e a galeria. O `accept`
- *   padrão é a lista de extensões que o backend aceita (`lib/uploadRules`):
+ *   padrão é a lista de extensões que a biblioteca aceita (`lib/uploadRules`):
  *   o seletor não oferece o que o servidor recusaria depois do upload.
  * · Depois de escolher, o arquivo aparece com nome e tamanho. "Nenhum arquivo
  *   selecionado" é o estado que mais gera dúvida em formulário de upload.
  */
 export default function MediaUploadPanel({
-    accept = acceptFor('any'),
+    accept = acceptFor('library'),
     submitLabel = 'Adicionar à biblioteca',
     isPending = false,
     error,

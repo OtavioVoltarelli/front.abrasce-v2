@@ -8,6 +8,7 @@ import { formatCnpj, formatCpf, maskPhone } from '../../lib/format';
 import { validateCandidate } from '../../validations/candidateValidation';
 import { useCreateCandidate } from '../../hooks/useCandidate';
 import { scrollToFirstError } from '../../lib/scrollToError';
+import { acceptFor } from '../../lib/uploadRules';
 
 const EMPTY_FORM = {
     name: '',
@@ -274,6 +275,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 label="Currículo"
                 required
                 hint="Arquivo em PDF ou Word, de até 1 MB."
+                accept={acceptFor('cv')}
                 value={form.cv}
                 onChange={(file) => setField('cv', file)}
                 error={errors.cv}

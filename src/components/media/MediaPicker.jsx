@@ -10,7 +10,7 @@ import { formatShortDate } from '../../lib/format';
 import { fileKind } from '../../lib/fileKind';
 import { useCreateReusableFile, useReusableFilePages } from '../../hooks/useReusableFiles';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { acceptFor } from '../../lib/uploadRules';
+import { libraryAcceptFor } from '../../lib/uploadRules';
 
 /**
  * Seletor de mídia — escolher um arquivo já existente na biblioteca.
@@ -113,7 +113,7 @@ export default function MediaPicker({
                 size="lg"
             >
                 <MediaUploadPanel
-                    accept={acceptFor(kind)}
+                    accept={libraryAcceptFor(kind)}
                     submitLabel="Enviar e usar"
                     isPending={createMutation.isPending}
                     error={createMutation.isError ? createMutation.error?.message : null}

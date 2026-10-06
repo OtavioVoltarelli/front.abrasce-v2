@@ -11,8 +11,9 @@
  * companyName e cnpj são opcionais.
  */
 
+import { hasAllowedExtension } from '../lib/uploadRules';
+
 const MAX_CV_SIZE = 1 * 1024 * 1024; // 1 MB — o limite anunciado ao candidato
-const ACCEPTED_CV_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
 export function isValidCPF(value) {
     const digits = String(value ?? '').replace(/\D/g, '');
@@ -99,7 +100,10 @@ export function validateCandidate(form) {
         errors.cv = 'Anexe seu currículo para concluir a inscrição.';
     } else if (form.cv.size > MAX_CV_SIZE) {
         errors.cv = 'O arquivo passa de 1 MB. Tente salvar o currículo em PDF, que costuma ficar menor.';
-    } else if (form.cv.type && !ACCEPTED_CV_TYPES.includes(form.cv.type)) {
+    } else if (!hasAllowedExtension('cv', form.cv.name)) {
+        // Pela EXTENSÃO, como o backend decide — não pelo tipo MIME. O MIME
+        // vem do sistema operacional e varia: no Android um .odt costuma
+        // chegar vazio ou como application/octet-stream.
         errors.cv = 'Envie o currículo em PDF ou Word.';
     }
 

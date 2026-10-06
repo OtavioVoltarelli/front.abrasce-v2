@@ -4,11 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import FileUpload from '../ui/FileUpload';
 import { useCreateTransparencyFolder, useUploadTransparencyFile } from '../../hooks/useTransparency';
-
-/* Mesma allowlist de extensão que o backend aceita (`file.allowed-extensions`,
-   application.properties) — vale para todo upload do sistema, não só este. */
-const ACCEPT =
-    '.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * "Novo": pasta ou arquivo, dentro da pasta que a pessoa está vendo agora.
@@ -93,7 +89,7 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
                 <div className="space-y-4">
                     <FileUpload
                         label="Arquivo"
-                        accept={ACCEPT}
+                        accept={acceptFor('transparency')}
                         maxSizeMb={15}
                         value={file}
                         onChange={setFile}

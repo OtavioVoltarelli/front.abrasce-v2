@@ -22,11 +22,18 @@ import { formatFileSize } from '../../lib/format';
  *   acrescentar um anexo, só trocar a lista inteira. Deixar isso escondido
  *   levaria a apagar anexos sem querer.
  */
+/*
+ * `accept` não tem valor padrão de propósito: cada upload pertence a uma
+ * categoria do backend com a sua lista (`lib/uploadRules`), e quem usa o
+ * componente é quem sabe qual é. Um padrão aqui já mascarou o problema uma
+ * vez — anexos de notícia ofereciam só PDF e Word por herdarem o padrão do
+ * currículo.
+ */
 export default function MultiFileUpload({
     label,
     hint,
     error,
-    accept = '.pdf,.doc,.docx',
+    accept,
     existingFiles = [],
     files,
     onChange,

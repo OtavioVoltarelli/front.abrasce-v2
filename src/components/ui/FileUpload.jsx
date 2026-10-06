@@ -18,13 +18,20 @@ import { formatFileSize } from '../../lib/format';
  * Arrastar-e-soltar é um extra do desktop. Nunca é o ÚNICO caminho: no celular
  * não existe arrastar arquivo, então o toque precisa resolver tudo sozinho.
  */
+/*
+ * `accept` não tem valor padrão de propósito: cada upload pertence a uma
+ * categoria do backend com a sua lista (`lib/uploadRules`), e quem usa o
+ * componente é quem sabe qual é. Um padrão aqui já mascarou o problema uma
+ * vez — anexos de notícia ofereciam só PDF e Word por herdarem o padrão do
+ * currículo.
+ */
 export default function FileUpload({
     id: idProp,
     label,
     hint,
     error,
     required,
-    accept = '.pdf,.doc,.docx',
+    accept,
     maxSizeMb = 1,
     value,
     onChange,

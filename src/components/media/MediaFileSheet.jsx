@@ -10,7 +10,7 @@ import { formatDateTime } from '../../lib/format';
 import { fileUrl } from '../../services/config';
 import { reusableFileDownloadUrl } from '../../services/reusableFileService';
 import { accentVars } from '../../lib/palette';
-import { acceptFor } from '../../lib/uploadRules';
+import { libraryAcceptFor } from '../../lib/uploadRules';
 
 /**
  * Gaveta de um arquivo da biblioteca: ver, renomear, substituir, baixar, excluir.
@@ -204,7 +204,7 @@ export default function MediaFileSheet({
                         ref={replaceInputRef}
                         id={replaceInputId}
                         type="file"
-                        accept={acceptFor(kind.id)}
+                        accept={libraryAcceptFor(kind.id)}
                         onChange={(event) => setReplacement(event.target.files?.[0] ?? null)}
                         className="sr-only"
                     />

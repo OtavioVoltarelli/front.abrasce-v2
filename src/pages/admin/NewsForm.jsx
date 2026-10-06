@@ -16,6 +16,7 @@ import {
     useUpdateNews,
 } from '../../hooks/useNews';
 import { scrollToFirstError } from '../../lib/scrollToError';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * Criar e editar uma notícia.
@@ -288,7 +289,8 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
 
                     <MultiFileUpload
                         label="Anexos"
-                        hint="PDF ou Word. Uma notícia pode não ter anexo nenhum."
+                        hint="PDF, Word, planilha, apresentação, imagem (inclusive GIF) ou .zip. Uma notícia pode não ter anexo nenhum."
+                        accept={acceptFor('news')}
                         existingFiles={news?.attachments ?? []}
                         files={files}
                         onChange={setFiles}

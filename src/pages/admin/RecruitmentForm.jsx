@@ -15,6 +15,7 @@ import {
     useUpdateRecruitmentProcess,
 } from '../../hooks/useRecruitmentProcess';
 import { scrollToFirstError } from '../../lib/scrollToError';
+import { acceptFor } from '../../lib/uploadRules';
 
 /**
  * Criar e editar um processo seletivo.
@@ -247,7 +248,8 @@ function RecruitmentFormFields({
 
                     <MultiFileUpload
                         label="Edital e anexos"
-                        hint="PDF ou Word. Um processo pode não ter anexo nenhum."
+                        hint="PDF, Word, planilha, apresentação, imagem ou .zip. Um processo pode não ter anexo nenhum."
+                        accept={acceptFor('recruitmentProcess')}
                         existingFiles={process?.attachments ?? []}
                         files={files}
                         onChange={setFiles}
