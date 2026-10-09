@@ -34,6 +34,17 @@ const candidateHttpService = {
         const { data } = await api.post('/candidates', form);
         return data;
     },
+
+    /**
+     * O arquivo do currículo, como Blob. A rota exige login, e por isso NÃO
+     * pode ser um `<a href>`: quem segue um link é o navegador, que não sabe
+     * do token guardado no localStorage — só o axios (pelo interceptor do
+     * `api.js`) põe o `Authorization: Bearer` na requisição.
+     */
+    getCv: async (id) => {
+        const { data } = await api.get(`/candidates/${id}/cv`, { responseType: 'blob' });
+        return data;
+    },
 };
 
 export const candidateService = USE_MOCKS ? candidateMockService : candidateHttpService;

@@ -11,6 +11,14 @@ export function useCreateCandidate(options) {
     });
 }
 
+/** Baixa o arquivo do currículo (Blob) com o token de login. */
+export function useCandidateCv(options) {
+    return useMutation({
+        mutationFn: (candidateId) => candidateService.getCv(candidateId),
+        ...options,
+    });
+}
+
 /**
  * Busca de candidatos no painel administrativo.
  *

@@ -61,4 +61,15 @@ export const candidateMockService = {
         await delay(900);
         return clone({ ...payload, id: Date.now(), candidateDate: new Date().toISOString() });
     },
+
+    /* Sem servidor não há arquivo: um texto curto deixa o fluxo de "abrir
+       currículo" testável de ponta a ponta no modo mock. */
+    getCv: async (id) => {
+        await delay(600);
+        const candidate = CANDIDATES.find((item) => item.id === id);
+        return new Blob(
+            [`Currículo de demonstração (modo mock) — ${candidate?.name ?? `candidato ${id}`}.`],
+            { type: 'text/plain;charset=utf-8' }
+        );
+    },
 };

@@ -8,9 +8,9 @@ import ErrorState from '../../components/feedback/ErrorState';
 import Skeleton from '../../components/feedback/Skeleton';
 import LoadMore from '../../components/feedback/LoadMore';
 import { useRecruitmentProcessOptions } from '../../hooks/useRecruitmentProcess';
-import { fetchAllCandidates, useCandidateSearch } from '../../hooks/useCandidate';
+import { fetchAllCandidates, useCandidateCv, useCandidateSearch } from '../../hooks/useCandidate';
 import { formatCnpj, formatCpf, formatDateTime, formatPhone, formatShortDate } from '../../lib/format';
-import { API_URL, USE_MOCKS } from '../../services/config';
+import { canShowInTab, openPendingTab, saveBlob, showBlobInTab } from '../../lib/blobFile';
 
 /**
  * Consulta de candidatos.
@@ -49,10 +49,11 @@ const EXPORT_COLUMNS = [
     { header: 'Data da inscrição', value: (row) => formatDateTime(row.candidateDate), width: 20 },
     {
         header: 'Currículo',
-        // O código antigo removia esta coluna da planilha. Ela volta como
-        // ENDEREÇO COMPLETO: um caminho interno ("cv/ana.pdf") não serve para
-        // nada em um Excel; um link abre o arquivo com um clique.
-        value: (row) => (row.cv ? (USE_MOCKS ? row.cv.storedName : `${API_URL}/candidates/${row.id}/cv`) : ''),
+        // O NOME do arquivo, não um link: a rota do currículo exige login, e
+        // quem abre a planilha não tem o token — um link levaria sempre a
+        // "Não autenticado". O nome identifica o arquivo para abri-lo pelo
+        // painel.
+        value: (row) => row.cv?.originalName ?? '',
         width: 40,
     },
 ];
@@ -73,6 +74,22 @@ export default function AdminCandidates() {
     const searchQuery = useCandidateSearch(appliedFilters ?? {}, {
         enabled: Boolean(appliedFilters),
     });
+
+    const cvDownload = useCandidateCv();
+
+    /* PDF (e imagem) abre numa aba; Word o navegador não mostra, então baixa
+       com o nome original. A aba é aberta JÁ no clique — ver
+       `openPendingTab`. Se o bloqueador de pop-up a recusar mesmo assim, o
+       arquivo é baixado em vez de se perder. */
+    const handleOpenCv = (candidate) => {
+        const { contentType, originalName } = candidate.cv;
+        const tab = canShowInTab(contentType) ? openPendingTab() : null;
+
+        cvDownload.mutate(candidate.id, {
+            onSuccess: (blob) => (tab ? showBlobInTab(tab, blob) : saveBlob(blob, originalName)),
+            onError: () => tab?.close(),
+        });
+    };
 
     const handleSearch = () => {
         if (!selectedProcessId) {
@@ -241,17 +258,12 @@ export default function AdminCandidates() {
                                     </dl>
 
                                     {candidate.cv && (
-                                        <a
-                                            href={USE_MOCKS ? '#' : `${API_URL}/candidates/${candidate.id}/cv`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-50 px-4 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-100"
-                                        >
-                                            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-                                                <path d="M14 2v6h6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                            </svg>
-                                            Abrir currículo
-                                        </a>
+                                        <CvButton
+                                            opensInTab={canShowInTab(candidate.cv.contentType)}
+                                            isLoading={cvDownload.isPending && cvDownload.variables === candidate.id}
+                                            hasFailed={cvDownload.isError && cvDownload.variables === candidate.id}
+                                            onClick={() => handleOpenCv(candidate)}
+                                        />
                                     )}
                                 </li>
                             ))}
@@ -271,6 +283,38 @@ function Field({ label, children }) {
         <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
             <dd className="text-ink-900">{children}</dd>
+        </div>
+    );
+}
+
+/**
+ * Botão do currículo. É um <button>, não um <a>: ele dispara uma busca
+ * autenticada (ver `handleOpenCv`), não navega para um endereço.
+ *
+ * O texto diz o que vai acontecer — "Abrir" para PDF, "Baixar" para Word —
+ * e o erro aparece logo abaixo, no próprio card, onde a pessoa clicou.
+ */
+function CvButton({ opensInTab, isLoading, hasFailed, onClick }) {
+    const label = opensInTab ? 'Abrir currículo' : 'Baixar currículo';
+
+    return (
+        <div className="mt-4">
+            <button
+                type="button"
+                onClick={onClick}
+                disabled={isLoading}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-50 px-4 text-sm font-bold text-brand-700 transition-colors hover:bg-brand-100 disabled:cursor-wait disabled:opacity-70"
+            >
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+                    <path d="M14 2v6h6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                </svg>
+                {isLoading ? 'Abrindo…' : label}
+            </button>
+            {hasFailed && (
+                <p role="alert" className="mt-2 text-sm font-medium text-berry-ink">
+                    Não foi possível abrir o currículo. Confira a conexão e tente de novo.
+                </p>
+            )}
         </div>
     );
 }
