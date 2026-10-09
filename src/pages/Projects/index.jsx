@@ -3,6 +3,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import ProjectCard from '../../components/cards/ProjectCard';
 import AreaRange from '../../components/AreaRange';
 import TriangleMark from '../../components/ui/TriangleMark';
+import ResponsivePicture from '../../components/ui/ResponsivePicture';
 import Button from '../../components/ui/Button';
 import { AREAS, areaVars } from '../../content/areas';
 import { PROJECTS, PROJECT_CITIES, projectsByArea } from '../../content/projects';
@@ -104,12 +105,14 @@ export default function Projects() {
                         <Container>
                             <div className="grid gap-8 lg:grid-cols-2 lg:items-start lg:gap-12">
                                 <div className={isAlternate ? 'lg:order-2' : undefined}>
-                                    <img
-                                        src={area.image}
+                                    {/* 3:2, o formato das fotos geradas: nada é
+                                        cortado. Abaixo de `lg` a foto ocupa a
+                                        largura toda; acima, meia coluna. */}
+                                    <ResponsivePicture
+                                        image={area.image}
                                         alt={area.imageAlt}
-                                        loading="lazy"
-                                        decoding="async"
-                                        className="aspect-[4/3] w-full rounded-2xl object-cover shadow-card"
+                                        sizes="(min-width: 1024px) 520px, 100vw"
+                                        className="aspect-[3/2] w-full rounded-2xl object-cover shadow-card"
                                     />
                                 </div>
 

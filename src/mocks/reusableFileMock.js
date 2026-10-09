@@ -22,12 +22,12 @@
  * `storedName` volta a ser um nome e o `fileUrl` monta a URL sozinho.
  */
 
-import capaEducacao from '../assets/areas/educacao.jpg';
-import capaEsporte from '../assets/areas/esporte.jpg';
-import capaCultura from '../assets/areas/cultura.jpg';
-import capaSaude from '../assets/areas/saude.jpg';
-import capaLazer from '../assets/areas/lazer.jpg';
-import capaAssistencia from '../assets/areas/assistencia-social.jpg';
+import capaEducacao from '../assets/areas/educacao-1200w.jpg';
+import capaEsporte from '../assets/areas/esporte-1200w.jpg';
+import capaCultura from '../assets/areas/cultura-1200w.jpg';
+import capaSaude from '../assets/areas/saude-1200w.jpg';
+import capaLazer from '../assets/areas/lazer-1200w.jpg';
+import capaAssistencia from '../assets/areas/assistencia-social-1200w.jpg';
 import logo from '../assets/logo.png';
 import marcaPaie from '../assets/projects/paie.jpeg';
 import marcaEscolaDeArtes from '../assets/projects/escola-de-artes.jpeg';

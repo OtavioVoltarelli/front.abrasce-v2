@@ -25,13 +25,16 @@
  */
 
 import { PALETTE } from '../lib/palette';
+import { responsiveImage } from '../lib/responsiveImage';
 
-import educacao from '../assets/areas/educacao.jpg';
-import esporte from '../assets/areas/esporte.jpg';
-import lazer from '../assets/areas/lazer.jpg';
-import saude from '../assets/areas/saude.jpg';
-import cultura from '../assets/areas/cultura.jpg';
-import assistenciaSocial from '../assets/areas/assistencia-social.jpg';
+/* As fotos são geradas por `npm run images:areas` (ver o script) em três
+   larguras e dois formatos. O glob importa todas de uma vez; `areaPhoto`
+   separa as da área pedida. */
+const AREA_PHOTO_FILES = import.meta.glob('../assets/areas/*.{jpg,webp}', {
+    eager: true,
+    import: 'default',
+});
+const areaPhoto = (slug) => responsiveImage(AREA_PHOTO_FILES, slug);
 
 const AREA_DEFINITIONS = [
     {
@@ -39,8 +42,8 @@ const AREA_DEFINITIONS = [
         label: 'Educação',
         projectTitle: 'Projetos educacionais',
         accent: 'brand',
-        image: educacao,
-        imageAlt: 'Corredor de uma biblioteca com estantes cheias de livros',
+        image: areaPhoto('educacao'),
+        imageAlt: 'Crianças desenhando e lendo em volta de uma mesa na sala de aula',
         summary:
             'Promovemos o acesso ao conhecimento com programas que capacitam jovens e adultos. Nossa missão é abrir portas para o crescimento pessoal e profissional através da educação.',
         description:
@@ -51,8 +54,8 @@ const AREA_DEFINITIONS = [
         label: 'Esporte',
         projectTitle: 'Projetos esportivos',
         accent: 'lagoon',
-        image: esporte,
-        imageAlt: 'Pessoas praticando atividade esportiva ao ar livre',
+        image: areaPhoto('esporte'),
+        imageAlt: 'Jovens jogando futebol em uma quadra coberta',
         summary:
             'O esporte é um agente de inclusão e transformação. Promovemos atividades que incentivam o trabalho em equipe, a saúde e a disciplina, fortalecendo a convivência e os vínculos sociais',
         description:
@@ -63,8 +66,8 @@ const AREA_DEFINITIONS = [
         label: 'Lazer',
         projectTitle: 'Projetos de lazer',
         accent: 'sun',
-        image: lazer,
-        imageAlt: 'Grupo reunido em um momento de lazer',
+        image: areaPhoto('lazer'),
+        imageAlt: 'Pessoas passeando de bicicleta e descansando na grama de um parque',
         summary:
             'Oferecemos momentos de lazer para melhorar o bem-estar da comunidade. Com eventos culturais e atividades recreativas, promovemos integração e saúde mental.',
         description:
@@ -75,8 +78,8 @@ const AREA_DEFINITIONS = [
         label: 'Saúde',
         projectTitle: 'Projetos de saúde',
         accent: 'berry',
-        image: saude,
-        imageAlt: 'Profissional de saúde em atendimento à comunidade',
+        image: areaPhoto('saude'),
+        imageAlt: 'Profissional de saúde medindo a pressão de uma mulher em uma ação ao ar livre',
         summary:
             'Apoiamos a saúde comunitária com ações de prevenção e conscientização. Nosso objetivo é que todos tenham acesso a informações e cuidados essenciais para uma vida saudável.',
         description:
@@ -87,8 +90,8 @@ const AREA_DEFINITIONS = [
         label: 'Cultura',
         projectTitle: 'Projetos culturais',
         accent: 'iris',
-        image: cultura,
-        imageAlt: 'Apresentação cultural com participação da comunidade',
+        image: areaPhoto('cultura'),
+        imageAlt: 'Apresentação de quadrilha junina com dançarinos fantasiados diante do público',
         summary:
             'Promovemos a cultura local por meio de eventos e oficinas que celebram a diversidade, incentivando o acesso à arte e ao patrimônio cultural da comunidade.',
         description:
@@ -99,8 +102,8 @@ const AREA_DEFINITIONS = [
         label: 'Assistência social',
         projectTitle: 'Projetos de assistência social',
         accent: 'leaf',
-        image: assistenciaSocial,
-        imageAlt: 'Voluntários organizando doações para a comunidade',
+        image: areaPhoto('assistencia-social'),
+        imageAlt: 'Mãos de várias pessoas unidas umas sobre as outras, num gesto de união',
         summary:
             'Oferecemos apoio para pessoas em vulnerabilidade, promovendo ações de inclusão e desenvolvimento para fortalecer a autonomia e a qualidade de vida da comunidade.',
         description:

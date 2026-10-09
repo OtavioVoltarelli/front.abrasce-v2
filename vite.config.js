@@ -20,7 +20,12 @@ export default defineConfig(({ mode }) => ({
     //
     // Qualidade 75 no JPEG/WebP é o ponto em que a diferença some a olho nu
     // numa tela de celular, e o arquivo cai para uma fração do original.
+    //
+    // As fotos das áreas (`*-800w-<hash>.webp` no build) ficam de fora: elas
+    // já saem comprimidas do `npm run images:areas`, e comprimir de novo só
+    // perderia qualidade sem ganhar quase nada de peso.
     ViteImageOptimizer({
+      exclude: /-\d+w-[\w-]+\.(jpe?g|webp)$/,
       jpeg: { quality: 75, progressive: true },
       jpg: { quality: 75, progressive: true },
       png: { quality: 80 },

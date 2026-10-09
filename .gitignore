@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Fotos originais em alta resolução (dezenas de MB). Ficam fora do git: o
+# site usa as versões geradas por `npm run images:areas` em src/assets/areas.
+fotos-originais/

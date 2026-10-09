@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { areaVars } from '../../content/areas';
+import ResponsivePicture from '../ui/ResponsivePicture';
 
 /**
  * Card de uma área de atuação.
@@ -27,12 +28,15 @@ export default function AreaCard({ area, to }) {
                 antes mesmo de ler o título. */}
             <span aria-hidden="true" className="h-1.5 w-full bg-[var(--area)]" />
 
-            <div className="relative aspect-[16/10] overflow-hidden bg-sand">
-                <img
-                    src={area.image}
+            {/* Moldura 3:2, o mesmo formato das fotos geradas pelo script: com
+                os dois iguais, o `object-cover` não corta nada. `sizes`
+                espelha a grade da Home — 1 coluna no celular, 2 no tablet,
+                3 de ~350px no desktop. */}
+            <div className="relative aspect-[3/2] overflow-hidden bg-sand">
+                <ResponsivePicture
+                    image={area.image}
                     alt=""
-                    loading="lazy"
-                    decoding="async"
+                    sizes="(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
                     className="size-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                 />
             </div>
