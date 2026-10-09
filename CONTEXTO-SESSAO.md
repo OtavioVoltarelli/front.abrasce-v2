@@ -1,7 +1,7 @@
 # Contexto da sessão — Redesign V2 (site público + painel admin)
 
 > Documento de passagem de bastão. Leia junto com o `CLAUDE.md`.
-> Última atualização: 2026-09-28.
+> Última atualização: 2026-10-09.
 
 ---
 
@@ -10,6 +10,9 @@
 **Entrega 1** — redesenho completo do site público.
 **Entrega 2** — painel administrativo inteiro.
 **Entrega 3** — autenticação real com o backend (ver seção própria mais abaixo).
+**Ajustes de 2026-10** — hover colorido nos cards, logo em "Quem somos",
+extensões e limites de tamanho de upload por categoria, e o aviso de erro de
+envio perto do botão (seções próprias mais abaixo).
 
 As entregas 1 e 2 começaram com dados mockados e já foram ligadas ao backend de
 verdade (commit `058fb77` e a entrega 3). O modo mock (`VITE_USE_MOCKS`) continua
@@ -140,6 +143,39 @@ Verificado: 28/28 combinações de contraste passam em AA, as 34 cores que
 aparecem no HTML gerado pertencem todas à paleta, e não há **nenhum**
 hexadecimal escrito direto em arquivo `.jsx`.
 
+### Hover dos cards — o token `--shadow-glow`
+
+Todo card clicável reage do mesmo jeito: sobe 4px, a sombra ganha a cor do
+conteúdo e a borda fica na mesma cor a 40%. Só a cor muda, e a cor diz o tipo:
+
+| card | `--glow` | onde aparece |
+|---|---|---|
+| `AreaCard` | `var(--area)` (cor da área) | Home |
+| `NewsCard` | `var(--color-coral)` | Home e Notícias |
+| `JobCard` | `var(--color-leaf)` | Trabalhe conosco |
+
+O token fica em `theme.css` e tem duas camadas: uma pequena em azul-marinho
+(o "chão" do objeto levantado) e uma difusa na cor de `--glow` a **25%**. Sem
+`--glow` definido, cai no azul da marca. O componente escolhe a cor com uma
+propriedade arbitrária: `[--glow:var(--color-leaf)] hover:shadow-glow`.
+
+- **25% é decisão do usuário** (50% ficou forte demais, principalmente nas
+  listas de Trabalhe conosco, onde o brilho invadia o card vizinho).
+- Cards em que o link é só o título (`NewsCard`, `JobCard`) usam
+  `has-focus-visible:` para acender também no foco de teclado; o `AreaCard`,
+  que é um link inteiro, usa `focus-visible:`.
+- `transition-[translate,box-shadow]`, nunca `transition-all`.
+- Nas etiquetas das seis áreas no hero da Home, o texto vai para
+  `--area-bright` (a única versão com contraste sobre o azul-marinho) e a
+  etiqueta cresce para 110% com `scale` — `font-size` empurraria as vizinhas.
+  `areaVars` passou a expor `--area-bright` para isso.
+- Cards **não clicáveis** (Missão, Visão, Valores) não têm hover de propósito:
+  hover promete uma ação que não existe.
+
+O logo da ABRASCE fica na seção "Quem somos" da Home (à direita no desktop,
+acima do título no celular). Uma versão no hero, dentro de uma placa branca,
+foi tentada e descartada pelo usuário.
+
 ---
 
 ### Biblioteca de arquivos reutilizáveis
@@ -252,6 +288,61 @@ Decisões:
 - Tamanhos: notícias públicas 12, biblioteca 24, seletor de mídia 12, vagas
   públicas 10, listas do painel 20.
 
+### Regras de upload por categoria — `src/lib/uploadRules.js`
+
+O backend recusa com 400 toda extensão fora da lista da categoria
+(`file.allowed-extensions.<categoria>` no `application.properties`). O front
+espelha as cinco listas para o seletor de arquivos nem oferecer o que seria
+recusado:
+
+| categoria (`ALLOWED_EXTENSIONS`) | quem usa |
+|---|---|
+| `cv` | `CandidateForm` |
+| `recruitmentProcess` | `RecruitmentForm` |
+| `news` | `NewsForm` |
+| `library` (no backend: `admin`) | `MediaUploadPanel`, `MediaPicker`, `MediaFileSheet` |
+| `transparency` | `TransparencyCreateModal` |
+
+- As listas são escritas **por extenso**, na ordem do backend, mesmo
+  repetindo extensões — para serem conferidas lado a lado com o
+  `application.properties`. **Se o backend mudar uma lista, esta muda junto.**
+- `acceptFor(categoria)` dá o `accept`; `libraryAcceptFor(kind)` restringe a
+  biblioteca a imagens quando o campo é `kind="image"`;
+  `hasAllowedExtension(categoria, nome)` valida antes do envio.
+- **Tamanho** (`MAX_FILE_SIZE_MB`): currículo **2 MB**, todo o resto **10 MB**
+  por arquivo, e **50 MB** somando um envio inteiro (`MAX_REQUEST_SIZE_MB`).
+  1 MB = 1024 × 1024 bytes, como o Spring conta. Acima disso o backend
+  responde 413.
+- **Texto dos formatos** (`FORMATS_LABEL`): o que aparece dentro do campo
+  ("PDF ou Word · até 2 MB"). Mora ao lado das extensões porque muda junto.
+- `FileUpload` e `MultiFileUpload` recebem **só `category`** (obrigatória, sem
+  padrão) e tiram dela o `accept`, o limite e o texto. Antes eram três props
+  soltas, e cada uma envelheceu de um jeito: o `accept` padrão
+  (`.pdf,.doc,.docx`) fazia os anexos oferecerem só PDF e Word, o texto ficou
+  fixo em "PDF ou Word" e a transparência anunciava 15 MB sem validar.
+- Anexos (notícia, processo seletivo): `validations/uploadValidation.js` →
+  `validateAttachments(categoria, files)` devolve uma mensagem (arquivo grande
+  demais primeiro, depois a soma) ou `null`. O formulário calcula a cada
+  render, passa por `error` ao `MultiFileUpload`, bloqueia o envio e rola até
+  o campo (`id="files"` no `FIELD_ORDER`). O componente marca em `berry` o
+  arquivo que passou do limite.
+- O currículo é validado pela **extensão**, não pelo tipo MIME, que varia por
+  sistema operacional (no Android um `.odt` costuma chegar sem tipo).
+- O `accept` é só conveniência. **Segurança é o backend**: allowlist no
+  upload, `Content-Type` decidido pela extensão salva (não pelo que o cliente
+  manda), `nosniff` e `inline` só para PNG, JPEG, GIF, WebP e PDF — o resto,
+  inclusive SVG e HTML, é baixado como anexo.
+
+### Aviso de erro de envio — `components/feedback/SubmitError.jsx`
+
+Candidatura e contato mostram o erro do servidor (limite de envios, duplicata,
+sem conexão) **logo acima do botão de enviar**, não no topo do formulário. No
+celular o formulário ocupa várias telas: com o aviso no topo, a pessoa tocava
+em "Enviar", o aviso aparecia fora da tela e ela tocava de novo — gastando
+tentativas do limite por hora. Sem resposta do servidor (`error.response`
+vazio) o texto é próprio, porque o axios preencheria "Network Error" em
+inglês. Cores `berry` da paleta, `role="alert"` para o leitor de tela.
+
 ## Autenticação
 
 O backend v2 já tinha o módulo de auth pronto (`AuthController`, JWT stateless,
@@ -332,6 +423,13 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
 | `ExportButton` | Recebia `rows` prontas; com paginação exportaria só as 20 primeiras linhas sem aviso. Agora recebe `loadRows()`. |
 | `Dashboard` | Esqueleto girando para sempre se a contagem falhasse; e o aviso "dados de demonstração" aparecia mesmo ligado ao backend real (agora só em modo mock). |
 | Biblioteca de arquivos | O seletor aceitava qualquer tipo e o backend recusava `.svg`/`.odt` só DEPOIS do upload. `lib/uploadRules.js` espelha a lista do backend no `accept`. |
+| `FileUpload`, `MultiFileUpload` | `accept` padrão `.pdf,.doc,.docx` era herdado pelos anexos de notícia e de processo seletivo, que ofereciam só PDF e Word. Padrão removido; cada campo declara a categoria. |
+| `candidateValidation` | Checava o tipo MIME do currículo e deixava passar qualquer arquivo sem tipo. Agora checa a extensão, como o backend. |
+| `TransparencyCreateModal` | Tinha lista de extensões própria, divergente do backend (`gif` a mais; faltavam `odt`, `ods`, `tsv`). Agora usa `uploadRules`. |
+| `TransparencyCreateModal` | Anunciava "até 15 MB", mas o backend aceita 10 MB — e nem validava: arquivo grande subia inteiro e levava 413. Agora valida em 10 MB e bloqueia o envio. |
+| `FileUpload` | Texto "PDF ou Word" fixo no componente, errado na transparência. Agora vem de `FORMATS_LABEL` da categoria. |
+| `CandidateForm`, `ContactForm` | Aviso de erro do servidor no topo, fora da tela no celular; `bg-red-*` do Tailwind fora da paleta; "Network Error" em inglês sem conexão. → `SubmitError` acima do botão. |
+| `content/areas.js` | Comentário do `areaVars` estava em cima de `AREAS`, falava em "quatro tons" (são cinco) e `findArea` vinha antes de `AREAS`. |
 | `Candidates.jsx`, `AttachmentList.jsx`, `MultiFileUpload.jsx` | Três lugares ainda tratavam anexo/currículo como STRING (`candidate.cvUrl`, `filesPath`/`filesPaths` como array de nome de arquivo). O backend já manda objeto (`StoredFileOutput` — `storedName`, `originalName`, `contentType` — ou `CandidateOutput.cv`). Achado numa troca de contrato com a sessão do backend; conferido contra o `NewsController`/`CandidateOutput.java` e contra dados reais do backend local antes de corrigir. |
 
 ---
@@ -369,6 +467,15 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
   virar coringa, `usageCount` == `/usages` == notícias com aquela capa, telefone
   do contato como texto. A mesma bateria em modo mock. Renderização no servidor
   das 9 telas alteradas e do `LoadMore` nos quatro estados.
+- Hover e extensões (2026-10-08): `lint` e `build` passam; as classes novas
+  conferidas no CSS gerado; as cinco listas de `uploadRules` conferidas item
+  por item contra o `application.properties` do backend. **Nada disso foi
+  aberto num navegador** — a extensão do Chrome seguiu desconectada. Não foram
+  feitos uploads de teste contra o `:8080`, para não criar registros no banco
+  local.
+- Limites de tamanho (2026-10-09): bordas testadas fora do navegador —
+  currículo de 2 MB exatos passa e 2 MB + 1 byte não; 10 MB exatos passam;
+  seis anexos de 9 MB são recusados pela soma (54 MB); 50 MB exatos passam.
 
 ---
 
@@ -378,11 +485,34 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
    backend v2 em produção? (a da v1 era `https://www.abrascesocial.org.br/api`).
    Bloqueia o login e todas as chamadas no site publicado.
 2. **Testar no celular de verdade**, começando pelo site público. Nenhuma tela
-   além do login foi aberta num navegador.
-3. **Fotos das áreas** são 300×300 e genéricas. Depende de a ABRASCE fornecer
-   fotos reais dos projetos.
+   além do login foi aberta num navegador — incluindo os hovers e os campos de
+   upload de 2026-10.
+3. **Migração dos arquivos da v1**: antes de copiar, procurar `.svg`, `.htm*` e
+   `.xml` (registrado também no `CLAUDE.md` do backend). O backend já serve
+   esses tipos como anexo, mas o ideal é que nem entrem.
 4. **`npm audit`**: `axios`, `react-router` e `vite` têm correção por
    atualização; `xlsx` não tem correção no npm. Ver `CLAUDE.md`.
+5. **Arrastar arquivo ignora o `accept`** (`FileUpload`). Na transparência,
+   um arquivo arrastado no desktop com extensão proibida só é recusado pelo
+   backend, depois do envio (o tamanho já é validado). O currículo já está
+   coberto pela validação. Correção: `hasAllowedExtension` ao receber o
+   arquivo, com erro no campo.
+6. **Filtros "Documentos" e "Planilhas" da biblioteca**: a biblioteca agora só
+   aceita imagem e PDF. Os filtros só fazem sentido se houver arquivos antigos
+   desses tipos; se não houver, podem sair.
+7. **Fotos das áreas** são 300×300 e genéricas. Depende de a ABRASCE fornecer
+   fotos reais dos projetos.
+8. **Hover nos links do rodapé e da navbar** (sublinhado animado): sugerido,
+   ainda não decidido.
+9. **Branch `feat/paleta-biblioteca-de-arquivos`** sem push e sem merge na
+   `main` (o backend também tem commits sem push).
+10. **Biblioteca não valida tamanho** (`MediaUploadPanel`): arquivo acima de
+    10 MB sobe inteiro e leva 413. Correção: `exceedsMaxSize('library', file)`.
+11. **`formatFileSize` usa ponto decimal** ("54.0 MB"); em português é
+    "54,0 MB". Usado no site todo; correção com `toLocaleString('pt-BR')`.
+12. **Margem do limite de 50 MB**: o front aceita exatamente 50 MB de anexos,
+    mas a requisição leva também o JSON da notícia (alguns KB). Raríssimo;
+    se quiser rigor, deixar uma margem pequena.
 
 ---
 
@@ -393,3 +523,23 @@ Tudo o que o front pedia ao backend foi entregue (sessão `back-agent`,
 busca e `kind` na biblioteca, `usageCount` + `/usages`, `attachments` no lugar
 de `filesPath`/`filesPaths`, e `Contact.phoneNumber` como String (migration
 V3; o zero à esquerda que já tinha se perdido nos dados antigos não volta).
+
+Contrato novo de 2026-10 (backend `488b9b4`, `2d473a8`):
+
+- **Login com limite de tentativas:** 5 senhas erradas para o mesmo e-mail+IP
+  em 15 min → `429` com `Retry-After` (segundos) e `detail` em português. O
+  `api.js` já mostra o `detail`, então o front não precisou mudar. A contagem
+  regressiva no botão foi **descartada pelo usuário**.
+- **Extensões por categoria:** ver a seção de `uploadRules` acima.
+- **Tamanho:** currículo 2 MB (`file.max-size.cv`), demais 10 MB por arquivo,
+  50 MB por requisição. Acima → `413`, title "Arquivo muito grande", `detail`
+  em português. O Caddy de produção não impõe limite de corpo.
+- **Limite por IP nos formulários públicos:** `POST /api/candidates` 10 envios
+  por hora, `POST /api/contacts` 5 por hora — todo envio conta, inclusive os
+  que dão 400. Estourou → `429` com `Retry-After` e `detail` em português. O
+  title do 429 (inclusive o do login) é "Muitas requisições"; o front não usa
+  o title.
+- **Download:** `inline` só para uma allowlist explícita de tipos (PNG, JPEG,
+  GIF, WebP, PDF). Antes era o prefixo `image/`, que deixava SVG — que pode
+  conter `<script>` — abrir no navegador na origem da API. Achado nesta
+  sessão, corrigido pelo backend com teste.
