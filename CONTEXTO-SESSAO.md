@@ -11,8 +11,8 @@
 **Entrega 2** — painel administrativo inteiro.
 **Entrega 3** — autenticação real com o backend (ver seção própria mais abaixo).
 **Ajustes de 2026-10** — hover colorido nos cards, logo em "Quem somos",
-extensões e limites de tamanho de upload por categoria, e o aviso de erro de
-envio perto do botão (seções próprias mais abaixo).
+extensões e limites de tamanho de upload por categoria, o aviso de erro de
+envio perto do botão e as fotos reais das áreas (seções próprias mais abaixo).
 
 As entregas 1 e 2 começaram com dados mockados e já foram ligadas ao backend de
 verdade (commit `058fb77` e a entrega 3). O modo mock (`VITE_USE_MOCKS`) continua
@@ -333,6 +333,33 @@ recusado:
   manda), `nosniff` e `inline` só para PNG, JPEG, GIF, WebP e PDF — o resto,
   inclusive SVG e HTML, é baixado como anexo.
 
+### Fotos das áreas — `npm run images:areas`
+
+As fotos genéricas de 300×300 foram trocadas por fotos reais (originais de
+3.400 a 5.200px, 14,7 MB somadas). O site nunca usa as originais:
+
+| Onde | O quê |
+|---|---|
+| `fotos-originais/areas/<slug>.jpg` | originais, **fora do git** (`.gitignore`). Guardar cópia fora da máquina (Drive da ABRASCE). |
+| `scripts/optimize-area-photos.mjs` | corta em **3:2** e gera 800/1200/1600px em WebP e JPEG (qualidade 78) com o `sharp` |
+| `src/assets/areas/<slug>-<largura>w.<webp\|jpg>` | as 36 versões geradas, que vão para o git |
+| `lib/responsiveImage.js` | junta as versões (via `import.meta.glob`) em `srcset` |
+| `components/ui/ResponsivePicture.jsx` | `<picture>`: WebP primeiro, JPEG de reserva no `<img>`; `sizes` vem de quem usa |
+
+- **Moldura e foto no mesmo formato (3:2)** no `AreaCard` e na página
+  Projetos: o `object-cover` não corta nada. Quando a original não é 3:2, o
+  script corta do lado definido em `CROP_POSITION` (esporte: `right`, para
+  manter todos os jogadores).
+- Um celular baixa ~710 KB pelas seis fotos (versão 1200px), e só quando elas
+  entram na tela (`loading="lazy"`).
+- O `ViteImageOptimizer` **pula** essas fotos (`exclude` por `-<n>w-` no
+  nome): recomprimir só perderia qualidade.
+- AVIF seria ~30% mais leve que o WebP; o usuário preferiu WebP + JPEG.
+- **Trocar uma foto:** substituir em `fotos-originais/areas/` (mesmo nome do
+  slug), rodar `npm run images:areas` e conferir o corte. **Atualizar o
+  `imageAlt` em `content/areas.js`** — os antigos descreviam as fotos
+  genéricas e precisaram ser reescritos.
+
 ### Aviso de erro de envio — `components/feedback/SubmitError.jsx`
 
 Candidatura e contato mostram o erro do servidor (limite de envios, duplicata,
@@ -500,17 +527,15 @@ papel só por enquanto"), então o front não faz nenhuma distinção de permiss
 6. **Filtros "Documentos" e "Planilhas" da biblioteca**: a biblioteca agora só
    aceita imagem e PDF. Os filtros só fazem sentido se houver arquivos antigos
    desses tipos; se não houver, podem sair.
-7. **Fotos das áreas** são 300×300 e genéricas. Depende de a ABRASCE fornecer
-   fotos reais dos projetos.
-8. **Hover nos links do rodapé e da navbar** (sublinhado animado): sugerido,
+7. **Hover nos links do rodapé e da navbar** (sublinhado animado): sugerido,
    ainda não decidido.
-9. **Branch `feat/paleta-biblioteca-de-arquivos`** sem push e sem merge na
+8. **Branch `feat/paleta-biblioteca-de-arquivos`** sem push e sem merge na
    `main` (o backend também tem commits sem push).
-10. **Biblioteca não valida tamanho** (`MediaUploadPanel`): arquivo acima de
+9. **Biblioteca não valida tamanho** (`MediaUploadPanel`): arquivo acima de
     10 MB sobe inteiro e leva 413. Correção: `exceedsMaxSize('library', file)`.
-11. **`formatFileSize` usa ponto decimal** ("54.0 MB"); em português é
+10. **`formatFileSize` usa ponto decimal** ("54.0 MB"); em português é
     "54,0 MB". Usado no site todo; correção com `toLocaleString('pt-BR')`.
-12. **Margem do limite de 50 MB**: o front aceita exatamente 50 MB de anexos,
+11. **Margem do limite de 50 MB**: o front aceita exatamente 50 MB de anexos,
     mas a requisição leva também o JSON da notícia (alguns KB). Raríssimo;
     se quiser rigor, deixar uma margem pequena.
 

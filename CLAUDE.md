@@ -200,10 +200,6 @@ MUI e Emotion já não estão nas dependências.
 
 ### Outros
 
-- **Fotos das áreas de atuação são 300×300 e genéricas.** Fotos reais dos projetos
-  melhorariam a página de Projetos e a Home. Ao trocar, mirar ~1200px no lado maior,
-  proporção entre 4:3 e 16:9 (a imagem é cortada nas duas — `AreaCard` na Home usa
-  16:10, o bloco da página Projetos usa 4:3), até ~150 KB depois de comprimida.
 - **Dependências com vulnerabilidade conhecida** (`npm audit`, levantado em
   2026-09-28): `axios`, `react-router`, `vite` e transitivas têm correção
   disponível por atualização; `xlsx` não tem correção no npm (o pacote
