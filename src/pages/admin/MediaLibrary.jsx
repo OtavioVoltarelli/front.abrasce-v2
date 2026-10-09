@@ -17,6 +17,7 @@ import { accentVars } from '../../lib/palette';
 import {
     useCreateReusableFile,
     useDeleteReusableFile,
+    useDownloadReusableFile,
     useFileUsages,
     useRenameReusableFile,
     useReplaceReusableFile,
@@ -54,6 +55,7 @@ export default function AdminMediaLibrary() {
     const createMutation = useCreateReusableFile();
     const renameMutation = useRenameReusableFile();
     const replaceMutation = useReplaceReusableFile();
+    const downloadMutation = useDownloadReusableFile();
     const deleteMutation = useDeleteReusableFile();
 
     const files = query.data ?? [];
@@ -239,6 +241,7 @@ export default function AdminMediaLibrary() {
                     onClose={() => setOpenFile(null)}
                     renameMutation={renameMutation}
                     replaceMutation={replaceMutation}
+                    downloadMutation={downloadMutation}
                     onRequestDelete={setFileToDelete}
                 />
             )}

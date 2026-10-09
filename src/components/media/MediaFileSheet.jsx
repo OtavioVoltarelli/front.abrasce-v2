@@ -8,9 +8,9 @@ import LoadMore from '../feedback/LoadMore';
 import { fileKind, isImage } from '../../lib/fileKind';
 import { formatDateTime } from '../../lib/format';
 import { fileUrl } from '../../services/config';
-import { reusableFileDownloadUrl } from '../../services/reusableFileService';
 import { accentVars } from '../../lib/palette';
 import { libraryAcceptFor } from '../../lib/uploadRules';
+import { saveBlob } from '../../lib/blobFile';
 
 /**
  * Gaveta de um arquivo da biblioteca: ver, renomear, substituir, baixar, excluir.
@@ -57,6 +57,7 @@ export default function MediaFileSheet({
     onClose,
     renameMutation,
     replaceMutation,
+    downloadMutation,
     onRequestDelete,
 }) {
     const replaceInputId = useId();
@@ -81,6 +82,16 @@ export default function MediaFileSheet({
         setNameError(null);
         renameMutation.mutate({ id: file.id, name });
     };
+
+    // A mutação é da página e sobrevive à troca de arquivo aberto: por isso o
+    // estado só vale quando o download em andamento (ou que falhou) é DESTE.
+    const isDownloading = downloadMutation.isPending && downloadMutation.variables === file.id;
+    const downloadFailed = downloadMutation.isError && downloadMutation.variables === file.id;
+
+    const handleDownload = () =>
+        downloadMutation.mutate(file.id, {
+            onSuccess: (blob) => saveBlob(blob, file.originalName),
+        });
 
     const handleReplace = () => {
         if (!replacement) return;
@@ -233,9 +244,24 @@ export default function MediaFileSheet({
                 </div>
 
                 {/* --------------------------------------------------- BAIXAR */}
-                <Button href={reusableFileDownloadUrl(file)} variant="secondary" fullWidth>
-                    Baixar arquivo
-                </Button>
+                {/* Botão e não link: a rota de download exige login, e só o
+                    axios manda o token. O erro aparece logo abaixo, onde a
+                    pessoa tocou. */}
+                <div>
+                    <Button
+                        variant="secondary"
+                        fullWidth
+                        onClick={handleDownload}
+                        disabled={isDownloading}
+                    >
+                        {isDownloading ? 'Baixando…' : 'Baixar arquivo'}
+                    </Button>
+                    {downloadFailed && (
+                        <p role="alert" className="mt-2 text-sm font-medium text-berry-ink">
+                            Não foi possível baixar o arquivo. Confira a conexão e tente de novo.
+                        </p>
+                    )}
+                </div>
 
                 {/* -------------------------------------------------- EXCLUIR */}
                 <section className="rounded-xl bg-berry-tint p-4 ring-1 ring-berry/25">

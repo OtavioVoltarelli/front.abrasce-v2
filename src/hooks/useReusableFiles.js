@@ -52,6 +52,10 @@ export function useFileUsages(fileId, { pageSize = 10 } = {}) {
     });
 }
 
+/** Baixa o arquivo (Blob) com o token de login, para salvar com o nome original. */
+export const useDownloadReusableFile = () =>
+    useMutation({ mutationFn: (id) => reusableFileService.download(id) });
+
 /* -------------------------------------------------------------------- escrita */
 
 /**

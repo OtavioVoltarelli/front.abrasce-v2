@@ -281,6 +281,15 @@ export const reusableFileMockService = {
         return toOutput(FILES[index], await loadNewsUsage());
     },
 
+    /* No mock o `storedName` já é a URL do arquivo empacotado (ou um `blob:`
+       de um upload feito na sessão): basta buscá-la. */
+    download: async (id) => {
+        await delay(400);
+        const file = FILES.find((item) => item.id === Number(id));
+        if (!file) throw new Error('Arquivo reutilizável não encontrado.');
+        return (await fetch(file.storedName)).blob();
+    },
+
     remove: async (id) => {
         await delay(700);
         const index = FILES.findIndex((file) => file.id === Number(id));

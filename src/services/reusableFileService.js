@@ -1,5 +1,5 @@
 import api from './api';
-import { USE_MOCKS, fileUrl } from './config';
+import { USE_MOCKS } from './config';
 import { toPage } from './pagination';
 import { reusableFileMockService } from '../mocks/reusableFileMock';
 
@@ -97,24 +97,21 @@ const reusableFileHttpService = {
     remove: async (id) => {
         await api.delete(`/reusable-files/${id}`);
     },
+
+    /**
+     * O arquivo como Blob, para baixar com o NOME ORIGINAL ("edital-2026.pdf",
+     * e não "947ebbe2-…-edital-2026.pdf") — é por isso que o backend tem esta
+     * rota separada da que serve a imagem.
+     *
+     * A rota exige login, então não pode ser um `<a href>`: o navegador
+     * seguiria o link sem o token, que só o axios envia.
+     */
+    download: async (id) => {
+        const { data } = await api.get(`/reusable-files/${id}/download`, { responseType: 'blob' });
+        return data;
+    },
 };
 
 export const reusableFileService = USE_MOCKS
     ? reusableFileMockService
     : reusableFileHttpService;
-
-/**
- * URL para baixar o arquivo com o NOME ORIGINAL ("edital-2026.pdf", e não
- * "947ebbe2-…-edital-2026.pdf"). É por isso que o backend tem uma rota de
- * download separada da rota que serve a imagem: `<img src>` não mostra nome
- * nenhum, mas um download mostra.
- *
- * Em modo mock não existe servidor, e o `storedName` já é a URL do arquivo
- * empacotado — então o link aponta direto para ele. Esta decisão fica AQUI, no
- * service, e não no componente: a tela não deveria saber se os dados vêm de
- * mock ou de API, essa é a fronteira inteira desta camada.
- */
-export const reusableFileDownloadUrl = (file) =>
-    USE_MOCKS
-        ? fileUrl('admin', file.storedName)
-        : `${api.defaults.baseURL ?? ''}/reusable-files/${file.id}/download`;
