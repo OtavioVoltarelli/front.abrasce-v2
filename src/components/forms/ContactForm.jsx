@@ -3,6 +3,7 @@ import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
+import SubmitError from '../feedback/SubmitError';
 import { BRAZILIAN_STATES } from '../../lib/brazilianStates';
 import { maskPhone } from '../../lib/format';
 import { validateContact } from '../../validations/contactValidation';
@@ -107,15 +108,6 @@ export default function ContactForm() {
                 </div>
             )}
 
-            {mutation.isError && (
-                <div role="alert" className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200">
-                    <p className="text-sm font-bold text-red-800">A mensagem não foi enviada.</p>
-                    <p className="mt-1 text-sm text-red-700">
-                        {mutation.error?.message ?? 'Verifique sua conexão e tente novamente.'}
-                    </p>
-                </div>
-            )}
-
             <Input
                 id="name"
                 label="Nome completo"
@@ -187,6 +179,8 @@ export default function ContactForm() {
                 error={errors.message}
                 placeholder="Conte o que você precisa. Quanto mais detalhes, melhor conseguimos ajudar."
             />
+
+            <SubmitError title="A mensagem não foi enviada." error={mutation.error} />
 
             <Button type="submit" size="lg" fullWidth className="sm:w-auto" disabled={mutation.isPending}>
                 {mutation.isPending ? 'Enviando…' : 'Enviar mensagem'}

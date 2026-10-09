@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
+import SubmitError from '../feedback/SubmitError';
 import FileUpload from '../ui/FileUpload';
 import { BRAZILIAN_STATES } from '../../lib/brazilianStates';
 import { formatCnpj, formatCpf, maskPhone } from '../../lib/format';
@@ -140,15 +141,6 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 </div>
             )}
 
-            {mutation.isError && (
-                <div role="alert" className="rounded-xl bg-red-50 p-4 ring-1 ring-red-200">
-                    <p className="text-sm font-bold text-red-800">A inscrição não foi enviada.</p>
-                    <p className="mt-1 text-sm text-red-700">
-                        {mutation.error?.message ?? 'Verifique sua conexão e tente novamente.'}
-                    </p>
-                </div>
-            )}
-
             <fieldset className="space-y-5">
                 {/* <legend> nomeia o grupo de campos para o leitor de tela.
                     `sr-only` porque o título visual já está na seção acima. */}
@@ -280,6 +272,8 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 error={errors.cv}
                 category="cv"
             />
+
+            <SubmitError title="A inscrição não foi enviada." error={mutation.error} />
 
             {/* Botão de largura total no celular (alvo enorme, fácil de acertar)
                 e largura natural no desktop. */}
