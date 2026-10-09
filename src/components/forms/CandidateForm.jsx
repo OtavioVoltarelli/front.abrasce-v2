@@ -8,7 +8,7 @@ import { formatCnpj, formatCpf, maskPhone } from '../../lib/format';
 import { validateCandidate } from '../../validations/candidateValidation';
 import { useCreateCandidate } from '../../hooks/useCandidate';
 import { scrollToFirstError } from '../../lib/scrollToError';
-import { acceptFor } from '../../lib/uploadRules';
+import { MAX_FILE_SIZE_MB } from '../../lib/uploadRules';
 
 const EMPTY_FORM = {
     name: '',
@@ -274,12 +274,11 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                 id="cv"
                 label="Currículo"
                 required
-                hint="Arquivo em PDF ou Word, de até 1 MB."
-                accept={acceptFor('cv')}
+                hint={`Arquivo em PDF ou Word, de até ${MAX_FILE_SIZE_MB.cv} MB.`}
                 value={form.cv}
                 onChange={(file) => setField('cv', file)}
                 error={errors.cv}
-                maxSizeMb={1}
+                category="cv"
             />
 
             {/* Botão de largura total no celular (alvo enorme, fácil de acertar)

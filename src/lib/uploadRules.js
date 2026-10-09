@@ -36,6 +36,51 @@ export const ALLOWED_EXTENSIONS = {
     ],
 };
 
+/**
+ * Tamanho máximo por arquivo, em MB, por categoria. Espelha o backend:
+ * `file.max-size.cv` para o currículo e `spring.servlet.multipart.max-file-size`
+ * para todo o resto. Acima disso o servidor responde 413 — validar antes
+ * evita a pessoa esperar o upload inteiro no 4G para só então ser recusada.
+ */
+export const MAX_FILE_SIZE_MB = {
+    cv: 2,
+    recruitmentProcess: 10,
+    news: 10,
+    library: 10,
+    transparency: 10,
+};
+
+/**
+ * Teto de uma requisição inteira, em MB — a soma de todos os arquivos de um
+ * envio (`spring.servlet.multipart.max-request-size`). Só pesa onde dá para
+ * mandar vários arquivos de uma vez: seis anexos de 9 MB passam um a um, mas
+ * juntos (54 MB) a requisição inteira é recusada.
+ */
+export const MAX_REQUEST_SIZE_MB = 50;
+
+const BYTES_PER_MB = 1024 * 1024; // como o Spring conta "10MB"
+
+/** O arquivo passa do tamanho máximo da categoria? */
+export const exceedsMaxSize = (category, file) =>
+    file.size > MAX_FILE_SIZE_MB[category] * BYTES_PER_MB;
+
+/** A soma dos arquivos passa do teto de uma requisição? */
+export const exceedsRequestSize = (files) =>
+    files.reduce((total, file) => total + file.size, 0) > MAX_REQUEST_SIZE_MB * BYTES_PER_MB;
+
+/**
+ * Como cada categoria descreve, para gente, o que aceita. Aparece dentro do
+ * campo de upload ("PDF ou Word · até 2 MB"). Mora aqui, ao lado da lista de
+ * extensões, porque as duas precisam mudar juntas.
+ */
+export const FORMATS_LABEL = {
+    cv: 'PDF ou Word',
+    recruitmentProcess: 'PDF, Word, planilha, apresentação, imagem ou .zip',
+    news: 'PDF, Word, planilha, apresentação, imagem (inclusive GIF) ou .zip',
+    library: 'Imagem ou PDF',
+    transparency: 'PDF, Word, planilha, apresentação, imagem, .txt ou .zip',
+};
+
 /* Imagens da biblioteca, para campos que só aceitam imagem (a capa de uma
    notícia). Não é `image/*`: isso ofereceria SVG, AVIF e HEIC, que o backend
    recusa. (No iPhone, pedir extensões de imagem faz o sistema converter a

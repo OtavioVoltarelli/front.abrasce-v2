@@ -15,7 +15,7 @@ import {
     useUpdateRecruitmentProcess,
 } from '../../hooks/useRecruitmentProcess';
 import { scrollToFirstError } from '../../lib/scrollToError';
-import { acceptFor } from '../../lib/uploadRules';
+import { validateAttachments } from '../../validations/uploadValidation';
 
 /**
  * Criar e editar um processo seletivo.
@@ -35,7 +35,7 @@ import { acceptFor } from '../../lib/uploadRules';
 
 const EMPTY_FORM = { title: '', description: '', active: true };
 
-const FIELD_ORDER = ['title', 'description'];
+const FIELD_ORDER = ['title', 'description', 'files'];
 
 export default function AdminRecruitmentForm() {
     const { id } = useParams();
@@ -113,6 +113,10 @@ function RecruitmentFormFields({
         });
     };
 
+    // Calculado a cada render, e não só no envio: o aviso aparece assim que o
+    // arquivo grande entra na lista, e some assim que ele sai.
+    const filesError = validateAttachments('recruitmentProcess', files);
+
     const handleSubmit = (event) => {
         event.preventDefault();
 
@@ -120,6 +124,7 @@ function RecruitmentFormFields({
         if (!form.title.trim()) validation.title = 'Informe o título do processo seletivo.';
         else if (form.title.length > 255) validation.title = 'O título pode ter no máximo 255 caracteres.';
         if (!form.description.trim()) validation.description = 'Descreva a vaga, os requisitos e como se inscrever.';
+        if (filesError) validation.files = filesError;
 
         setErrors(validation);
         if (Object.keys(validation).length > 0) {
@@ -247,9 +252,11 @@ function RecruitmentFormFields({
                     </div>
 
                     <MultiFileUpload
+                        id="files"
                         label="Edital e anexos"
-                        hint="PDF, Word, planilha, apresentação, imagem ou .zip. Um processo pode não ter anexo nenhum."
-                        accept={acceptFor('recruitmentProcess')}
+                        hint="Um processo pode não ter anexo nenhum."
+                        category="recruitmentProcess"
+                        error={filesError}
                         existingFiles={process?.attachments ?? []}
                         files={files}
                         onChange={setFiles}

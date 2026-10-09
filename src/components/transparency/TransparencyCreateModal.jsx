@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import FileUpload from '../ui/FileUpload';
 import { useCreateTransparencyFolder, useUploadTransparencyFile } from '../../hooks/useTransparency';
-import { acceptFor } from '../../lib/uploadRules';
+import { MAX_FILE_SIZE_MB, exceedsMaxSize } from '../../lib/uploadRules';
 
 /**
  * "Novo": pasta ou arquivo, dentro da pasta que a pessoa está vendo agora.
@@ -51,12 +51,21 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
         createFolder.mutate(folderId ? `${folderId}/${trimmed}` : trimmed, { onSuccess: close });
     };
 
+    // Arquivo grande demais bloqueia o envio; nome repetido só avisa (substituir
+    // é uma ação legítima). Por isso o tamanho vem primeiro na mensagem do campo.
+    const fileTooLarge = file ? exceedsMaxSize('transparency', file) : false;
+    const fileCollides = file ? collides(file.name) : false;
+    const fileError = fileTooLarge
+        ? `O arquivo passa de ${MAX_FILE_SIZE_MB.transparency} MB, o máximo aceito.`
+        : fileCollides
+            ? 'Já existe um arquivo com este nome aqui — enviar vai substituí-lo.'
+            : null;
+
     const handleUpload = () => {
-        if (!file) return;
+        if (!file || fileTooLarge) return;
         upload.mutate({ file, path: folderId ?? '' }, { onSuccess: close });
     };
 
-    const fileCollides = file ? collides(file.name) : false;
 
     if (panel === 'folder') {
         return (
@@ -89,18 +98,17 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
                 <div className="space-y-4">
                     <FileUpload
                         label="Arquivo"
-                        accept={acceptFor('transparency')}
-                        maxSizeMb={15}
+                        category="transparency"
                         value={file}
                         onChange={setFile}
-                        error={fileCollides ? 'Já existe um arquivo com este nome aqui — enviar vai substituí-lo.' : null}
+                        error={fileError}
                     />
                     {upload.isError && (
                         <p role="alert" className="text-sm font-semibold text-berry-ink">
                             {upload.error?.message}
                         </p>
                     )}
-                    <Button fullWidth onClick={handleUpload} disabled={!file || upload.isPending}>
+                    <Button fullWidth onClick={handleUpload} disabled={!file || fileTooLarge || upload.isPending}>
                         {upload.isPending ? 'Enviando…' : fileCollides ? 'Enviar e substituir' : 'Enviar arquivo'}
                     </Button>
                 </div>

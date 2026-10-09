@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react';
 import { cn } from '../../lib/cn';
 import { formatFileSize } from '../../lib/format';
+import { FORMATS_LABEL, MAX_FILE_SIZE_MB, MAX_REQUEST_SIZE_MB, acceptFor, exceedsMaxSize } from '../../lib/uploadRules';
 
 /**
  * Envio de VÁRIOS arquivos — os anexos de uma notícia ou o edital de um
@@ -23,17 +24,22 @@ import { formatFileSize } from '../../lib/format';
  *   levaria a apagar anexos sem querer.
  */
 /*
- * `accept` não tem valor padrão de propósito: cada upload pertence a uma
- * categoria do backend com a sua lista (`lib/uploadRules`), e quem usa o
- * componente é quem sabe qual é. Um padrão aqui já mascarou o problema uma
- * vez — anexos de notícia ofereciam só PDF e Word por herdarem o padrão do
- * currículo.
+ * `category` (obrigatória, sem padrão) é a categoria de upload do backend —
+ * `news`, `recruitmentProcess`. Dela saem o `accept`, os limites de tamanho e
+ * o texto dos formatos, todos de `lib/uploadRules`.
+ *
+ * O componente MOSTRA qual arquivo passou do limite, mas não decide se o
+ * formulário pode ser enviado: a mensagem de erro chega pronta por `error`,
+ * calculada pelo formulário com `validateAttachments` — a mesma função que
+ * bloqueia o envio. `id` vai no contêiner para o `scrollToFirstError` achar
+ * o campo.
  */
 export default function MultiFileUpload({
+    id: containerId,
     label,
     hint,
     error,
-    accept,
+    category,
     existingFiles = [],
     files,
     onChange,
@@ -56,9 +62,12 @@ export default function MultiFileUpload({
     const removeAt = (index) => onChange(files.filter((_, position) => position !== index));
 
     return (
-        <div className={cn('flex flex-col gap-1.5', className)}>
+        <div id={containerId} className={cn('flex flex-col gap-1.5', className)}>
             <span className="text-sm font-semibold text-ink-800">{label}</span>
             {hint && <p className="text-xs text-muted">{hint}</p>}
+            <p className="text-xs text-muted">
+                {FORMATS_LABEL[category]} · até {MAX_FILE_SIZE_MB[category]} MB cada, {MAX_REQUEST_SIZE_MB} MB no total
+            </p>
 
             {/* Anexos já publicados — só aparecem enquanto não se está trocando. */}
             {!isReplacing && existingFiles.length > 0 && (
@@ -87,32 +96,44 @@ export default function MultiFileUpload({
             {/* Arquivos novos escolhidos agora. */}
             {isReplacing && files.length > 0 && (
                 <ul className="space-y-2">
-                    {files.map((file, index) => (
-                        <li
-                            key={`${file.name}-${index}`}
-                            className="flex items-center gap-3 rounded-xl bg-brand-50 p-3 ring-1 ring-inset ring-brand-200"
-                        >
-                            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-600 text-white">
-                                <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-                                    <path d="M14 2v6h6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                </svg>
-                            </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm font-semibold text-ink-900">{file.name}</span>
-                                <span className="block text-xs text-muted">{formatFileSize(file.size)}</span>
-                            </span>
-                            <button
-                                type="button"
-                                onClick={() => removeAt(index)}
-                                aria-label={`Remover ${file.name}`}
-                                className="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white hover:text-red-700"
+                    {files.map((file, index) => {
+                        const tooLarge = exceedsMaxSize(category, file);
+                        return (
+                            <li
+                                key={`${file.name}-${index}`}
+                                className={cn(
+                                    'flex items-center gap-3 rounded-xl p-3 ring-1 ring-inset',
+                                    tooLarge ? 'bg-berry-tint ring-berry/40' : 'bg-brand-50 ring-brand-200'
+                                )}
                             >
-                                <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                    <path d="M18 6 6 18M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </li>
-                    ))}
+                                <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-600 text-white">
+                                    <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+                                        <path d="M14 2v6h6M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    </svg>
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-sm font-semibold text-ink-900">{file.name}</span>
+                                    {/* O tamanho continua visível no arquivo grande
+                                        demais: é ele que diz à pessoa QUANTO precisa
+                                        diminuir. */}
+                                    <span className={cn('block text-xs', tooLarge ? 'font-semibold text-berry-ink' : 'text-muted')}>
+                                        {formatFileSize(file.size)}
+                                        {tooLarge && ` · passa de ${MAX_FILE_SIZE_MB[category]} MB`}
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => removeAt(index)}
+                                    aria-label={`Remover ${file.name}`}
+                                    className="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white hover:text-red-700"
+                                >
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                        <path d="M18 6 6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
 
@@ -144,7 +165,7 @@ export default function MultiFileUpload({
                             ref={inputRef}
                             id={id}
                             type="file"
-                            accept={accept}
+                            accept={acceptFor(category)}
                             multiple
                             className="sr-only"
                             aria-invalid={Boolean(error) || undefined}

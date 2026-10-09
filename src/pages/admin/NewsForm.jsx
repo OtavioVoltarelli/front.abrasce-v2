@@ -16,7 +16,7 @@ import {
     useUpdateNews,
 } from '../../hooks/useNews';
 import { scrollToFirstError } from '../../lib/scrollToError';
-import { acceptFor } from '../../lib/uploadRules';
+import { validateAttachments } from '../../validations/uploadValidation';
 
 /**
  * Criar e editar uma notícia.
@@ -57,7 +57,7 @@ const MAX_SHORT = 255;
 /* Ordem VISUAL dos campos, de cima para baixo — é ela que decide qual erro
    é "o primeiro" para o scroll-to-error, não a ordem em que `handleSubmit`
    valida cada um. */
-const FIELD_ORDER = ['coverImage', 'title', 'shortDescription', 'longDescription'];
+const FIELD_ORDER = ['coverImage', 'title', 'shortDescription', 'longDescription', 'files'];
 
 export default function AdminNewsForm() {
     const { id } = useParams();
@@ -133,6 +133,10 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
         });
     };
 
+    // Calculado a cada render, e não só no envio: o aviso aparece assim que o
+    // arquivo grande entra na lista, e some assim que ele sai.
+    const filesError = validateAttachments('news', files);
+
     const handleSubmit = (event) => {
         event.preventDefault();
 
@@ -155,6 +159,7 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
            se a pessoa remover de propósito, e aí é erro mesmo.
            O backend concorda: `coverImageId` é `@NotNull`. */
         if (!coverImage) validation.coverImage = 'Escolha a imagem de capa na biblioteca.';
+        if (filesError) validation.files = filesError;
 
         setErrors(validation);
         if (Object.keys(validation).length > 0) {
@@ -288,9 +293,11 @@ function NewsFormFields({ isEditing, news, navigate, createMutation, updateMutat
                     />
 
                     <MultiFileUpload
+                        id="files"
                         label="Anexos"
-                        hint="PDF, Word, planilha, apresentação, imagem (inclusive GIF) ou .zip. Uma notícia pode não ter anexo nenhum."
-                        accept={acceptFor('news')}
+                        hint="Uma notícia pode não ter anexo nenhum."
+                        category="news"
+                        error={filesError}
                         existingFiles={news?.attachments ?? []}
                         files={files}
                         onChange={setFiles}

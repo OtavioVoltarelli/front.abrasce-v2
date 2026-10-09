@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { formatFileSize } from '../../lib/format';
+import { FORMATS_LABEL, MAX_FILE_SIZE_MB, acceptFor } from '../../lib/uploadRules';
 
 /**
  * Envio de arquivo.
@@ -19,11 +20,12 @@ import { formatFileSize } from '../../lib/format';
  * não existe arrastar arquivo, então o toque precisa resolver tudo sozinho.
  */
 /*
- * `accept` não tem valor padrão de propósito: cada upload pertence a uma
- * categoria do backend com a sua lista (`lib/uploadRules`), e quem usa o
- * componente é quem sabe qual é. Um padrão aqui já mascarou o problema uma
- * vez — anexos de notícia ofereciam só PDF e Word por herdarem o padrão do
- * currículo.
+ * `category` (obrigatória, sem padrão) é a categoria de upload do backend —
+ * `cv`, `transparency`... Dela saem a lista de extensões do `accept`, o
+ * tamanho máximo e o texto "PDF ou Word · até 2 MB", todos de
+ * `lib/uploadRules`. Antes eram três props soltas, e cada uma envelheceu de
+ * um jeito: o texto ficou fixo em "PDF ou Word" e a transparência anunciava
+ * 15 MB quando o backend aceita 10.
  */
 export default function FileUpload({
     id: idProp,
@@ -31,8 +33,7 @@ export default function FileUpload({
     hint,
     error,
     required,
-    accept,
-    maxSizeMb = 1,
+    category,
     value,
     onChange,
     className,
@@ -123,13 +124,13 @@ export default function FileUpload({
                     </span>
                     <span className="text-xs text-muted">
                         <span className="hidden sm:inline">ou arraste até aqui · </span>
-                        PDF ou Word · até {maxSizeMb} MB
+                        {FORMATS_LABEL[category]} · até {MAX_FILE_SIZE_MB[category]} MB
                     </span>
                     <input
                         ref={inputRef}
                         id={id}
                         type="file"
-                        accept={accept}
+                        accept={acceptFor(category)}
                         className="sr-only"
                         aria-describedby={describedBy}
                         aria-invalid={Boolean(error) || undefined}
