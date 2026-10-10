@@ -265,8 +265,8 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
             <FileUpload
                 id="cv"
                 label="Currículo"
-                required
-                hint={`Arquivo em PDF ou Word, de até ${MAX_FILE_SIZE_MB.cv} MB.`}
+                optional
+                hint={`Arquivo em PDF ou Word, ou uma foto nítida do currículo, de até ${MAX_FILE_SIZE_MB.cv} MB.`}
                 value={form.cv}
                 onChange={(file) => setField('cv', file)}
                 error={errors.cv}

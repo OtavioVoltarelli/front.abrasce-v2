@@ -94,15 +94,17 @@ export function validateCandidate(form) {
     if (!form.state) errors.state = 'Selecione o estado.';
     if (!form.city?.trim()) errors.city = 'Informe a cidade onde você mora.';
 
-    if (!form.cv) {
-        errors.cv = 'Anexe seu currículo para concluir a inscrição.';
-    } else if (exceedsMaxSize('cv', form.cv)) {
-        errors.cv = `O arquivo passa de ${MAX_FILE_SIZE_MB.cv} MB. Tente salvar o currículo em PDF, que costuma ficar menor.`;
-    } else if (!hasAllowedExtension('cv', form.cv.name)) {
-        // Pela EXTENSÃO, como o backend decide — não pelo tipo MIME. O MIME
-        // vem do sistema operacional e varia: no Android um .odt costuma
-        // chegar vazio ou como application/octet-stream.
-        errors.cv = 'Envie o currículo em PDF ou Word.';
+    // O currículo é opcional (o backend aceita a candidatura sem ele): só é
+    // conferido quando a pessoa anexou algum arquivo.
+    if (form.cv) {
+        if (exceedsMaxSize('cv', form.cv)) {
+            errors.cv = `O arquivo passa de ${MAX_FILE_SIZE_MB.cv} MB. Se for foto, envie um print da tela, que fica bem menor; se for documento, salve em PDF.`;
+        } else if (!hasAllowedExtension('cv', form.cv.name)) {
+            // Pela EXTENSÃO, como o backend decide — não pelo tipo MIME. O MIME
+            // vem do sistema operacional e varia: no Android um .odt costuma
+            // chegar vazio ou como application/octet-stream.
+            errors.cv = 'Envie o currículo em PDF, Word ou como foto (JPG, PNG ou WebP).';
+        }
     }
 
     return errors;

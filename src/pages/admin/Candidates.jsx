@@ -259,13 +259,20 @@ export default function AdminCandidates() {
                                         {candidate.cnpj && <Field label="CNPJ">{formatCnpj(candidate.cnpj)}</Field>}
                                     </dl>
 
-                                    {candidate.cv && (
+                                    {/* O currículo é opcional desde a v2 — e os
+                                        candidatos migrados da v1 sem arquivo já
+                                        vinham com `cv: null`. Sem arquivo, um
+                                        aviso no lugar do botão: chamar a rota
+                                        só daria 404. */}
+                                    {candidate.cv ? (
                                         <CvButton
                                             opensInTab={canShowInTab(candidate.cv.contentType)}
                                             isLoading={cvDownload.isPending && cvDownload.variables === candidate.id}
                                             error={cvDownload.isError && cvDownload.variables === candidate.id ? cvDownload.error : null}
                                             onClick={() => handleOpenCv(candidate)}
                                         />
+                                    ) : (
+                                        <p className="mt-4 text-sm text-muted">Sem currículo anexado.</p>
                                     )}
                                 </li>
                             ))}

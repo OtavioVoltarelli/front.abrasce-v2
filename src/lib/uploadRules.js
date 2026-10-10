@@ -15,8 +15,9 @@
  * application.properties. Se o backend mudar uma lista, esta muda junto.
  */
 export const ALLOWED_EXTENSIONS = {
-    /* POST /api/candidates — currículo do candidato. */
-    cv: ['pdf', 'doc', 'docx', 'odt'],
+    /* POST /api/candidates — currículo do candidato. Aceita foto porque, na
+       v1, ~1 em cada 5 currículos chegava como foto ou print do celular. */
+    cv: ['pdf', 'doc', 'docx', 'odt', 'png', 'jpg', 'jpeg', 'webp'],
     /* Edital e anexos de processo seletivo. */
     recruitmentProcess: [
         'pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'csv', 'tsv',
@@ -74,7 +75,7 @@ export const exceedsRequestSize = (files) =>
  * extensões, porque as duas precisam mudar juntas.
  */
 export const FORMATS_LABEL = {
-    cv: 'PDF ou Word',
+    cv: 'PDF, Word ou foto',
     recruitmentProcess: 'PDF, Word, planilha, apresentação, imagem ou .zip',
     news: 'PDF, Word, planilha, apresentação, imagem (inclusive GIF) ou .zip',
     library: 'Imagem ou PDF',

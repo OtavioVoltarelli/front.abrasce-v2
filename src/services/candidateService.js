@@ -29,7 +29,9 @@ const candidateHttpService = {
     create: async ({ cv, ...candidateData }) => {
         const form = new FormData();
         form.append('data', new Blob([JSON.stringify(candidateData)], { type: 'application/json' }));
-        form.append('cv', cv);
+        // O currículo é opcional: sem arquivo, a parte "cv" nem vai — o
+        // backend responde 201 com `cv: null`.
+        if (cv) form.append('cv', cv);
 
         const { data } = await api.post('/candidates', form);
         return data;

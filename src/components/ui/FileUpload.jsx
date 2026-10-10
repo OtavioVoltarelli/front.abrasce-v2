@@ -33,6 +33,7 @@ export default function FileUpload({
     hint,
     error,
     required,
+    optional,
     category,
     value,
     onChange,
@@ -63,6 +64,7 @@ export default function FileUpload({
             <span className="text-sm font-semibold text-ink-800">
                 {label}
                 {required && <span className="ml-1 font-normal text-muted">(obrigatório)</span>}
+                {optional && <span className="ml-1 font-normal text-muted">(opcional)</span>}
             </span>
 
             {hint && (
