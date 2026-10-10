@@ -128,7 +128,7 @@ export default function Home() {
                     No celular o logo vem antes do título — `lg:order-last` o
                     manda para a direita sem duplicar marcação. O texto mantém
                     `max-w-2xl` para a linha não ficar longa demais de ler. */}
-                <Container className="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-center lg:gap-16">
+                <Container className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-center lg:gap-16">
                     {/* alt vazio: o parágrafo ao lado já começa com o nome
                         completo da ABRASCE; descrever o logo faria o leitor de
                         tela repetir a mesma informação. */}
@@ -138,7 +138,7 @@ export default function Home() {
                         width={452}
                         height={320}
                         loading="lazy"
-                        className="mb-8 h-auto w-40 sm:w-48 lg:order-last lg:mb-0 lg:w-full"
+                        className="mb-8 h-auto w-44 sm:w-56 lg:order-last lg:mb-0 lg:w-full"
                     />
 
                     <div className="max-w-2xl">
