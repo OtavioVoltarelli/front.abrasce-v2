@@ -58,12 +58,46 @@ export function toIsoDate(value) {
     return date ? date.toISOString() : undefined;
 }
 
-/** Telefone já completo, para EXIBIR numa listagem. */
+/** Só os dígitos de um texto — o formato em que CPF, CNPJ e telefone vão
+ *  para o backend e voltam dele. A máscara é só da tela. */
+export const onlyDigits = (value) => String(value ?? '').replace(/\D/g, '');
+
+/*
+ * EXIBIR vs. DIGITAR
+ * `formatPhone`, `formatCpf` e `formatCnpj` mostram um valor que já chegou do
+ * backend (listagem, detalhe, planilha): mascaram só quando o tamanho bate e,
+ * fora do padrão, devolvem os dígitos crus — os dados migrados da v1 têm
+ * telefone com 9, 12 e 13 dígitos, e uma máscara aplicada pela metade
+ * ("(11) 9888") esconderia o problema em vez de mostrá-lo.
+ * `maskPhone`, `maskCpf` e `maskCnpj` acompanham a DIGITAÇÃO, montando a
+ * máscara aos poucos.
+ * Valor vazio vira '' em todas: quem exibe decide se mostra "—".
+ */
+
+/** Telefone para EXIBIR: 11 dígitos → (99) 99999-9999; 10 → (99) 9999-9999. */
 export function formatPhone(value) {
-    const digits = String(value ?? '').replace(/\D/g, '');
+    const digits = onlyDigits(value);
     if (digits.length === 11) return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     if (digits.length === 10) return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-    return String(value ?? '');
+    return digits;
+}
+
+/** CPF para EXIBIR: 11 dígitos → 999.999.999-99. */
+export function formatCpf(value) {
+    const digits = onlyDigits(value);
+    if (digits.length === 11) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    return digits;
+}
+
+/**
+ * CNPJ para EXIBIR: 14 dígitos → 99.999.999/9999-99. Com 11, é um CPF — na v1
+ * muita gente pôs o CPF no campo de CNPJ —, e sai com a máscara de CPF.
+ */
+export function formatCnpj(value) {
+    const digits = onlyDigits(value);
+    if (digits.length === 14) return digits.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    if (digits.length === 11) return formatCpf(digits);
+    return digits;
 }
 
 /**
@@ -80,7 +114,7 @@ export function formatPhone(value) {
  * daria uma conta diferente da que queremos.
  */
 export function maskPhone(value) {
-    const digits = String(value ?? '').replace(/\D/g, '').slice(0, 11);
+    const digits = onlyDigits(value).slice(0, 11);
 
     if (digits.length <= 2) return digits.replace(/(\d{1,2})/, '($1');
     if (digits.length <= 6) return digits.replace(/(\d{2})(\d{1,4})/, '($1) $2');
@@ -88,16 +122,18 @@ export function maskPhone(value) {
     return digits.replace(/(\d{2})(\d{5})(\d{1,4})/, '($1) $2-$3');
 }
 
-export function formatCpf(value) {
-    const digits = String(value ?? '').replace(/\D/g, '').slice(0, 11);
+/** CPF sendo DIGITADO — a máscara se monta aos poucos. */
+export function maskCpf(value) {
+    const digits = onlyDigits(value).slice(0, 11);
     return digits
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-export function formatCnpj(value) {
-    const digits = String(value ?? '').replace(/\D/g, '').slice(0, 14);
+/** CNPJ sendo DIGITADO — a máscara se monta aos poucos. */
+export function maskCnpj(value) {
+    const digits = onlyDigits(value).slice(0, 14);
     return digits
         .replace(/(\d{2})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')

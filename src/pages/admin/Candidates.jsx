@@ -45,7 +45,7 @@ const EXPORT_COLUMNS = [
     { header: 'Telefone', value: (row) => formatPhone(row.phoneNumber), width: 18 },
     { header: 'CPF', value: (row) => formatCpf(row.cpf), width: 16 },
     { header: 'Razão social', value: (row) => row.companyName, width: 28 },
-    { header: 'CNPJ', value: (row) => (row.cnpj ? formatCnpj(row.cnpj) : ''), width: 20 },
+    { header: 'CNPJ', value: (row) => formatCnpj(row.cnpj), width: 20 },
     { header: 'Cidade', value: (row) => row.city, width: 22 },
     { header: 'Estado', value: (row) => row.state, width: 8 },
     { header: 'Data da inscrição', value: (row) => formatDateTime(row.candidateDate), width: 20 },
@@ -249,7 +249,7 @@ export default function AdminCandidates() {
                                                 {formatPhone(candidate.phoneNumber)}
                                             </a>
                                         </Field>
-                                        <Field label="CPF">{formatCpf(candidate.cpf)}</Field>
+                                        <Field label="CPF">{formatCpf(candidate.cpf) || '—'}</Field>
                                         <Field label="Cidade">
                                             {candidate.city} — {candidate.state}
                                         </Field>

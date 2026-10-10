@@ -1,6 +1,7 @@
 import api from './api';
 import { USE_MOCKS } from './config';
 import { toPage } from './pagination';
+import { onlyDigits } from '../lib/format';
 import { contactMockService } from '../mocks/contactMock';
 
 /**
@@ -28,7 +29,7 @@ const contactHttpService = {
     send: async ({ phoneNumber, ...rest }) => {
         const { data } = await api.post('/contacts', {
             ...rest,
-            phoneNumber: String(phoneNumber).replace(/\D/g, ''),
+            phoneNumber: onlyDigits(phoneNumber),
         });
         return data;
     },

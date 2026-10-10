@@ -1,6 +1,7 @@
 import api from './api';
 import { USE_MOCKS } from './config';
 import { toPage } from './pagination';
+import { onlyDigits } from '../lib/format';
 import { candidateMockService } from '../mocks/candidateMock';
 
 /**
@@ -26,7 +27,16 @@ const candidateHttpService = {
      * com o arquivo. O JSON PRECISA ir como Blob com type application/json —
      * sem isso o navegador manda text/plain e o Spring recusa com 415.
      */
-    create: async ({ cv, ...candidateData }) => {
+    create: async ({ cv, cpf, cnpj, phoneNumber, ...rest }) => {
+        // CPF, CNPJ e telefone vão SÓ COM DÍGITOS: é como o backend grava e
+        // devolve. A máscara é da tela. CNPJ é opcional: vazio vai `null`.
+        const candidateData = {
+            ...rest,
+            cpf: onlyDigits(cpf),
+            cnpj: onlyDigits(cnpj) || null,
+            phoneNumber: onlyDigits(phoneNumber),
+        };
+
         const form = new FormData();
         form.append('data', new Blob([JSON.stringify(candidateData)], { type: 'application/json' }));
         // O currículo é opcional: sem arquivo, a parte "cv" nem vai — o

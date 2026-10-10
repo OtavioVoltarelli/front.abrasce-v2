@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import SubmitError from '../feedback/SubmitError';
 import FileUpload from '../ui/FileUpload';
 import { BRAZILIAN_STATES } from '../../lib/brazilianStates';
-import { formatCnpj, formatCpf, maskPhone } from '../../lib/format';
+import { maskCnpj, maskCpf, maskPhone } from '../../lib/format';
 import { validateCandidate } from '../../validations/candidateValidation';
 import { useCreateCandidate } from '../../hooks/useCandidate';
 import { scrollToFirstError } from '../../lib/scrollToError';
@@ -195,7 +195,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                     required
                     name="cpf"
                     value={form.cpf}
-                    onChange={(event) => setField('cpf', formatCpf(event.target.value))}
+                    onChange={(event) => setField('cpf', maskCpf(event.target.value))}
                     error={errors.cpf}
                     inputMode="numeric"
                     placeholder="000.000.000-00"
@@ -225,7 +225,7 @@ export default function CandidateForm({ recruitmentProcessId, processTitle }) {
                         label="CNPJ"
                         name="cnpj"
                         value={form.cnpj}
-                        onChange={(event) => setField('cnpj', formatCnpj(event.target.value))}
+                        onChange={(event) => setField('cnpj', maskCnpj(event.target.value))}
                         error={errors.cnpj}
                         inputMode="numeric"
                         placeholder="00.000.000/0000-00"
