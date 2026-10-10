@@ -49,7 +49,11 @@ export default function MediaPicker({
     title = 'Selecionar arquivo',
 }) {
     const [panel, setPanel] = useState('browse');
-    const [pendingId, setPendingId] = useState(selectedId);
+    /* Guarda o ARQUIVO marcado, não só o id. Com o id, confirmar dependia de
+       achar o arquivo na lista da tela — e, se a pessoa marcasse um e depois
+       buscasse outra palavra, ele saía da lista e "Usar este arquivo" não
+       fazia nada. `null` = nada marcado nesta abertura (vale o atual). */
+    const [pendingFile, setPendingFile] = useState(null);
     const [search, setSearch] = useState('');
     const [kindFilter, setKindFilter] = useState('all');
 
@@ -64,26 +68,23 @@ export default function MediaPicker({
     const createMutation = useCreateReusableFile();
     const files = query.data ?? [];
     const isFiltering = Boolean(debouncedSearch.trim()) || effectiveKind !== kind;
+    const markedId = pendingFile?.id ?? selectedId;
 
     const close = () => {
         setPanel('browse');
         setSearch('');
         setKindFilter('all');
-        setPendingId(selectedId);
+        /* Antes voltava para o `selectedId` da PRIMEIRA renderização: depois de
+           escolher uma capa, reabrir o seletor marcava a capa antiga. Zerar e
+           derivar a marcação de `selectedId` (abaixo) sempre usa o valor atual. */
+        setPendingFile(null);
+        createMutation.reset();
         onClose();
     };
 
     const confirm = () => {
-        // Confirmar sem trocar de arquivo não muda nada. E o arquivo atual
-        // pode nem estar entre as páginas carregadas, então não dá para
-        // procurá-lo na lista.
-        if (pendingId === selectedId) {
-            close();
-            return;
-        }
-        const chosen = files.find((file) => file.id === pendingId);
-        if (!chosen) return;
-        onSelect(chosen);
+        // Confirmar sem trocar de arquivo não muda nada.
+        if (pendingFile && pendingFile.id !== selectedId) onSelect(pendingFile);
         close();
     };
 
@@ -140,7 +141,7 @@ export default function MediaPicker({
                         fullWidth
                         className="sm:w-auto"
                         onClick={confirm}
-                        disabled={pendingId === null}
+                        disabled={markedId === null}
                     >
                         Usar este arquivo
                     </Button>
@@ -196,15 +197,15 @@ export default function MediaPicker({
                 {files.length > 0 && (
                     <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                         {files.map((file) => {
-                            const isPending = file.id === pendingId;
+                            const isMarked = file.id === markedId;
                             return (
                                 <li key={file.id}>
                                     <button
                                         type="button"
-                                        onClick={() => setPendingId(file.id)}
-                                        aria-pressed={isPending}
+                                        onClick={() => setPendingFile(file)}
+                                        aria-pressed={isMarked}
                                         className={`group w-full rounded-xl p-1.5 text-left transition-colors ${
-                                            isPending ? 'bg-brand-50 ring-2 ring-brand-600' : 'ring-1 ring-line hover:bg-sand'
+                                            isMarked ? 'bg-brand-50 ring-2 ring-brand-600' : 'ring-1 ring-line hover:bg-sand'
                                         }`}
                                     >
                                         <span className="relative block aspect-square overflow-hidden rounded-lg">
@@ -213,7 +214,7 @@ export default function MediaPicker({
                                                 moldura sozinha é cor, e cor
                                                 sozinha não comunica para quem
                                                 não a distingue. O visto é forma. */}
-                                            {isPending && (
+                                            {isMarked && (
                                                 <span
                                                     aria-hidden="true"
                                                     className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-full bg-brand-600 text-white shadow-card"

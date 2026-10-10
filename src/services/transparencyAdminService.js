@@ -11,9 +11,10 @@ import { transparencyAdminMockService } from '../mocks/transparencyMock';
  *   1. `to`, em `move`, é o caminho de destino COMPLETO, nome do arquivo/pasta
  *      incluído — não só a pasta destino. Quem chama monta
  *      `pastaDestino + '/' + nomeAtual`.
- *   2. Upload e mover SOBRESCREVEM em silêncio um item de mesmo nome no
- *      destino (`REPLACE_EXISTING` no backend). A tela avisa antes de deixar
- *      escolher um destino com colisão.
+ *   2. Upload SOBRESCREVE um arquivo de mesmo nome na pasta — é assim que se
+ *      publica a versão nova de um documento, e a tela avisa ("Enviar e
+ *      substituir"). Mover e renomear NÃO sobrescrevem: o backend responde
+ *      400 se o nome já existir no destino, e a tela avisa antes.
  *
  * Todos os endpoints devolvem 200 sem corpo — nenhum método aqui devolve nada
  * além da confirmação; quem chama invalida a árvore (`useTransparencyTree`) e

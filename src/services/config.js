@@ -32,5 +32,10 @@ export const API_URL = import.meta.env.VITE_API_URL ?? '';
 export function fileUrl(category, path) {
     if (!path) return '';
     if (/^(https?:|\/|data:|blob:)/.test(path)) return path;
-    return `${API_URL}/files/${category}/${path}`;
+    /* `encodeURIComponent`: o nome físico carrega o nome que a pessoa deu ao
+       arquivo ("uuid_Edital #2.pdf"). Sem codificar, o navegador lê o "#"
+       como início de âncora e pede só "uuid_Edital " ao servidor — 404. O
+       mesmo vale para "?" (vira query string) e "+". A transparência já fazia
+       isso em `transparencyFileUrl`; aqui faltava. */
+    return `${API_URL}/files/${category}/${encodeURIComponent(path)}`;
 }

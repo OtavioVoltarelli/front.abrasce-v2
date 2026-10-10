@@ -84,9 +84,16 @@ export default function FileUpload({
                         <span className="block truncate text-sm font-semibold text-ink-900">{value.name}</span>
                         <span className="block text-xs text-muted">{formatFileSize(value.size)}</span>
                     </span>
+                    {/* O `id` do campo vai para o botão de remover enquanto há
+                        arquivo escolhido: o <input> some da tela nesse estado, e
+                        sem um elemento com esse id o `scrollToFirstError` não
+                        achava o campo — "arquivo grande demais" ficava fora da
+                        tela, sem rolagem até ele. */}
                     <button
+                        id={id}
                         type="button"
                         onClick={clear}
+                        aria-describedby={describedBy}
                         className="grid size-11 shrink-0 place-items-center rounded-lg text-muted transition-colors hover:bg-white hover:text-red-700"
                         aria-label={`Remover o arquivo ${value.name}`}
                     >

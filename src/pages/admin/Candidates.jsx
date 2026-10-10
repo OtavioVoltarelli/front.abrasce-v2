@@ -34,7 +34,9 @@ import { canShowInTab, openPendingTab, saveBlob, showBlobInTab } from '../../lib
 /** "2026-08-15" -> "2026-08-15T00:00:00" (ou o fim do dia). */
 const toDateTime = (date, edge) => {
     if (!date) return undefined;
-    return edge === 'end' ? `${date}T23:59:59` : `${date}T00:00:00`;
+    // `.999999`: o banco guarda a data com microssegundos, então uma inscrição
+    // às 23:59:59.4 ficava DEPOIS de "23:59:59" e fora do filtro.
+    return edge === 'end' ? `${date}T23:59:59.999999` : `${date}T00:00:00`;
 };
 
 const EXPORT_COLUMNS = [
@@ -261,7 +263,7 @@ export default function AdminCandidates() {
                                         <CvButton
                                             opensInTab={canShowInTab(candidate.cv.contentType)}
                                             isLoading={cvDownload.isPending && cvDownload.variables === candidate.id}
-                                            hasFailed={cvDownload.isError && cvDownload.variables === candidate.id}
+                                            error={cvDownload.isError && cvDownload.variables === candidate.id ? cvDownload.error : null}
                                             onClick={() => handleOpenCv(candidate)}
                                         />
                                     )}
@@ -294,7 +296,7 @@ function Field({ label, children }) {
  * O texto diz o que vai acontecer — "Abrir" para PDF, "Baixar" para Word —
  * e o erro aparece logo abaixo, no próprio card, onde a pessoa clicou.
  */
-function CvButton({ opensInTab, isLoading, hasFailed, onClick }) {
+function CvButton({ opensInTab, isLoading, error, onClick }) {
     const label = opensInTab ? 'Abrir currículo' : 'Baixar currículo';
 
     return (
@@ -310,9 +312,14 @@ function CvButton({ opensInTab, isLoading, hasFailed, onClick }) {
                 </svg>
                 {isLoading ? 'Abrindo…' : label}
             </button>
-            {hasFailed && (
+            {/* Com resposta do servidor, o motivo dele ("Candidato não possui
+                currículo."); sem resposta, aí sim é a conexão. Antes era sempre
+                "confira a conexão", mesmo quando o problema era outro. */}
+            {error && (
                 <p role="alert" className="mt-2 text-sm font-medium text-berry-ink">
-                    Não foi possível abrir o currículo. Confira a conexão e tente de novo.
+                    {error.response
+                        ? `Não foi possível abrir o currículo: ${error.message}`
+                        : 'Não foi possível abrir o currículo. Confira a conexão e tente de novo.'}
                 </p>
             )}
         </div>

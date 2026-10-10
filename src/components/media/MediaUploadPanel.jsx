@@ -4,7 +4,7 @@ import Input from '../ui/Input';
 import FileThumbnail from './FileThumbnail';
 import { fileKind, isImage } from '../../lib/fileKind';
 import { formatFileSize } from '../../lib/format';
-import { acceptFor } from '../../lib/uploadRules';
+import { acceptFor, chosenFileProblem } from '../../lib/uploadRules';
 
 /**
  * Enviar um arquivo para a biblioteca: escolher → conferir → nomear → salvar.
@@ -76,6 +76,9 @@ export default function MediaUploadPanel({
         }
     };
 
+    // tipo e tamanho conferidos antes do envio — ver `chosenFileProblem`
+    const fileProblem = chosenFileProblem(file, accept, 'library');
+
     const handleSubmit = (event) => {
         event.preventDefault();
         if (!file) {
@@ -83,6 +86,7 @@ export default function MediaUploadPanel({
             inputRef.current?.focus();
             return;
         }
+        if (fileProblem) return;
         onSubmit({ file, name });
     };
 
@@ -115,9 +119,9 @@ export default function MediaUploadPanel({
                     </svg>
                     {file ? 'Trocar arquivo' : 'Escolher arquivo'}
                 </label>
-                {validationError && (
+                {(validationError || fileProblem) && (
                     <p role="alert" className="mt-2 text-sm font-semibold text-berry-ink">
-                        {validationError}
+                        {validationError ?? fileProblem}
                     </p>
                 )}
             </div>
@@ -163,7 +167,7 @@ export default function MediaUploadPanel({
             />
 
             <div className="flex flex-col gap-2 sm:flex-row-reverse">
-                <Button type="submit" size="lg" fullWidth className="sm:w-auto" disabled={isPending}>
+                <Button type="submit" size="lg" fullWidth className="sm:w-auto" disabled={isPending || Boolean(fileProblem)}>
                     {isPending ? 'Enviando…' : submitLabel}
                 </Button>
                 {onCancel && (

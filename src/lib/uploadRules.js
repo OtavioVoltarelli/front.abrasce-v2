@@ -103,6 +103,29 @@ export const libraryAcceptFor = (kind) =>
     toAccept(kind === 'image' ? LIBRARY_IMAGE_EXTENSIONS : ALLOWED_EXTENSIONS.library);
 
 /**
+ * O que impede um arquivo escolhido de ser enviado a um campo — ou `null`.
+ *
+ * Confere tipo e tamanho ANTES do envio. O `accept` do <input> só filtra o
+ * seletor (e o Android costuma ignorá-lo): sem isto, um PDF escolhido no
+ * seletor de CAPA virava capa de notícia, e um arquivo de 30 MB subia
+ * inteiro no 4G só para o servidor recusar. A lista de extensões vem do
+ * próprio `accept`, para valer o que o campo pede (só imagens, ou a
+ * biblioteca inteira); o tamanho vem da `category`.
+ */
+export function chosenFileProblem(file, accept, category) {
+    if (!file) return null;
+
+    const allowed = accept.split(',').map((item) => item.trim().replace(/^\./, '').toLowerCase());
+    if (!allowed.includes(extensionOf(file.name))) {
+        return `Este tipo de arquivo não é aceito aqui. Escolha: ${allowed.join(', ')}.`;
+    }
+    if (exceedsMaxSize(category, file)) {
+        return `O arquivo passa de ${MAX_FILE_SIZE_MB[category]} MB. Envie uma versão menor.`;
+    }
+    return null;
+}
+
+/**
  * O arquivo tem uma extensão aceita na categoria? Para validar ANTES do
  * envio: o `accept` só filtra o seletor — arquivo arrastado para a página
  * passa direto por ele.

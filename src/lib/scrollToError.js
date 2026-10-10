@@ -20,9 +20,10 @@ export function scrollToFirstError(fieldOrder, errors) {
 
     field.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // Um Input/Textarea/Select é focável direto; o MediaField é um <div> de
-    // agrupamento — quem recebe o foco de verdade é o botão de dentro dele.
-    const focusTarget = field.matches('input, textarea, select')
+    // Um Input/Textarea/Select (ou o botão de remover do FileUpload) é
+    // focável direto; o MediaField é um <div> de agrupamento — quem recebe o
+    // foco de verdade é o botão de dentro dele.
+    const focusTarget = field.matches('input, textarea, select, button')
         ? field
         : field.querySelector('button, input, textarea, select');
     focusTarget?.focus({ preventScroll: true });

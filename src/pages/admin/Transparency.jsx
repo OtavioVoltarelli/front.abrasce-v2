@@ -52,6 +52,24 @@ export default function AdminTransparency() {
 
     const existingNames = browser.items.map((item) => item.name);
 
+    /* As mutações são da PÁGINA, não de cada gaveta: o erro de uma tentativa
+       sobrevive ao fechar. Sem o `reset()`, abrir outro arquivo mostrava o
+       "não foi possível renomear" do arquivo anterior. */
+    const openActions = (item) => {
+        renameMutation.reset();
+        setOpenItem(item);
+    };
+
+    const closeDeleteDialog = () => {
+        setItemToDelete(null);
+        deleteMutation.reset();
+    };
+
+    const handleRenamed = (item, newName) => {
+        setOpenItem(null);
+        setFlash(`"${item.name}" agora se chama "${newName}".`);
+    };
+
     const handleConfirmMove = (destinationFolderId) => {
         const to = joinPath(destinationFolderId, itemToMove.name);
         moveMutation.mutate(
@@ -146,7 +164,7 @@ export default function AdminTransparency() {
                                     key={item.id}
                                     item={item}
                                     onEnter={browser.enter}
-                                    onOpenActions={setOpenItem}
+                                    onOpenActions={openActions}
                                 />
                             ))}
                         </ul>
@@ -161,6 +179,7 @@ export default function AdminTransparency() {
                     existingNames={existingNames}
                     onClose={() => setOpenItem(null)}
                     renameMutation={renameMutation}
+                    onRenamed={handleRenamed}
                     onRequestMove={(item) => {
                         setOpenItem(null);
                         setItemToMove(item);
@@ -186,7 +205,7 @@ export default function AdminTransparency() {
 
             <ConfirmDialog
                 isOpen={Boolean(itemToDelete)}
-                onClose={() => setItemToDelete(null)}
+                onClose={closeDeleteDialog}
                 onConfirm={handleConfirmDelete}
                 isPending={deleteMutation.isPending}
                 title={itemToDelete && isFolderNode(itemToDelete) ? 'Excluir pasta?' : 'Excluir arquivo?'}

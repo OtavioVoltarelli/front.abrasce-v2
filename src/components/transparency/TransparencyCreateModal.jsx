@@ -3,8 +3,13 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import FileUpload from '../ui/FileUpload';
-import { useCreateTransparencyFolder, useUploadTransparencyFile } from '../../hooks/useTransparency';
-import { MAX_FILE_SIZE_MB, exceedsMaxSize } from '../../lib/uploadRules';
+import {
+    hasNameIn,
+    nameProblem,
+    useCreateTransparencyFolder,
+    useUploadTransparencyFile,
+} from '../../hooks/useTransparency';
+import { FORMATS_LABEL, MAX_FILE_SIZE_MB, exceedsMaxSize, hasAllowedExtension } from '../../lib/uploadRules';
 
 /**
  * "Novo": pasta ou arquivo, dentro da pasta que a pessoa está vendo agora.
@@ -33,14 +38,14 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
         onClose();
     };
 
-    const collides = (candidateName) =>
-        existingNames.some((existing) => existing.toLowerCase() === candidateName.toLowerCase());
+    const collides = (candidateName) => hasNameIn(existingNames, candidateName);
 
     const handleCreateFolder = (event) => {
         event.preventDefault();
         const trimmed = name.trim();
-        if (!trimmed) {
-            setNameError('Digite um nome para a pasta.');
+        const problem = trimmed ? nameProblem(trimmed) : 'Digite um nome para a pasta.';
+        if (problem) {
+            setNameError(problem);
             return;
         }
         if (collides(trimmed)) {
@@ -54,15 +59,21 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
     // Arquivo grande demais bloqueia o envio; nome repetido só avisa (substituir
     // é uma ação legítima). Por isso o tamanho vem primeiro na mensagem do campo.
     const fileTooLarge = file ? exceedsMaxSize('transparency', file) : false;
+    // O `accept` do seletor não basta: no Android ele costuma ser ignorado, e
+    // a pessoa só descobriria a recusa depois de enviar o arquivo inteiro.
+    const fileNotAllowed = file ? !hasAllowedExtension('transparency', file.name) : false;
+    const fileBlocked = fileTooLarge || fileNotAllowed;
     const fileCollides = file ? collides(file.name) : false;
     const fileError = fileTooLarge
         ? `O arquivo passa de ${MAX_FILE_SIZE_MB.transparency} MB, o máximo aceito.`
-        : fileCollides
-            ? 'Já existe um arquivo com este nome aqui — enviar vai substituí-lo.'
-            : null;
+        : fileNotAllowed
+            ? `Este tipo de arquivo não é aceito. Envie: ${FORMATS_LABEL.transparency}.`
+            : fileCollides
+                ? 'Já existe um arquivo com este nome aqui — enviar vai substituí-lo.'
+                : null;
 
     const handleUpload = () => {
-        if (!file || fileTooLarge) return;
+        if (!file || fileBlocked) return;
         upload.mutate({ file, path: folderId ?? '' }, { onSuccess: close });
     };
 
@@ -108,7 +119,7 @@ export default function TransparencyCreateModal({ isOpen, onClose, folderId, exi
                             {upload.error?.message}
                         </p>
                     )}
-                    <Button fullWidth onClick={handleUpload} disabled={!file || fileTooLarge || upload.isPending}>
+                    <Button fullWidth onClick={handleUpload} disabled={!file || fileBlocked || upload.isPending}>
                         {upload.isPending ? 'Enviando…' : fileCollides ? 'Enviar e substituir' : 'Enviar arquivo'}
                     </Button>
                 </div>

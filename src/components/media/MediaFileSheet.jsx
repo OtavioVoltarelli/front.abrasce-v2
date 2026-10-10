@@ -9,7 +9,7 @@ import { fileKind, isImage } from '../../lib/fileKind';
 import { formatDateTime } from '../../lib/format';
 import { fileUrl } from '../../services/config';
 import { accentVars } from '../../lib/palette';
-import { libraryAcceptFor } from '../../lib/uploadRules';
+import { chosenFileProblem, libraryAcceptFor } from '../../lib/uploadRules';
 import { saveBlob } from '../../lib/blobFile';
 
 /**
@@ -93,8 +93,14 @@ export default function MediaFileSheet({
             onSuccess: (blob) => saveBlob(blob, file.originalName),
         });
 
+    /* A troca mantém o id: uma capa de notícia trocada por um PDF quebraria a
+       imagem de todas as notícias que a usam. Por isso o arquivo novo passa
+       pela mesma conferência de tipo e tamanho do envio. */
+    const replaceAccept = libraryAcceptFor(kind.id);
+    const replacementProblem = chosenFileProblem(replacement, replaceAccept, 'library');
+
     const handleReplace = () => {
-        if (!replacement) return;
+        if (!replacement || replacementProblem) return;
         replaceMutation.mutate(
             { id: file.id, file: replacement },
             { onSuccess: () => setReplacement(null) }
@@ -215,7 +221,7 @@ export default function MediaFileSheet({
                         ref={replaceInputRef}
                         id={replaceInputId}
                         type="file"
-                        accept={libraryAcceptFor(kind.id)}
+                        accept={replaceAccept}
                         onChange={(event) => setReplacement(event.target.files?.[0] ?? null)}
                         className="sr-only"
                     />
@@ -231,12 +237,12 @@ export default function MediaFileSheet({
                             <p className="truncate text-sm font-semibold text-ink-900">
                                 {replacement.name}
                             </p>
-                            {replaceMutation.isError && (
+                            {(replacementProblem || replaceMutation.isError) && (
                                 <p role="alert" className="text-sm font-semibold text-berry-ink">
-                                    {replaceMutation.error?.message}
+                                    {replacementProblem ?? replaceMutation.error?.message}
                                 </p>
                             )}
-                            <Button fullWidth onClick={handleReplace} disabled={replaceMutation.isPending}>
+                            <Button fullWidth onClick={handleReplace} disabled={Boolean(replacementProblem) || replaceMutation.isPending}>
                                 {replaceMutation.isPending ? 'Substituindo…' : 'Substituir arquivo'}
                             </Button>
                         </div>
@@ -258,7 +264,9 @@ export default function MediaFileSheet({
                     </Button>
                     {downloadFailed && (
                         <p role="alert" className="mt-2 text-sm font-medium text-berry-ink">
-                            Não foi possível baixar o arquivo. Confira a conexão e tente de novo.
+                            {downloadMutation.error?.response
+                                ? `Não foi possível baixar o arquivo: ${downloadMutation.error.message}`
+                                : 'Não foi possível baixar o arquivo. Confira a conexão e tente de novo.'}
                         </p>
                     )}
                 </div>

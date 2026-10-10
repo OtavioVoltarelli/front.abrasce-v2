@@ -182,13 +182,25 @@ npm run preview   # servir o build localmente
 > **Regra pra manter esta seção confiável: quando resolver um item, apague — não
 > deixe "pendência morta" acumulando.**
 
-### 🔴 Bloqueador de deploy — resolver ANTES de subir para produção
+### Revisão geral de bugs (2026-10-09)
 
-1. **`.env.production` está vazio**, então `VITE_API_URL` fica `undefined` no build
-   de produção. Com a autenticação em produção, isso agora quebra **duas** coisas:
-   toda chamada de API comum **e** o próprio `POST /auth/login` — ninguém consegue
-   nem entrar no painel publicado. Falta só preencher a URL do backend v2 de
-   produção (a da v1 era `https://www.abrascesocial.org.br/api`).
+Feita junto com o backend. Pontos que mudam o jeito de mexer no código daqui pra
+frente:
+
+- **`Modal`**: `onClose` não é dependência do efeito (usa `useEffectEvent`). Com
+  ela nas dependências, cada renderização do pai remontava o efeito e tirava o
+  foco do campo a cada tecla (ex.: "Nome da pasta" na transparência).
+- **`fileUrl`** codifica o nome do arquivo (`encodeURIComponent`) — `#` e `?` no
+  nome quebravam imagem e anexo.
+- **Erros de download em Blob** (`responseType: 'blob'`) agora têm o `detail`
+  lido pelo interceptor do `api.js`.
+- **Mutação compartilhada pela página** (renomear, excluir, enviar) precisa de
+  `reset()` ao abrir/fechar a gaveta ou o diálogo, senão o erro de um item aparece
+  no próximo.
+- **Transparência**: mover/renomear não sobrescrevem mais no backend; a tela avisa
+  a colisão antes (`hasNameIn`) e valida o nome (`nameProblem`).
+- **Processo seletivo**: "Substituir todos os anexos" sem escolher nenhum agora
+  manda `removeAllFiles` (antes os anexos continuavam lá).
 
 ### CSS
 

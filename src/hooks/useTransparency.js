@@ -47,6 +47,27 @@ export const isSameOrDescendant = (ancestorId, candidateId) =>
  *  backend um caminho completo, nunca só um nome solto. */
 export const joinPath = (parentId, name) => (parentId ? `${parentId}/${name}` : name);
 
+/**
+ * Mensagem de erro para um nome digitado (nova pasta, renomear), ou `null` se
+ * ele serve. Espelha o backend (`FileService.validateTransparencyName`):
+ * · barra criaria uma subpasta (ou o backend cortaria o nome nela) em vez de
+ *   dar o nome pedido;
+ * · `%` e `;` deixam o item impossível de abrir — o servidor recusa a URL.
+ * Validar aqui avisa enquanto a pessoa digita, em vez de depois de enviar.
+ */
+export function nameProblem(name) {
+    const trimmed = name.trim();
+    if (!trimmed) return 'O nome não pode ficar em branco.';
+    if (trimmed === '.' || trimmed === '..') return 'Escolha outro nome.';
+    if (/[/\\]/.test(trimmed)) return 'O nome não pode ter barra (/ ou \\).';
+    if (/[%;]/.test(trimmed)) return 'O nome não pode ter os caracteres % ou ;.';
+    return null;
+}
+
+/** Já existe um item com este nome na lista? Sem diferenciar maiúsculas — "Balanço.pdf" e "balanço.pdf" lado a lado só confundem. */
+export const hasNameIn = (names, candidate) =>
+    names.some((existing) => existing.toLowerCase() === candidate.toLowerCase());
+
 /** Pasta que contém `id` — `null` quando `id` já está na raiz. Inverso de `joinPath`. */
 export const parentIdOf = (id) => {
     const slash = id.lastIndexOf('/');

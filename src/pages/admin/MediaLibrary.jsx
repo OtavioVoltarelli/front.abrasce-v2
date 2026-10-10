@@ -61,12 +61,26 @@ export default function AdminMediaLibrary() {
     const files = query.data ?? [];
     const isFiltering = Boolean(debouncedSearch.trim()) || kindFilter !== 'all';
 
+    /* As mutações são da página e guardam o erro da última tentativa. Sem o
+       `reset()`, o erro de um envio ou renomear aparecia de novo ao reabrir o
+       modal, ou na gaveta de OUTRO arquivo. */
+    const closeUpload = () => {
+        setIsUploadOpen(false);
+        createMutation.reset();
+    };
+
+    const openSheet = (file) => {
+        renameMutation.reset();
+        replaceMutation.reset();
+        setOpenFile(file);
+    };
+
     const handleUpload = ({ file, name }) => {
         createMutation.mutate(
             { file, name },
             {
                 onSuccess: (created) => {
-                    setIsUploadOpen(false);
+                    closeUpload();
                     setFlash(`"${created.name}" foi adicionado à biblioteca.`);
                 },
             }
@@ -201,7 +215,7 @@ export default function AdminMediaLibrary() {
                                             variant="secondary"
                                             fullWidth
                                             className="mt-3"
-                                            onClick={() => setOpenFile(file)}
+                                            onClick={() => openSheet(file)}
                                         >
                                             Opções
                                             <span className="sr-only"> de {file.name}</span>
@@ -218,7 +232,7 @@ export default function AdminMediaLibrary() {
 
             <Modal
                 isOpen={isUploadOpen}
-                onClose={() => setIsUploadOpen(false)}
+                onClose={closeUpload}
                 title="Adicionar arquivo"
                 description="Imagem ou PDF."
                 size="lg"
@@ -227,7 +241,7 @@ export default function AdminMediaLibrary() {
                     isPending={createMutation.isPending}
                     error={createMutation.isError ? createMutation.error?.message : null}
                     onSubmit={handleUpload}
-                    onCancel={() => setIsUploadOpen(false)}
+                    onCancel={closeUpload}
                 />
             </Modal>
 
@@ -248,7 +262,10 @@ export default function AdminMediaLibrary() {
 
             <ConfirmDialog
                 isOpen={Boolean(fileToDelete)}
-                onClose={() => setFileToDelete(null)}
+                onClose={() => {
+                    setFileToDelete(null);
+                    deleteMutation.reset();
+                }}
                 onConfirm={handleDelete}
                 isPending={deleteMutation.isPending}
                 title="Excluir arquivo?"

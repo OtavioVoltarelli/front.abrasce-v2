@@ -72,8 +72,14 @@ api.interceptors.request.use((config) => {
  */
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        const detail = error.response?.data?.detail;
+    async (error) => {
+        // Download pedido com `responseType: 'blob'` (currículo, biblioteca):
+        // se der erro, o corpo do ProblemDetail também chega como Blob, e
+        // `data.detail` seria `undefined` — a pessoa via só "Request failed
+        // with status code 404". Lê o Blob como JSON antes de procurar o detail.
+        const data = error.response?.data;
+        const problem = data instanceof Blob ? await readJsonBlob(data) : data;
+        const detail = problem?.detail;
         if (detail) error.message = detail;
 
         const isLoginRequest = error.config?.url?.includes('/auth/login');
@@ -86,5 +92,15 @@ api.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+/** O Blob como objeto, se ele for JSON (`application/problem+json`); senão `null`. */
+async function readJsonBlob(blob) {
+    if (!blob.type.includes('json')) return null;
+    try {
+        return JSON.parse(await blob.text());
+    } catch {
+        return null;
+    }
+}
 
 export default api;

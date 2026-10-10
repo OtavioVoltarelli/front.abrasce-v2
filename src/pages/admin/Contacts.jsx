@@ -41,7 +41,9 @@ import { formatDateTime, formatPhone, formatShortDate } from '../../lib/format';
 /** "2026-08-15" -> "2026-08-15T00:00:00" (ou o fim do dia). */
 const toDateTime = (date, edge) => {
     if (!date) return undefined;
-    return edge === 'end' ? `${date}T23:59:59` : `${date}T00:00:00`;
+    // `.999999`: o banco guarda a data com microssegundos, então uma inscrição
+    // às 23:59:59.4 ficava DEPOIS de "23:59:59" e fora do filtro.
+    return edge === 'end' ? `${date}T23:59:59.999999` : `${date}T00:00:00`;
 };
 
 const EXPORT_COLUMNS = [

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import { cn } from '../../lib/cn';
 
 /**
@@ -27,6 +27,17 @@ export default function Modal({ isOpen, onClose, title, description, children, f
     const panelRef = useRef(null);
     const previouslyFocused = useRef(null);
 
+    /* `onClose` quase sempre chega como uma função NOVA a cada renderização de
+       quem usa o modal (`onClose={() => setOpen(false)}`, ou um `close`
+       declarado dentro do componente). Se ela estivesse nas dependências do
+       efeito abaixo, cada renderização do pai desmontaria e remontaria o
+       efeito — e o efeito MOVE O FOCO. Era o que acontecia: digitar uma letra
+       no "Nome da pasta" re-renderizava o pai, e o foco saía do campo.
+       `useEffectEvent` (React 19.2) é a ferramenta para isso: uma função que
+       o efeito chama, sempre com a versão mais nova de `onClose`, mas que não
+       conta como dependência. */
+    const handleClose = useEffectEvent(() => onClose());
+
     useEffect(() => {
         if (!isOpen) return undefined;
 
@@ -36,11 +47,19 @@ export default function Modal({ isOpen, onClose, title, description, children, f
         document.body.style.overflow = 'hidden';
 
         const panel = panelRef.current;
-        panel?.querySelector(FOCUSABLE)?.focus() ?? panel?.focus();
+        /* Respeita um `autoFocus` de dentro do modal (o React já focou o
+           campo antes deste efeito rodar). Só sem isso o foco vai para o
+           primeiro elemento focável — ou para o próprio painel. O código
+           anterior usava `focus() ?? panel.focus()`, mas `focus()` sempre
+           devolve `undefined`, então o painel roubava o foco em todo caso. */
+        if (panel && !panel.contains(document.activeElement)) {
+            const firstFocusable = panel.querySelector(FOCUSABLE);
+            (firstFocusable ?? panel).focus();
+        }
 
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
-                onClose();
+                handleClose();
                 return;
             }
             if (event.key !== 'Tab' || !panel) return;
@@ -69,7 +88,7 @@ export default function Modal({ isOpen, onClose, title, description, children, f
             document.body.style.overflow = overflow;
             previouslyFocused.current?.focus?.();
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

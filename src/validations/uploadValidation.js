@@ -1,5 +1,12 @@
 import { formatFileSize } from '../lib/format';
-import { MAX_FILE_SIZE_MB, MAX_REQUEST_SIZE_MB, exceedsMaxSize, exceedsRequestSize } from '../lib/uploadRules';
+import {
+    FORMATS_LABEL,
+    MAX_FILE_SIZE_MB,
+    MAX_REQUEST_SIZE_MB,
+    exceedsMaxSize,
+    exceedsRequestSize,
+    hasAllowedExtension,
+} from '../lib/uploadRules';
 
 /**
  * Validação de uma lista de anexos (notícia, processo seletivo).
@@ -13,6 +20,15 @@ import { MAX_FILE_SIZE_MB, MAX_REQUEST_SIZE_MB, exceedsMaxSize, exceedsRequestSi
  */
 export function validateAttachments(category, files) {
     if (!files?.length) return null;
+
+    // Tipo primeiro: um arquivo que o servidor nunca aceitaria não adianta
+    // diminuir. O `accept` do seletor não garante isso — no Android ele
+    // costuma ser ignorado, e o envio inteiro voltava 400 depois do upload.
+    const notAllowed = files.filter((file) => !hasAllowedExtension(category, file.name));
+    if (notAllowed.length > 0) {
+        const names = notAllowed.map((file) => `“${file.name}”`).join(', ');
+        return `${names} não ${notAllowed.length === 1 ? 'é um tipo aceito' : 'são tipos aceitos'}. Envie: ${FORMATS_LABEL[category]}.`;
+    }
 
     const maxMb = MAX_FILE_SIZE_MB[category];
     const oversized = files.filter((file) => exceedsMaxSize(category, file));

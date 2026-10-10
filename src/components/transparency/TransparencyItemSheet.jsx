@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { fileKind } from '../../lib/fileKind';
 import { accentVars } from '../../lib/palette';
-import { countDescendants, isFolderNode } from '../../hooks/useTransparency';
+import { countDescendants, hasNameIn, isFolderNode, nameProblem } from '../../hooks/useTransparency';
 import { transparencyFileUrl } from '../../services/transparencyService';
 
 /**
@@ -23,6 +23,7 @@ export default function TransparencyItemSheet({
     existingNames,
     onClose,
     renameMutation,
+    onRenamed,
     onRequestMove,
     onRequestDelete,
 }) {
@@ -37,16 +38,21 @@ export default function TransparencyItemSheet({
     const handleRename = (event) => {
         event.preventDefault();
         const trimmed = name.trim();
-        if (!trimmed) {
-            setNameError('O nome não pode ficar em branco.');
+        const problem = nameProblem(trimmed);
+        if (problem) {
+            setNameError(problem);
             return;
         }
-        if (existingNames.some((existing) => existing.toLowerCase() === trimmed.toLowerCase() && existing !== item.name)) {
+        if (hasNameIn(existingNames.filter((existing) => existing !== item.name), trimmed)) {
             setNameError('Já existe um item com este nome aqui.');
             return;
         }
         setNameError(null);
-        renameMutation.mutate({ path: item.id, name: trimmed });
+        /* Fecha a gaveta ao terminar. Antes ela ficava aberta mostrando o item
+           ANTIGO (nome e caminho de antes do rename): "Mover" e "Excluir" a
+           partir dali apontavam para um caminho que não existia mais — e o
+           excluir chegava a responder "foi excluído" sem apagar nada. */
+        renameMutation.mutate({ path: item.id, name: trimmed }, { onSuccess: () => onRenamed(item, trimmed) });
     };
 
     return (

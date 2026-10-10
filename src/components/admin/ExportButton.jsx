@@ -27,6 +27,16 @@ import Button from '../ui/Button';
  * precisa do período INTEIRO. Passar `query.data` exportaria só as 20
  * primeiras linhas, sem nenhum aviso de que faltou gente.
  */
+/**
+ * "2026-10-09" no fuso de QUEM EXPORTA. `toISOString()` dá a data em UTC:
+ * em Brasília, a partir das 21h ela já é a de amanhã, e a planilha gerada na
+ * noite do dia 9 saía com "10" no nome.
+ */
+const localIsoDate = (date) =>
+    [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+        .map((part) => String(part).padStart(2, '0'))
+        .join('-');
+
 export default function ExportButton({ loadRows, columns, fileName, sheetName = 'Dados', disabled }) {
     const [isExporting, setIsExporting] = useState(false);
     const [error, setError] = useState(null);
@@ -59,8 +69,7 @@ export default function ExportButton({ loadRows, columns, fileName, sheetName = 
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-            const today = new Date().toISOString().slice(0, 10);
-            XLSX.writeFile(workbook, `${fileName}-${today}.xlsx`);
+            XLSX.writeFile(workbook, `${fileName}-${localIsoDate(new Date())}.xlsx`);
         } catch (exportError) {
             setError(exportError.message ?? 'Não foi possível gerar a planilha.');
         } finally {

@@ -139,7 +139,9 @@ export default function MultiFileUpload({
 
             {isReplacing && files.length === 0 && (
                 <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-inset ring-amber-200">
-                    Ao salvar, esta notícia ficará <strong>sem nenhum anexo</strong>.
+                    {/* Texto neutro: o componente serve a notícias E a processos
+                        seletivos — "esta notícia" aparecia também na tela de processo. */}
+                    Ao salvar, os anexos atuais serão removidos e não ficará <strong>nenhum anexo</strong> publicado.
                 </p>
             )}
 

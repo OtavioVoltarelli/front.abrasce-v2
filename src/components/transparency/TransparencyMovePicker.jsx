@@ -2,7 +2,13 @@ import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { accentVars } from '../../lib/palette';
 import TransparencyBreadcrumb from './TransparencyBreadcrumb';
-import { isFolderNode, isSameOrDescendant, parentIdOf, useTransparencyBrowser } from '../../hooks/useTransparency';
+import {
+    hasNameIn,
+    isFolderNode,
+    isSameOrDescendant,
+    parentIdOf,
+    useTransparencyBrowser,
+} from '../../hooks/useTransparency';
 
 /**
  * "Mover para onde?" — a mesma navegação pasta-por-pasta da tela principal,
@@ -24,6 +30,11 @@ export default function TransparencyMovePicker({ isOpen, onClose, item, tree, on
     const destinationIsInvalid =
         browser.currentFolderId !== null && isSameOrDescendant(item.id, browser.currentFolderId);
     const isAlreadyHere = browser.currentFolderId === parentIdOf(item.id);
+    // Um item de mesmo nome na pasta de destino. O backend recusa (antes ele
+    // SOBRESCREVIA em silêncio, apagando o arquivo que já estava lá); avisar
+    // aqui poupa a pessoa de descobrir só depois de tocar em "Mover".
+    const nameTakenHere =
+        !isAlreadyHere && hasNameIn(browser.items.map((child) => child.name), item.name);
 
     return (
         <Modal
@@ -42,7 +53,7 @@ export default function TransparencyMovePicker({ isOpen, onClose, item, tree, on
                         fullWidth
                         className="sm:w-auto"
                         onClick={() => onConfirm(browser.currentFolderId)}
-                        disabled={destinationIsInvalid || isAlreadyHere || isPending}
+                        disabled={destinationIsInvalid || isAlreadyHere || nameTakenHere || isPending}
                     >
                         {isPending ? 'Movendo…' : 'Mover para cá'}
                     </Button>
@@ -61,6 +72,12 @@ export default function TransparencyMovePicker({ isOpen, onClose, item, tree, on
                 {destinationIsInvalid && (
                     <p className="rounded-xl bg-sun-tint p-3 text-sm font-semibold text-sun-ink">
                         Não é possível mover uma pasta para dentro dela mesma.
+                    </p>
+                )}
+
+                {!destinationIsInvalid && nameTakenHere && (
+                    <p className="rounded-xl bg-sun-tint p-3 text-sm font-semibold text-sun-ink">
+                        Já existe um item chamado “{item.name}” nesta pasta. Renomeie um dos dois antes de mover.
                     </p>
                 )}
 

@@ -35,7 +35,10 @@ export default function Login() {
         event.preventDefault();
 
         mutation.mutate(
-            { email, password },
+            // `trim()`: o autocompletar do teclado do celular insere o e-mail
+            // com um espaço no fim, e o servidor recusava "admin@x.com " como
+            // conta inexistente — a pessoa via "senha inválida" com a senha certa.
+            { email: email.trim(), password },
             {
                 // `login(data)` só roda se a API confirmar as credenciais —
                 // é o `AuthContext` que persiste o token e navega, não este
